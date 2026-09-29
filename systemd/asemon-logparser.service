@@ -1,0 +1,18 @@
+[Unit]
+Description=ASEMON-PG Log Parser (deadlocks + plans auto_explain)
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=postgres
+WorkingDirectory=/opt/asemon/app
+ExecStart=/opt/asemon/venv/bin/python3 /opt/asemon/app/log_parser.py
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=asemon-logparser
+
+[Install]
+WantedBy=multi-user.target

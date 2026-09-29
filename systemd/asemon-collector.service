@@ -1,0 +1,18 @@
+[Unit]
+Description=ASEMON-PG Collector
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=admin01
+WorkingDirectory=/opt/asemon/app
+ExecStart=/opt/asemon/venv/bin/python3 /opt/asemon/app/collector.py
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=asemon-collector
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,19 @@
+# ============================================================
+# ASEMON-PG — Configuration du collecteur
+# Copier ce fichier en config.py et adapter les valeurs.
+# config.py ne doit PAS être versionné dans Git (contient des mots de passe) :
+# ajouter "config.py" au .gitignore du dépôt.
+# ============================================================
+
+# Instance surveillée (locale à VM-Cible)
+TARGET_DSN = "host=localhost dbname=postgres user=asemon_collect password=CHANGEME_asemon_collect"
+
+# Repository (VM-Monitoring) — adapter l'IP à votre environnement
+REPO_DSN = "host=192.168.1.28 dbname=monitoring user=collector_writer password=CHANGEME_collector"
+
+# Intervalle de collecte, en secondes
+INTERVAL = 15
+
+# Répertoire de données PostgreSQL local (utilisé par log_parser.py pour
+# retrouver le fichier de log actif via current_logfiles)
+PG_DATA_DIR = "/var/lib/postgresql/17/main"

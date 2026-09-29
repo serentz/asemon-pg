@@ -1,0 +1,12 @@
+# Secrets locaux — ne jamais committer
+python/config.py
+**/config.py
+
+# Environnements virtuels Python
+venv/
+.venv/
+asemon-collector/
+
+# Fichiers Python compilés
+__pycache__/
+*.pyc

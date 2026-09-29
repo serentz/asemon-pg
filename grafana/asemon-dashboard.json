@@ -1,0 +1,399 @@
+{
+  "__inputs": [
+    {
+      "name": "DS_MONITORING",
+      "label": "ASEMON Monitoring (PostgreSQL)",
+      "description": "Datasource PostgreSQL pointant sur la base 'monitoring' (schéma asemon), configurée sur VM-Monitoring.",
+      "type": "datasource",
+      "pluginId": "postgres",
+      "pluginName": "PostgreSQL"
+    }
+  ],
+  "__requires": [
+    { "type": "grafana", "id": "grafana", "name": "Grafana", "version": "10.0.0" },
+    { "type": "datasource", "id": "postgres", "name": "PostgreSQL", "version": "1.0.0" }
+  ],
+  "title": "ASEMON-PG",
+  "description": "Vue de monitoring PostgreSQL inspirée d'ASEMON : CPU/IO/réseau, cache, connexions, verrous, deadlocks, top SQL, maintenance, checkpoints et WAL.",
+  "tags": ["asemon", "postgresql"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "time": { "from": "now-6h", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "type": "row",
+      "title": "Système",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "collapsed": false
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "CPU / Mémoire / iowait",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 1 },
+      "fieldConfig": {
+        "defaults": { "unit": "percent", "min": 0, "max": 100 },
+        "overrides": []
+      },
+      "datasource": { "type": "postgres", "uid": "${DS_MONITORING}" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "postgres", "uid": "${DS_MONITORING}" },
+          "format": "time_series",
+          "rawSql": "SELECT collected_at AS \"time\", cpu_percent AS \"CPU %\", mem_percent AS \"Mémoire %\", cpu_iowait_percent AS \"iowait %\" FROM asemon.snap_os WHERE $__timeFilter(collected_at) ORDER BY collected_at",
+          "rawQuery": true
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "Réseau (delta / cycle de collecte)",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 1 },
+      "fieldConfig": { "defaults": { "unit": "bytes" }, "overrides": [] },
+      "datasource": { "type": "postgres", "uid": "${DS_MONITORING}" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "postgres", "uid": "${DS_MONITORING}" },
+          "format": "time_series",
+          "rawSql": "SELECT collected_at AS \"time\", net_sent_bytes AS \"Envoyé\", net_recv_bytes AS \"Reçu\" FROM asemon.snap_os WHERE $__timeFilter(collected_at) ORDER BY collected_at",
+          "rawQuery": true
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Espace disque libre",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 9 },
+      "fieldConfig": { "defaults": { "unit": "bytes" }, "overrides": [] },
+      "datasource": { "type": "postgres", "uid": "${DS_MONITORING}" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "postgres", "uid": "${DS_MONITORING}" },
+          "format": "table",
+          "rawSql": "SELECT disk_free_bytes AS \"Libre\", disk_total_bytes AS \"Total\" FROM asemon.snap_os ORDER BY collected_at DESC LIMIT 1",
+          "rawQuery": true
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Cache hit ratio (cible > 99% en OLTP)",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 9 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 90,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 95 },
+              { "color": "green", "value": 99 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "datasource": { "type": "postgres", "uid": "${DS_MONITORING}" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "postgres", "uid": "${DS_MONITORING}" },
+          "format": "time_series",
+          "rawSql": "SELECT collected_at AS \"time\", (SUM(blks_hit)::float / NULLIF(SUM(blks_hit) + SUM(blks_read), 0)) * 100 AS \"Cache hit ratio\" FROM asemon.snap_io WHERE $__timeFilter(collected_at) GROUP BY collected_at ORDER BY collected_at",
+          "rawQuery": true
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Fichiers temporaires (work_mem trop bas ?)",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 9 },
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
+      "datasource": { "type": "postgres", "uid": "${DS_MONITORING}" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "postgres", "uid": "${DS_MONITORING}" },
+          "format": "time_series",
+          "rawSql": "SELECT collected_at AS \"time\", SUM(temp_files) AS \"Fichiers temp.\", SUM(temp_bytes) AS \"Octets temp.\" FROM asemon.snap_io WHERE $__timeFilter(collected_at) GROUP BY collected_at ORDER BY collected_at",
+          "rawQuery": true
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "type": "row",
+      "title": "Connexions, verrous et deadlocks",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 17 },
+      "collapsed": false
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "Connexions (active / idle / idle in transaction) vs max_connections",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 18 },
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
+      "datasource": { "type": "postgres", "uid": "${DS_MONITORING}" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "postgres", "uid": "${DS_MONITORING}" },
+          "format": "time_series",
+          "rawSql": "SELECT collected_at AS \"time\", active_connections AS \"Actives\", idle_connections AS \"Idle\", idle_in_transaction_connections AS \"Idle in transaction\", max_connections AS \"max_connections\" FROM asemon.snap_connections WHERE $__timeFilter(collected_at) ORDER BY collected_at",
+          "rawQuery": true
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "Deadlocks cumulés (compteur pg_stat_database)",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 18 },
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
+      "datasource": { "type": "postgres", "uid": "${DS_MONITORING}" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "postgres", "uid": "${DS_MONITORING}" },
+          "format": "time_series",
+          "rawSql": "SELECT collected_at AS \"time\", datname AS \"metric\", deadlocks FROM asemon.snap_io WHERE $__timeFilter(collected_at) ORDER BY collected_at",
+          "rawQuery": true
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "type": "table",
+      "title": "Verrous actuels (dernier snapshot)",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 26 },
+      "datasource": { "type": "postgres", "uid": "${DS_MONITORING}" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "postgres", "uid": "${DS_MONITORING}" },
+          "format": "table",
+          "rawSql": "SELECT pid, blocking_pid, locktype, relation, mode, granted, query FROM asemon.snap_locks WHERE collected_at = (SELECT max(collected_at) FROM asemon.snap_locks) ORDER BY granted ASC, pid",
+          "rawQuery": true
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "type": "table",
+      "title": "Deadlocks détaillés (tables, users, requêtes)",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 26 },
+      "datasource": { "type": "postgres", "uid": "${DS_MONITORING}" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "postgres", "uid": "${DS_MONITORING}" },
+          "format": "table",
+          "rawSql": "SELECT occurred_at, process_id, involved_tables, involved_users, queries FROM asemon.event_deadlocks WHERE $__timeFilter(occurred_at) ORDER BY occurred_at DESC LIMIT 50",
+          "rawQuery": true
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "type": "row",
+      "title": "Requêtes et plans d'exécution",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 34 },
+      "collapsed": false
+    },
+    {
+      "id": 13,
+      "type": "table",
+      "title": "Top requêtes / procédures (pg_stat_statements)",
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 35 },
+      "datasource": { "type": "postgres", "uid": "${DS_MONITORING}" },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "total_exec_time_ms" },
+            "properties": [{ "id": "unit", "value": "ms" }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "mean_exec_time_ms" },
+            "properties": [{ "id": "unit", "value": "ms" }]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "postgres", "uid": "${DS_MONITORING}" },
+          "format": "table",
+          "rawSql": "SELECT query, calls, round(total_exec_time::numeric, 2) AS total_exec_time_ms, round(mean_exec_time::numeric, 2) AS mean_exec_time_ms, rows FROM asemon.snap_statements WHERE collected_at = (SELECT max(collected_at) FROM asemon.snap_statements) ORDER BY total_exec_time DESC LIMIT 20",
+          "rawQuery": true
+        }
+      ]
+    },
+    {
+      "id": 14,
+      "type": "table",
+      "title": "Derniers plans d'exécution capturés (auto_explain)",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 45 },
+      "datasource": { "type": "postgres", "uid": "${DS_MONITORING}" },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "duration_ms" },
+            "properties": [{ "id": "unit", "value": "ms" }]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "postgres", "uid": "${DS_MONITORING}" },
+          "format": "table",
+          "rawSql": "SELECT occurred_at, duration_ms, query, plan FROM asemon.event_plans WHERE $__timeFilter(occurred_at) ORDER BY occurred_at DESC LIMIT 30",
+          "rawQuery": true
+        }
+      ]
+    },
+    {
+      "id": 15,
+      "type": "row",
+      "title": "Maintenance (bloat, index, wraparound)",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 53 },
+      "collapsed": false
+    },
+    {
+      "id": 16,
+      "type": "table",
+      "title": "Seq scans vs index scans / tuples morts (dernier snapshot)",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 54 },
+      "datasource": { "type": "postgres", "uid": "${DS_MONITORING}" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "postgres", "uid": "${DS_MONITORING}" },
+          "format": "table",
+          "rawSql": "SELECT schemaname, relname, seq_scan, idx_scan, n_live_tup, n_dead_tup, last_autovacuum FROM asemon.snap_tables WHERE collected_at = (SELECT max(collected_at) FROM asemon.snap_tables) ORDER BY seq_scan DESC",
+          "rawQuery": true
+        }
+      ]
+    },
+    {
+      "id": 17,
+      "type": "table",
+      "title": "Index inutilisés (idx_scan = 0)",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 54 },
+      "datasource": { "type": "postgres", "uid": "${DS_MONITORING}" },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "index_size_bytes" },
+            "properties": [{ "id": "unit", "value": "bytes" }]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "postgres", "uid": "${DS_MONITORING}" },
+          "format": "table",
+          "rawSql": "SELECT schemaname, relname, indexrelname, idx_scan, index_size_bytes FROM asemon.snap_indexes WHERE collected_at = (SELECT max(collected_at) FROM asemon.snap_indexes) AND idx_scan = 0 ORDER BY index_size_bytes DESC",
+          "rawQuery": true
+        }
+      ]
+    },
+    {
+      "id": 18,
+      "type": "table",
+      "title": "Âge des transactions par base (risque de wraparound)",
+      "gridPos": { "h": 6, "w": 24, "x": 0, "y": 62 },
+      "datasource": { "type": "postgres", "uid": "${DS_MONITORING}" },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 150000000 },
+              { "color": "red", "value": 1000000000 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "postgres", "uid": "${DS_MONITORING}" },
+          "format": "table",
+          "rawSql": "SELECT datname, datfrozenxid_age FROM asemon.snap_db_age WHERE collected_at = (SELECT max(collected_at) FROM asemon.snap_db_age) ORDER BY datfrozenxid_age DESC",
+          "rawQuery": true
+        }
+      ]
+    },
+    {
+      "id": 19,
+      "type": "row",
+      "title": "Checkpoints et WAL",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 68 },
+      "collapsed": false
+    },
+    {
+      "id": 20,
+      "type": "timeseries",
+      "title": "Checkpoints planifiés vs demandés (num_requested élevé => max_wal_size trop bas)",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 69 },
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
+      "datasource": { "type": "postgres", "uid": "${DS_MONITORING}" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "postgres", "uid": "${DS_MONITORING}" },
+          "format": "time_series",
+          "rawSql": "SELECT collected_at AS \"time\", num_timed AS \"Planifiés\", num_requested AS \"Demandés\" FROM asemon.snap_checkpoints WHERE $__timeFilter(collected_at) ORDER BY collected_at",
+          "rawQuery": true
+        }
+      ]
+    },
+    {
+      "id": 21,
+      "type": "timeseries",
+      "title": "Volume de WAL généré (cumulé)",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 69 },
+      "fieldConfig": { "defaults": { "unit": "bytes" }, "overrides": [] },
+      "datasource": { "type": "postgres", "uid": "${DS_MONITORING}" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "postgres", "uid": "${DS_MONITORING}" },
+          "format": "time_series",
+          "rawSql": "SELECT collected_at AS \"time\", wal_bytes::numeric AS \"WAL (octets cumulés)\" FROM asemon.snap_wal WHERE $__timeFilter(collected_at) ORDER BY collected_at",
+          "rawQuery": true
+        }
+      ]
+    }
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "DS_MONITORING",
+        "type": "datasource",
+        "query": "postgres",
+        "current": {},
+        "label": "Datasource ASEMON"
+      }
+    ]
+  }
+}
