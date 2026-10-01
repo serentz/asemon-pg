@@ -32,7 +32,7 @@ C'est le même paradigme que l'**Active Session History** d'Oracle (ASH/AWR) ou 
 ### Page 1 — Vue macro
 
 - Bandeau de KPI/compteurs instantanés : sessions actives, connexions vs `max_connections`, cache hit ratio, deadlocks sur la période, requêtes lentes en cours, charge CPU/mémoire de l'hôte.
-- Un petit graphique de tendance par KPI (sparkline) sur une fenêtre courte.
+- **Gabarit de widget retenu pour chaque KPI** : une tuile compacte (fond sombre) avec le libellé en haut, la valeur courante en gros avec son delta (`+436`, `+9`, ...), et une sparkline de tendance en bas de tuile, dans la couleur d'accent du thème — voir `images/references/kpi-tile-sparkline.png` pour l'exemple de référence. Chaque tuile est autonome et peut être dupliquée pour n'importe quel KPI de la page (sessions actives, deadlocks, requêtes lentes, cache hit ratio, etc.).
 - En dessous, **un résumé par heure sur les 6 dernières heures** (1 ligne = 1 heure), avec les mêmes KPI agrégés, pour repérer en un coup d'œil une période anormale avant de zoomer dessus.
 
 ### Page 2 — Vue intermédiaire
