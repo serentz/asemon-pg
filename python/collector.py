@@ -40,6 +40,15 @@ APP_NAME = "asemon-collector"
 _prev_disk = None
 _prev_net = None
 
+# pg_stat_kcache (CPU et I/O disque réels par requête, Phase 3) : compteurs
+# cumulés du cycle précédent, par (queryid, userid, dbid). Voir
+# docs/14-kcache-phase3.md. L'extension est facultative : si elle est absente,
+# le collecteur continue sans elle et réessaie toutes les KCACHE_RETRY_S secondes.
+KCACHE_RETRY_S = 600
+_kcache_prev = {}          # (queryid, userid, dbid) -> (usename, datname, cpu_user_s, cpu_system_s, reads, writes)
+_kcache_prev_at = None     # now() de la cible au dernier relevé validé
+_kcache_disabled_until = 0.0
+
 
 def collect_os_metrics():
     """Retourne un dict de métriques OS instantanées (deltas depuis le cycle précédent)."""
@@ -161,6 +170,94 @@ def collect_statements(target_conn):
         return cur.fetchall()
 
 
+SQL_KCACHE = """
+    SELECT now(), k.queryid, k.userid, k.dbid, r.rolname, d.datname,
+           sum(k.plan_user_time + k.exec_user_time),
+           sum(k.plan_system_time + k.exec_system_time),
+           sum(k.plan_reads + k.exec_reads),
+           sum(k.plan_writes + k.exec_writes)
+    FROM pg_stat_kcache() k
+    LEFT JOIN pg_roles r ON r.oid = k.userid
+    LEFT JOIN pg_database d ON d.oid = k.dbid
+    GROUP BY k.queryid, k.userid, k.dbid, r.rolname, d.datname
+"""
+
+
+def compute_kcache_deltas(prev, current):
+    """Écarts entre deux relevés cumulés de pg_stat_kcache.
+
+    prev, current : {(queryid, userid, dbid): (usename, datname, cpu_user_s,
+    cpu_system_s, reads, writes)}. Retourne des tuples
+    (queryid, usename, datname, cpu_user_ms, cpu_system_ms, reads, writes) pour
+    les seules requêtes qui ont consommé quelque chose entre les deux relevés.
+
+    Un compteur qui diminue (pg_stat_kcache_reset, redémarrage, entrée évincée
+    puis recréée) signifie que le cumul est reparti de zéro : on prend alors la
+    valeur courante. Une clé absente du relevé précédent compte en entier.
+    Si prev est vide (premier relevé), il n'y a pas d'écart à calculer.
+    """
+    if not prev:
+        return []
+    rows = []
+    for key, (usename, datname, user_s, sys_s, reads, writes) in current.items():
+        old = prev.get(key)
+        if old is None:
+            d_user, d_sys, d_reads, d_writes = user_s, sys_s, reads, writes
+        else:
+            _, _, o_user, o_sys, o_reads, o_writes = old
+            if user_s < o_user or sys_s < o_sys or reads < o_reads or writes < o_writes:
+                d_user, d_sys, d_reads, d_writes = user_s, sys_s, reads, writes
+            else:
+                d_user, d_sys = user_s - o_user, sys_s - o_sys
+                d_reads, d_writes = reads - o_reads, writes - o_writes
+        if d_user > 0 or d_sys > 0 or d_reads > 0 or d_writes > 0:
+            rows.append((key[0], usename, datname,
+                         d_user * 1000.0, d_sys * 1000.0, int(d_reads), int(d_writes)))
+    return rows
+
+
+def collect_kcache(target_conn):
+    """Écarts pg_stat_kcache depuis le cycle précédent.
+
+    Retourne (lignes, état) ; l'état n'est adopté par commit_kcache() qu'après
+    l'écriture réussie dans le repository, pour ne perdre aucun écart si cette
+    écriture échoue. Retourne ([], None) si l'extension est absente.
+    """
+    global _kcache_disabled_until
+    if time.monotonic() < _kcache_disabled_until:
+        return [], None
+    try:
+        with target_conn.cursor() as cur:
+            cur.execute(SQL_KCACHE)
+            fetched = cur.fetchall()
+    except (psycopg.errors.UndefinedFunction, psycopg.errors.UndefinedTable,
+            psycopg.errors.FeatureNotSupported, psycopg.errors.ObjectNotInPrerequisiteState) as exc:
+        log.warning("pg_stat_kcache indisponible (%s) : CPU et I/O réels non collectés, "
+                    "nouvel essai dans %ss", str(exc).splitlines()[0], KCACHE_RETRY_S)
+        _kcache_disabled_until = time.monotonic() + KCACHE_RETRY_S
+        commit_kcache((None, {}))   # repartir d'un état vierge au retour de l'extension
+        return [], None
+
+    if not fetched:
+        return [], (None, {})
+    now = fetched[0][0]
+    current = {(r[1], r[2], r[3]): (r[4], r[5], float(r[6] or 0), float(r[7] or 0),
+                                    int(r[8] or 0), int(r[9] or 0)) for r in fetched}
+    rows = []
+    if _kcache_prev_at is not None:
+        period_ms = int(round((now - _kcache_prev_at).total_seconds() * 1000))
+        if period_ms > 0:
+            rows = [(now, period_ms) + d for d in compute_kcache_deltas(_kcache_prev, current)]
+    return rows, (now, current)
+
+
+def commit_kcache(state):
+    """Adopte l'état du cycle une fois ses écarts écrits dans le repository."""
+    global _kcache_prev, _kcache_prev_at
+    if state is not None:
+        _kcache_prev_at, _kcache_prev = state
+
+
 def collect_tables(target_conn):
     """pg_stat_user_tables : seq scans vs index scans, tuples morts, autovacuum.
 
@@ -270,7 +367,7 @@ def collect_connections(target_conn):
 
 
 def write_snapshots(repo_conn, os_metrics, activity, locks, io, statements,
-                     tables, indexes, checkpoints, wal, db_age, connections):
+                     tables, indexes, checkpoints, wal, db_age, connections, kcache=()):
     with repo_conn.cursor() as cur:
         cur.execute("""
             INSERT INTO asemon.snap_os
@@ -313,6 +410,14 @@ def write_snapshots(repo_conn, os_metrics, activity, locks, io, statements,
                  rows, shared_blks_hit, shared_blks_read)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             """, statements)
+
+        if kcache:
+            cur.executemany("""
+                INSERT INTO asemon.snap_kcache
+                (sampled_at, period_ms, queryid, usename, datname,
+                 cpu_user_ms, cpu_system_ms, reads_bytes, writes_bytes)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, kcache)
 
         if tables:
             cur.executemany("""
@@ -374,15 +479,17 @@ def run_cycle(target_conn, repo_conn):
     wal = collect_wal(target_conn)
     db_age = collect_db_age(target_conn)
     connections = collect_connections(target_conn)
+    kcache, kcache_state = collect_kcache(target_conn)
 
     write_snapshots(repo_conn, os_metrics, activity, locks, io, statements,
-                     tables, indexes, checkpoints, wal, db_age, connections)
+                     tables, indexes, checkpoints, wal, db_age, connections, kcache)
+    commit_kcache(kcache_state)
 
     log.info(
         "Snapshot OK | CPU=%.1f%% MEM=%.1f%% | sessions=%d locks=%d statements=%d "
-        "tables=%d indexes=%d",
+        "tables=%d indexes=%d kcache=%d",
         os_metrics["cpu_percent"], os_metrics["mem_percent"],
-        len(activity), len(locks), len(statements), len(tables), len(indexes)
+        len(activity), len(locks), len(statements), len(tables), len(indexes), len(kcache)
     )
 
 
