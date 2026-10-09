@@ -33,7 +33,7 @@
   ],
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 2,
+  "version": 3,
   "refresh": "30s",
   "time": {
     "from": "now-6h",
@@ -827,6 +827,14 @@
       "type": "link",
       "icon": "dashboard",
       "url": "/d/asemon-intermediate",
+      "keepTime": true,
+      "targetBlank": false
+    },
+    {
+      "title": "Micro",
+      "type": "link",
+      "icon": "dashboard",
+      "url": "/d/asemon-micro",
       "keepTime": true,
       "targetBlank": false
     }
