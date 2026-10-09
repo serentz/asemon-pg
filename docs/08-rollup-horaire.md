@@ -87,7 +87,7 @@ LIMIT 6;
 
 ## 4. Limites connues
 
-- **Pas de rétention** : la table grossit d'une ligne par heure, soit environ 8 800 lignes par an. Négligeable ; la rétention des tables de snapshots bruts reste à traiter séparément (voir `03-VM-Cible-parseur-systemd.md` §9).
+- **Pas de rétention** : la table grossit d'une ligne par heure, soit environ 8 800 lignes par an. Négligeable ; la rétention des tables de snapshots bruts est traitée dans `10-retention.md`.
 - **Droits** : seul `postgres` (via le timer) peut appeler `rollup_hourly()`. `grafana_ro` lit la table, `collector_writer` ne l'écrit pas.
 - **Delta de compteurs sur redémarrage** : l'intervalle qui contient un redémarrage de PostgreSQL est ignoré pour le cache hit ratio, pas estimé.
 - **Seuil des « requêtes lentes »** : il dépend d'`auto_explain.log_min_duration` côté VM-Cible, pas d'un réglage de ce rollup. Changer ce seuil change la signification de la colonne pour les heures suivantes.

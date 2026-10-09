@@ -229,7 +229,7 @@ Comportement en cas de panne (à connaître) :
 
 ## 6. Limites connues
 
-- **Rétention des autres tables** : seule `snap_samples` a une rétention. Les snapshots bruts (`snap_activity`...) grossissent encore sans limite (voir `03-VM-Cible-parseur-systemd.md` §9), à traiter séparément.
+- **Rétention des autres tables** : traitée à part, voir `10-retention.md` (les durées se règlent dans la même table `asemon.settings`).
 - **Approximation CPU / I/O** : voir §1. Mesure fine en Phase 3 (`pg_stat_kcache`).
 - **Un échantillon est un instant, pas une durée** : l'erreur statistique diminue avec le nombre de relevés. Sur 5 minutes d'activité à 2 s, on a 150 relevés par session active.
 - **Horloge** : `sampled_at` vient de l'instance surveillée, `now()` est donc cohérent avec `snap_activity`. Les partitions sont découpées en UTC.
