@@ -2,7 +2,7 @@
 
 > Jusqu'ici, les coûts affichés (pages 2 et 3) étaient du **temps actif échantillonné** : une approximation. `pg_stat_kcache` mesure, pour chaque requête, le **temps CPU réellement consommé** et les **octets réellement lus et écrits sur le disque**, à partir des compteurs du noyau (`getrusage`). Le collecteur lit ces compteurs à chaque cycle et stocke les écarts.
 >
-> **Statut : extension installée et validée sur VM-Cible (2026-10-09). Collecte déployée et validée sur les VM (2026-10-09) : totaux exacts conservés par l'attribution (CPU 11 787 ms contre 11 786 ms ; écritures 161 Mo contre 162 Mo). Les dashboards ne sont pas encore modifiés.**
+> **Statut : extension installée et validée sur VM-Cible (2026-10-09). Collecte déployée et validée sur les VM (2026-10-09) : totaux exacts conservés par l'attribution (CPU 11 787 ms contre 11 786 ms ; écritures 161 Mo contre 162 Mo). Dashboards pages 2 et 3 et détails mis à jour et validés (§8).**
 
 Fichiers :
 - `python/collector.py` : lecture de `pg_stat_kcache()`, calcul des écarts, écriture dans `snap_kcache` (VM-Cible)
@@ -173,19 +173,28 @@ SELECT pg_size_pretty(pg_total_relation_size('asemon.snap_kcache')), count(*) FR
 
 ---
 
-## 8. Suite : dashboards
+## 8. Dashboards (mis à jour)
 
-Les pages 2 et 3 seront modifiées après validation des données :
-- page 2 : camemberts de **CPU réel** et de **lectures disque** par login (exact) et par programme (réparti) ;
-- page 3 : colonnes **CPU réel** et **I/O disque** dans les top 10, et option « Trier par » correspondante ; tuiles de coûts réels dans les détails de session et de requête.
+Aucune modification de la base : il suffit de **réimporter les 4 JSON** (même uid, « Overwrite ») : `asemon-intermediate.json`, `asemon-micro.json`, `asemon-session.json`, `asemon-query.json`.
+
+| Page | Ajout |
+|---|---|
+| Page 2 (intermédiaire) | Rangée « Coûts mesurés » : 4 camemberts : CPU par login (exact), CPU par programme (réparti), I/O disque par login (exact), I/O disque par programme (réparti). Part « (non attribué) » = requêtes trop courtes pour l'échantillonnage. |
+| Page 3, top sessions | Colonnes « CPU mesuré », « Lu », « Écrit » (réparties) |
+| Page 3, top requêtes | Mêmes colonnes (exactes). Les requêtes invisibles à l'échantillonnage y apparaissent, avec un temps actif à 0. |
+| Page 3, « Trier par » | Nouvelles valeurs : CPU mesuré, Lectures disque, Écritures disque |
+| Détail session / requête | Tuiles « CPU mesuré », « Lu sur disque », « Écrit sur disque » (sur la période du dashboard) |
+
+Rappels : les lectures disque restent à 0 tant que les données tiennent dans le cache de l'OS ; ASEMON-PG lui-même est exclu (login `asemon_collect`, programmes `asemon-*`).
 
 ---
 
 ## 9. Checklist de validation
 
 - [x] `postgresql-17-pg-stat-kcache` installé, `shared_preload_libraries` correct, extension créée, serveur en ligne
-- [ ] `11-schema-kcache.sql` et `09-retention.sql` exécutés sur VM-Monitoring, sans erreur
-- [ ] `collector.py` déployé, `kcache=N` visible dans le journal
-- [ ] Test `pgbench` : `snap_kcache` rempli, requêtes `pgbench` en tête du CPU
-- [ ] `kcache_attr()` répartit le CPU par login et par programme
+- [x] `11-schema-kcache.sql` et `09-retention.sql` exécutés sur VM-Monitoring, sans erreur
+- [x] `collector.py` déployé, `kcache=N` visible dans le journal
+- [x] Test `pgbench` : `snap_kcache` rempli, requêtes `pgbench` en tête du CPU
+- [x] `kcache_attr()` répartit le CPU par login et par programme
 - [ ] Volume relevé après une journée
+- [x] Dashboards réimportés et validés
