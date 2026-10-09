@@ -107,6 +107,7 @@ Ordre des scripts SQL (VM-Monitoring) : `01, 02, 04, 05, 06, 08, 09, 10, 11` ; `
 - **`query_id`** dépasse la précision des nombres JavaScript : toujours le traiter comme du texte dans Grafana (`13`).
 - **Lectures disque à 0** avec `pg_stat_kcache` : normal quand les données tiennent dans le cache du système (`14`).
 - **« Part non attribuée »** dans les camemberts par programme : requêtes plus courtes que l'intervalle d'échantillonnage. Le total reste exact (`00-architecture`, §4).
+- **Volume** : compter environ 6,5 Go sur VM-Monitoring pour 30 jours de rétention, dont l'essentiel pour `snap_statements` (100 requêtes écrites à chaque cycle). Réduire `snapshot_retention_days` si le disque est limité (`10-retention.md`).
 - **Journal tronqué** (`journal ... is truncated, ignoring file`) : message inoffensif, filtrer avec `grep -v truncated`.
 
 ## Vocabulaire

@@ -138,6 +138,8 @@ Environ **165 octets par ligne**, index inclus (mesuré en local sur 100 000 lig
 
 Ordre de grandeur pour décider : `Mo/jour ≈ 7 × sessions actives moyennes × (2 / intervalle en s)`. Le disque de VM-Monitoring a 50 Go libres au moment de la mesure.
 
+**Première mesure réelle (2026-10-09)** : 614 lignes pour 168 ko, soit environ 270 octets par ligne, index compris. C'est plus que l'estimation de 165 octets, mais l'échantillon est trop petit pour conclure (une partition vide occupe déjà 32 ko). À reprendre sur plusieurs jours de charge avant de dimensionner le disque ; prendre 270 octets par ligne comme hypothèse prudente.
+
 Mesure réelle une fois en place :
 
 ```sql
