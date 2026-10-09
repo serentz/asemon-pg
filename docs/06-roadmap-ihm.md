@@ -95,7 +95,7 @@ Il manque une **clé de session stable** traversant les tables, pour permettre l
 | Phase | Contenu | Prérequis | Statut |
 |---|---|---|---|
 | **Phase 0** | Existant : snapshots 15s, dashboard Grafana actuel | — | ✅ Fait |
-| **Phase 1** | `snap_sessions` via logs de connexion/déconnexion ; `session_key` ajoutée aux tables existantes ; page macro avec rollup horaire | Activer `log_connections`/`log_disconnections` ; étendre `log_parser.py` | **En cours** — logs activés sur VM-Cible, code et schéma prêts et testés en local, déploiement à faire (`07-sessions-phase1.md`). Reste : le rollup horaire `snap_hourly_summary` (brouillon dans `sql/06-schema-phase2-brouillon.sql`) |
+| **Phase 1** | `snap_sessions` via logs de connexion/déconnexion ; `session_key` ajoutée aux tables existantes ; page macro avec rollup horaire | Activer `log_connections`/`log_disconnections` ; étendre `log_parser.py` | **En cours** — sessions : déployé et validé le 2026-10-09 (`07-sessions-phase1.md`). Rollup horaire `snap_hourly_summary` : écrit et testé en local, déploiement à faire (`08-rollup-horaire.md`) |
 | **Phase 2** | Échantillonnage `snap_activity` resserré (1-5s) ; `snap_query_exec` ; camemberts par login (via `pg_stat_statements.userid`) | Évaluer l'impact volumétrique et la politique de rétention | À faire |
 | **Phase 3** | Camemberts par programme ; CPU réel par requête | Installer `pg_stat_kcache` (+ éventuellement `pg_wait_sampling`) sur VM-Cible | À faire |
 | **Phase 4** | Pages 1/2/3 complètes dans Grafana (ou interface dédiée si Grafana atteint ses limites de navigation drill-down inter-pages) | Phases 1-3 | À faire |

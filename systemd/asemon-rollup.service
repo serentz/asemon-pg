@@ -1,0 +1,16 @@
+[Unit]
+Description=ASEMON-PG Rollup horaire (asemon.snap_hourly_summary)
+After=postgresql.service
+Requires=postgresql.service
+
+[Service]
+# À installer sur VM-Monitoring (là où se trouve le repository), déclenché par
+# asemon-rollup.timer. Tourne sous l'utilisateur `postgres` (authentification
+# peer sur la socket locale, aucun mot de passe à stocker).
+Type=oneshot
+User=postgres
+# -At : sortie réduite au nombre de lignes écrites (une ligne dans le journal)
+ExecStart=/usr/bin/psql -X -q -At -v ON_ERROR_STOP=1 -d monitoring -c "SELECT asemon.rollup_hourly();"
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=asemon-rollup

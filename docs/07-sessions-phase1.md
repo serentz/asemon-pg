@@ -2,11 +2,11 @@
 
 > Première étape de la roadmap IHM (`06-roadmap-ihm.md`). Le parseur de logs enregistre désormais chaque connexion et déconnexion avec ses horodatages exacts, et une **clé de session** commune relie les sessions, les snapshots d'activité, les deadlocks et les plans `auto_explain`.
 >
-> **Statut : code et schéma écrits et testés en local, pas encore déployés sur les VM.**
+> **Statut : déployé sur les deux VM et validé le 2026-10-09** (sessions, activité, plans et deadlocks rattachés par `session_key`, dashboard Grafana inchangé).
 
 Fichiers concernés :
 - `sql/05-schema-sessions.sql` — table `snap_sessions`, colonne `session_key`, droits
-- `sql/06-schema-phase2-brouillon.sql` — tables des phases suivantes (non déployées)
+- `sql/07-schema-phase2-brouillon.sql` — tables des phases suivantes (non déployées)
 - `python/log_parser.py` — événements de connexion/déconnexion, `session_key` sur deadlocks et plans
 - `python/collector.py` — `session_key` dans `snap_activity`
 

@@ -2,9 +2,10 @@
 -- ASEMON-PG — Phase 1 : cycle de vie des sessions
 -- (voir docs/06-roadmap-ihm.md et docs/07-sessions-phase1.md)
 --
--- STATUT : prêt à déployer après relecture (jamais exécuté en
--- production). Les tables des phases suivantes (snap_query_exec,
--- snap_hourly_summary) sont dans 06-schema-phase2-brouillon.sql.
+-- STATUT : déployé sur VM-Monitoring (2026-10-09) et validé.
+-- Les tables des phases suivantes ne sont pas ici : le rollup horaire
+-- est dans 06-rollup-horaire.sql, le reste (snap_query_exec) dans
+-- 07-schema-phase2-brouillon.sql.
 --
 -- ORDRE DE DÉPLOIEMENT : ce script AVANT de mettre à jour
 -- log_parser.py et collector.py sur VM-Cible, car les nouvelles
