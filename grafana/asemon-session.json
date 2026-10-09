@@ -1,0 +1,880 @@
+{
+  "__inputs": [
+    {
+      "name": "DS_MONITORING",
+      "label": "ASEMON Monitoring (PostgreSQL)",
+      "description": "Datasource PostgreSQL pointant sur la base 'monitoring' (schéma asemon), configurée sur VM-Monitoring.",
+      "type": "datasource",
+      "pluginId": "postgres",
+      "pluginName": "PostgreSQL"
+    }
+  ],
+  "__requires": [
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "10.0.0"
+    },
+    {
+      "type": "datasource",
+      "id": "postgres",
+      "name": "PostgreSQL",
+      "version": "1.0.0"
+    }
+  ],
+  "title": "ASEMON-PG — Détail d'une session",
+  "uid": "asemon-session",
+  "description": "Détail d'une session : identité, coûts, exécutions, plans et deadlocks. S'ouvre depuis la page Micro (variable session_key).",
+  "tags": [
+    "asemon",
+    "postgresql",
+    "micro",
+    "detail"
+  ],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "links": [
+    {
+      "title": "Macro",
+      "type": "link",
+      "icon": "dashboard",
+      "url": "/d/asemon-macro",
+      "keepTime": true,
+      "targetBlank": false
+    },
+    {
+      "title": "Intermédiaire",
+      "type": "link",
+      "icon": "dashboard",
+      "url": "/d/asemon-intermediate",
+      "keepTime": true,
+      "targetBlank": false
+    },
+    {
+      "title": "Micro",
+      "type": "link",
+      "icon": "dashboard",
+      "url": "/d/asemon-micro",
+      "keepTime": true,
+      "targetBlank": false
+    }
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "DS_MONITORING",
+        "type": "datasource",
+        "query": "postgres",
+        "current": {},
+        "label": "Datasource ASEMON"
+      },
+      {
+        "name": "session_key",
+        "label": "session_key",
+        "type": "textbox",
+        "query": "",
+        "current": {
+          "text": "",
+          "value": ""
+        },
+        "options": []
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "row",
+      "title": "Session",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "id": 2,
+      "type": "table",
+      "title": "Identité de la session",
+      "description": "Source : snap_sessions (connexion et déconnexion lues dans les logs). Vide si la session n'a pas été vue dans les logs ou si session_key est vide.",
+      "gridPos": {
+        "h": 4,
+        "w": 24,
+        "x": 0,
+        "y": 1
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "${DS_MONITORING}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Connexion"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeAsIso"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Déconnexion"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeAsIso"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${DS_MONITORING}"
+          },
+          "format": "table",
+          "rawSql": "SELECT session_key, pid, usename AS \"Login\", application_name AS \"Programme\", datname AS \"Base\", client_addr AS \"Adresse\", connected_at AS \"Connexion\", disconnected_at AS \"Déconnexion\" FROM asemon.snap_sessions WHERE session_key = ${session_key:sqlstring}",
+          "rawQuery": true
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Temps actif",
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 0,
+        "y": 5
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "${DS_MONITORING}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "decimals": 1,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "orange"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "orange",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "graphMode": "none",
+        "colorMode": "none",
+        "textMode": "value"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${DS_MONITORING}"
+          },
+          "format": "table",
+          "rawSql": "SELECT sum(sm.interval_ms) / 1000.0 AS \"Temps actif\" FROM asemon.snap_samples sm WHERE sm.session_key = ${session_key:sqlstring}",
+          "rawQuery": true
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "dont CPU",
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 4,
+        "y": 5
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "${DS_MONITORING}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "decimals": 1,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "orange"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "orange",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "graphMode": "none",
+        "colorMode": "none",
+        "textMode": "value"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${DS_MONITORING}"
+          },
+          "format": "table",
+          "rawSql": "SELECT COALESCE(sum(sm.interval_ms) FILTER (WHERE sm.wait_event IS NULL), 0) / 1000.0 AS \"CPU\" FROM asemon.snap_samples sm WHERE sm.session_key = ${session_key:sqlstring}",
+          "rawQuery": true
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "dont I/O",
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 8,
+        "y": 5
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "${DS_MONITORING}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "decimals": 1,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "orange"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "orange",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "graphMode": "none",
+        "colorMode": "none",
+        "textMode": "value"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${DS_MONITORING}"
+          },
+          "format": "table",
+          "rawSql": "SELECT COALESCE(sum(sm.interval_ms) FILTER (WHERE sm.wait_event_type = 'IO'), 0) / 1000.0 AS \"I/O\" FROM asemon.snap_samples sm WHERE sm.session_key = ${session_key:sqlstring}",
+          "rawQuery": true
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "stat",
+      "title": "dont verrous",
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 12,
+        "y": 5
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "${DS_MONITORING}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "decimals": 1,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "orange"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "orange",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "graphMode": "none",
+        "colorMode": "none",
+        "textMode": "value"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${DS_MONITORING}"
+          },
+          "format": "table",
+          "rawSql": "SELECT COALESCE(sum(sm.interval_ms) FILTER (WHERE sm.wait_event_type IN ('Lock', 'LWLock')), 0) / 1000.0 AS \"Verrous\" FROM asemon.snap_samples sm WHERE sm.session_key = ${session_key:sqlstring}",
+          "rawQuery": true
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "type": "stat",
+      "title": "Exécutions relevées",
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 16,
+        "y": 5
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "${DS_MONITORING}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "orange"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "orange",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "graphMode": "none",
+        "colorMode": "none",
+        "textMode": "value"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${DS_MONITORING}"
+          },
+          "format": "table",
+          "rawSql": "SELECT count(DISTINCT (sm.query_id, sm.query_start)) AS \"Exécutions\" FROM asemon.snap_samples sm WHERE sm.session_key = ${session_key:sqlstring}",
+          "rawQuery": true
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "type": "stat",
+      "title": "Requêtes distinctes",
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 20,
+        "y": 5
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "${DS_MONITORING}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "orange"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "orange",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "graphMode": "none",
+        "colorMode": "none",
+        "textMode": "value"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${DS_MONITORING}"
+          },
+          "format": "table",
+          "rawSql": "SELECT count(DISTINCT sm.query_id) AS \"Requêtes\" FROM asemon.snap_samples sm WHERE sm.session_key = ${session_key:sqlstring}",
+          "rawQuery": true
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "Charge de la session par type d'attente (par minute)",
+      "description": "Temps actif de cette session, empilé par type d'attente. Temps actif échantillonné (snap_samples, relevé toutes les 2 s), pas un coût CPU exact.",
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 9
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "${DS_MONITORING}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 2,
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 70,
+            "lineWidth": 0,
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "calcs": [
+            "mean",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${DS_MONITORING}"
+          },
+          "format": "time_series",
+          "rawSql": "SELECT date_trunc('minute', sm.sampled_at) AS \"time\", CASE WHEN sm.wait_event IS NULL THEN 'CPU' ELSE sm.wait_event_type END AS \"metric\", SUM(sm.interval_ms) / 60000.0 AS \"Sessions actives\" FROM asemon.snap_samples sm WHERE $__timeFilter(sm.sampled_at) AND sm.session_key = ${session_key:sqlstring} GROUP BY 1, 2 ORDER BY 1",
+          "rawQuery": true
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "type": "row",
+      "title": "Requêtes exécutées (une ligne par exécution relevée)",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 16
+      }
+    },
+    {
+      "id": 11,
+      "type": "table",
+      "title": "Exécutions",
+      "description": "Une ligne = une exécution vue par l'échantillonneur (query_id + query_start). Fin et durée sont approximatives (dernier échantillon + intervalle). Les exécutions plus courtes que l'intervalle peuvent manquer. 200 dernières.",
+      "gridPos": {
+        "h": 11,
+        "w": 24,
+        "x": 0,
+        "y": 17
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "${DS_MONITORING}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Temps actif"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "dont CPU"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "dont I/O"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "dont verrous"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "query_id"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "Détail de la requête",
+                    "url": "/d/asemon-query?var-query_id=${__value.raw}&${__url_time_range}"
+                  }
+                ]
+              },
+              {
+                "id": "custom.width",
+                "value": 200
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Début"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeAsIso"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Fin (approx.)"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeAsIso"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${DS_MONITORING}"
+          },
+          "format": "table",
+          "rawSql": "SELECT sm.query_start AS \"Début\", max(sm.sampled_at) + max(sm.interval_ms) * interval '1 millisecond' AS \"Fin (approx.)\", round(sum(sm.interval_ms) / 1000.0, 1) AS \"Temps actif\", round(COALESCE(sum(sm.interval_ms) FILTER (WHERE sm.wait_event IS NULL), 0) / 1000.0, 1) AS \"dont CPU\", round(COALESCE(sum(sm.interval_ms) FILTER (WHERE sm.wait_event_type = 'IO'), 0) / 1000.0, 1) AS \"dont I/O\", round(COALESCE(sum(sm.interval_ms) FILTER (WHERE sm.wait_event_type IN ('Lock', 'LWLock')), 0) / 1000.0, 1) AS \"dont verrous\", sm.query_id::text AS \"query_id\", COALESCE((SELECT st.query FROM asemon.snap_statements st WHERE st.queryid = sm.query_id ORDER BY st.collected_at DESC LIMIT 1), '(texte non capturé)') AS \"Requête\" FROM asemon.snap_samples sm WHERE sm.session_key = ${session_key:sqlstring} GROUP BY sm.query_id, sm.query_start ORDER BY sm.query_start DESC NULLS LAST LIMIT 200",
+          "rawQuery": true
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "type": "row",
+      "title": "Plans d'exécution et deadlocks de la session",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 28
+      }
+    },
+    {
+      "id": 13,
+      "type": "table",
+      "title": "Plans capturés (auto_explain)",
+      "description": "Requêtes de cette session au-dessus du seuil auto_explain.log_min_duration.",
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 29
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "${DS_MONITORING}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Durée"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "ms"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Quand"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeAsIso"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "query_id"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "Détail de la requête",
+                    "url": "/d/asemon-query?var-query_id=${__value.raw}&${__url_time_range}"
+                  }
+                ]
+              },
+              {
+                "id": "custom.width",
+                "value": 200
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${DS_MONITORING}"
+          },
+          "format": "table",
+          "rawSql": "SELECT occurred_at AS \"Quand\", duration_ms AS \"Durée\", query_id::text AS \"query_id\", query AS \"Requête\", plan AS \"Plan\" FROM asemon.event_plans WHERE session_key = ${session_key:sqlstring} ORDER BY occurred_at DESC LIMIT 50",
+          "rawQuery": true
+        }
+      ]
+    },
+    {
+      "id": 14,
+      "type": "table",
+      "title": "Deadlocks de la session",
+      "description": "Deadlocks où la session figure comme session détectrice.",
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 29
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "${DS_MONITORING}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Quand"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeAsIso"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${DS_MONITORING}"
+          },
+          "format": "table",
+          "rawSql": "SELECT occurred_at AS \"Quand\", involved_tables AS \"Tables\", involved_users AS \"Utilisateurs\", queries AS \"Requêtes\" FROM asemon.event_deadlocks WHERE session_key = ${session_key:sqlstring} ORDER BY occurred_at DESC LIMIT 50",
+          "rawQuery": true
+        }
+      ]
+    }
+  ]
+}

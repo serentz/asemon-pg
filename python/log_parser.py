@@ -152,6 +152,17 @@ def parse_deadlock(entry):
     }
 
 
+def query_id_of(entry):
+    """query_id de la requête (identique à pg_stat_statements.queryid et à
+    pg_stat_activity.query_id), None s'il est absent ou nul (compute_query_id
+    désactivé). Nombre signé 64 bits, tenu en Python int."""
+    try:
+        qid = int(entry.get("query_id"))
+    except (TypeError, ValueError):
+        return None
+    return qid or None
+
+
 def parse_plan(entry):
     message = entry.get("message", "")
     m = PLAN_RE.search(message)
@@ -165,6 +176,7 @@ def parse_plan(entry):
     return {
         "occurred_at": entry.get("timestamp"),
         "session_key": session_key_of(entry),
+        "query_id": query_id_of(entry),
         "duration_ms": duration_ms,
         # auto_explain masque le champ "statement" du jsonlog (errhidestmt) : le texte
         # de la requête se trouve dans le plan JSON, sous "Query Text".
@@ -187,8 +199,8 @@ SQL_DEADLOCK = """
 """
 
 SQL_PLAN = """
-    INSERT INTO asemon.event_plans (occurred_at, duration_ms, query, plan, session_key)
-    VALUES (%s, %s, %s, %s, %s)
+    INSERT INTO asemon.event_plans (occurred_at, duration_ms, query, plan, session_key, query_id)
+    VALUES (%s, %s, %s, %s, %s, %s)
 """
 
 # Connexion : on n'écrase jamais une ligne existante.
@@ -227,7 +239,7 @@ def write_deadlock(repo_conn, d):
 def write_plan(repo_conn, p):
     with repo_conn.cursor() as cur:
         cur.execute(SQL_PLAN, (parse_timestamp(p["occurred_at"]), p["duration_ms"],
-                               p["query"], p["plan"], p["session_key"]))
+                               p["query"], p["plan"], p["session_key"], p["query_id"]))
     repo_conn.commit()
     log.info("Plan enregistré | duration=%.1fms", p["duration_ms"])
 
