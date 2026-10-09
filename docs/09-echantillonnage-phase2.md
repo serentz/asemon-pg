@@ -2,7 +2,7 @@
 
 > Un échantillonneur relève toutes les 2 secondes les sessions **actives** de PostgreSQL et les stocke dans `asemon.snap_samples`, à la manière de l'Active Session History d'Oracle. C'est la matière première des camemberts « coût par login / par programme » et du drill-down de la page micro (`06-roadmap-ihm.md`).
 >
-> **Statut : écrit et testé en local (PostgreSQL 16), pas encore déployé sur les VM.**
+> **Statut : déployé sur VM-Monitoring et VM-Cible (2026-10-09) et validé (échantillons, intervalle, lien avec `snap_sessions`). Reste à relever le volume réel après quelques heures.**
 
 Fichiers concernés :
 - `sql/08-schema-samples.sql` : table `asemon.snap_samples` (partitionnée par jour), table de paramètres `asemon.settings`, fonction de maintenance `asemon.maintain_samples()`, vue `asemon.v_samples_partitions` (VM-Monitoring)
