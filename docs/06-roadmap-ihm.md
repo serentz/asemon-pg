@@ -96,7 +96,7 @@ Il manque une **clé de session stable** traversant les tables, pour permettre l
 |---|---|---|---|
 | **Phase 0** | Existant : snapshots 15s, dashboard Grafana actuel | — | ✅ Fait |
 | **Phase 1** | `snap_sessions` via logs de connexion/déconnexion ; `session_key` ajoutée aux tables existantes ; page macro avec rollup horaire | Activer `log_connections`/`log_disconnections` ; étendre `log_parser.py` | **En cours** — sessions : déployé et validé le 2026-10-09 (`07-sessions-phase1.md`). Rollup horaire `snap_hourly_summary` : écrit et testé en local, déploiement à faire (`08-rollup-horaire.md`) |
-| **Phase 2** | Échantillonnage `snap_activity` resserré (1-5s) ; `snap_query_exec` ; camemberts par login (via `pg_stat_statements.userid`) | Évaluer l'impact volumétrique et la politique de rétention | À faire |
+| **Phase 2** | Échantillonnage resserré des sessions actives (`snap_samples`, 2 s, rétention 14 j, voir `09-echantillonnage-phase2.md`) ; camemberts par login | Volume et rétention traités dans `09` ; reste à brancher les camemberts (Phase 4) | Échantillonneur écrit et testé en local, à déployer |
 | **Phase 3** | Camemberts par programme ; CPU réel par requête | Installer `pg_stat_kcache` (+ éventuellement `pg_wait_sampling`) sur VM-Cible | À faire |
 | **Phase 4** | Pages 1/2/3 complètes dans Grafana (ou interface dédiée si Grafana atteint ses limites de navigation drill-down inter-pages) | Phases 1-3 | À faire |
 
