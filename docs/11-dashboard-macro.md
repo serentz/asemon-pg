@@ -61,7 +61,7 @@ Aucun changement de schéma, aucune VM à toucher : `grafana_ro` lit déjà tout
 ## 4. Limites connues
 
 - **Pas de variation absolue (« +436 »)** comme dans la tuile de référence `images/references/kpi-tile-sparkline.png` : Grafana n'affiche nativement qu'une variation en %. Une tuile entièrement personnalisée demanderait un panneau HTML ou un plugin ; à discuter si nécessaire.
-- **Pas de navigation vers les autres pages** : elles n'existent pas encore. Les liens (macro → intermédiaire → micro) seront ajoutés avec elles ; l'`uid` fixe `asemon-macro` est là pour ça.
+- **Navigation** : liens vers la page intermédiaire ajoutés (`12-dashboard-intermediaire.md`) ; le lien vers la page micro viendra avec elle.
 - **« Requêtes lentes en cours »** (roadmap) n'est pas une tuile : un snapshot toutes les 15 s les manquerait. La tuile « Requêtes lentes » compte les plans capturés par `auto_explain`.
 
 ---
