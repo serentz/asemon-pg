@@ -675,7 +675,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Sessions actives (moy.)"
+              "options": "Sessions moy."
             },
             "properties": [
               {
@@ -807,7 +807,7 @@
             "uid": "${DS_MONITORING}"
           },
           "format": "table",
-          "rawSql": "SELECT hour_bucket AS \"Heure\", avg_cpu_percent AS \"CPU %\", avg_mem_percent AS \"Mémoire %\", avg_active_sessions AS \"Sessions actives (moy.)\", max_active_sessions AS \"Sessions actives (max)\", total_deadlocks AS \"Deadlocks\", total_slow_queries AS \"Requêtes lentes\", cache_hit_ratio AS \"Cache hit %\" FROM asemon.snap_hourly_summary ORDER BY hour_bucket DESC LIMIT 6",
+          "rawSql": "SELECT hour_bucket AS \"Heure\", avg_cpu_percent AS \"CPU %\", avg_mem_percent AS \"Mémoire %\", avg_active_sessions AS \"Sessions moy.\", max_active_sessions AS \"Sessions max\", total_deadlocks AS \"Deadlocks\", total_slow_queries AS \"Requêtes lentes\", cache_hit_ratio AS \"Cache hit %\" FROM asemon.snap_hourly_summary ORDER BY hour_bucket DESC LIMIT 6",
           "rawQuery": true
         }
       ]

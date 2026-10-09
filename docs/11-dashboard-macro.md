@@ -2,7 +2,7 @@
 
 > Première page de l'IHM cible (`06-roadmap-ihm.md` §2) : huit tuiles d'indicateurs avec sparkline, et un résumé « une ligne par heure » sur les 6 dernières heures. C'est un **nouveau dashboard**, importé à côté de `ASEMON-PG` qui n'est pas modifié.
 >
-> **Statut : écrit, requêtes SQL testées en local (PostgreSQL 16), mise en page pas encore vue dans Grafana.**
+> **Statut : importé dans Grafana et validé (2026-10-09) : 8 tuiles et tableau horaire corrects.**
 
 Fichier : `grafana/asemon-macro.json` (uid `asemon-macro`, rafraîchissement 30 s, période par défaut 6 h).
 
@@ -51,7 +51,7 @@ Aucun changement de schéma, aucune VM à toucher : `grafana_ro` lit déjà tout
 ## 3. Vérification
 
 - Les 8 tuiles affichent une valeur (sinon : message « No data » sur la tuile concernée, à me signaler avec son nom).
-- Le tableau contient 6 lignes (ou moins si le collecteur n'a pas tourné 6 heures).
+- Le tableau (colonnes « Sessions moy. » et « Sessions max ») contient 6 lignes (ou moins si le collecteur n'a pas tourné 6 heures).
 - Comparaison avec le dashboard `ASEMON-PG` : mêmes valeurs de CPU, mémoire et connexions sur la même période.
 - La tuile « Deadlocks » correspond à tes tests du jour (un deadlock provoqué sur la période = 1 ou plus).
 - Un `pg_sleep(60)` lancé sur la cible fait monter « Charge active moyenne » à environ 1 pendant la minute concernée.
@@ -68,8 +68,8 @@ Aucun changement de schéma, aucune VM à toucher : `grafana_ro` lit déjà tout
 
 ## 5. Checklist de validation
 
-- [ ] Dashboard importé, datasource mappé, aucune erreur de panneau
-- [ ] 8 tuiles avec valeur et sparkline
-- [ ] Tableau horaire : 6 lignes cohérentes avec `snap_hourly_summary`
-- [ ] Valeurs cohérentes avec le dashboard `ASEMON-PG`
-- [ ] Dashboard `ASEMON-PG` existant inchangé
+- [x] Dashboard importé, datasource mappé, aucune erreur de panneau
+- [x] 8 tuiles avec valeur et sparkline
+- [x] Tableau horaire : 6 lignes cohérentes avec `snap_hourly_summary`
+- [x] Valeurs cohérentes avec le dashboard `ASEMON-PG`
+- [x] Dashboard `ASEMON-PG` existant inchangé
