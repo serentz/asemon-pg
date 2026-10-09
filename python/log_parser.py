@@ -166,7 +166,9 @@ def parse_plan(entry):
         "occurred_at": entry.get("timestamp"),
         "session_key": session_key_of(entry),
         "duration_ms": duration_ms,
-        "query": entry.get("statement") or "",
+        # auto_explain masque le champ "statement" du jsonlog (errhidestmt) : le texte
+        # de la requête se trouve dans le plan JSON, sous "Query Text".
+        "query": entry.get("statement") or plan.get("Query Text") or "",
         "plan": json.dumps(plan),
     }
 
