@@ -1,0 +1,14 @@
+[Unit]
+Description=ASEMON-PG Purge des donnees anciennes (retention des snapshots, evenements, sessions)
+After=postgresql.service
+Requires=postgresql.service
+
+[Service]
+# À installer sur VM-Monitoring, déclenché par asemon-purge.timer.
+# Tourne sous `postgres` (peer), comme asemon-rollup.
+Type=oneshot
+User=postgres
+ExecStart=/usr/bin/psql -X -q -At -v ON_ERROR_STOP=1 -d monitoring -c "SELECT asemon.purge_old_data();"
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=asemon-purge

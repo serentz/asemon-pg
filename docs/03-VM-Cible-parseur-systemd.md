@@ -232,4 +232,4 @@ Doit répondre `enabled` pour les deux.
 
 - Construction des premiers **dashboards Grafana** : vue globale CPU/IO/réseau, verrous et chaînes de blocage, deadlocks détaillés, top SQL avec lien vers les plans d'exécution
 - Contention spécifique PostgreSQL : `idle in transaction` longues, retard d'autovacuum, bloat, checkpoints, fichiers temporaires
-- Partitionnement et politique de rétention sur les tables `asemon.snap_*` (volumétrie à surveiller avec un intervalle de collecte de 15s)
+- ~~Politique de rétention sur les tables `asemon.snap_*`~~ : traitée, voir `10-retention.md` (purge quotidienne, durées réglables). Pas de partitionnement pour ces tables, la purge par `DELETE` suffit à ce volume.
