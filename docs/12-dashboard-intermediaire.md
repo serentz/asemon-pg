@@ -2,7 +2,7 @@
 
 > Deuxième page de l'IHM cible (`06-roadmap-ihm.md` §2) : qui consomme la base (camemberts par login et par programme), à quoi les sessions passent leur temps (CPU ou attentes), puis les graphiques déjà présents dans le dashboard `ASEMON-PG`, regroupés. Nouveau dashboard : `ASEMON-PG` n'est pas modifié.
 >
-> **Statut : écrit, requêtes SQL testées en local (PostgreSQL 16), mise en page pas encore vue dans Grafana.**
+> **Statut : importé dans Grafana et validé (2026-10-09) : camemberts, graphique empilé, graphiques système et liens de navigation corrects.**
 
 Fichiers : `grafana/asemon-intermediate.json` (uid `asemon-intermediate`) et `grafana/asemon-macro.json` (mis à jour : liens de navigation, version 2). Dépend de `snap_samples` (`09-echantillonnage-phase2.md`).
 
@@ -65,8 +65,8 @@ Aucune VM à toucher, aucun changement de schéma.
 
 ## 5. Checklist de validation
 
-- [ ] `asemon-intermediate.json` importé, datasource choisi, aucune erreur de panneau
-- [ ] Trois camemberts avec légende, graphique empilé affiché
-- [ ] Test `pg_sleep(60)` visible dans les camemberts
-- [ ] Graphiques système cohérents avec `ASEMON-PG`
-- [ ] `asemon-macro.json` réimporté, liens de navigation fonctionnels dans les deux sens
+- [x] `asemon-intermediate.json` importé, datasource choisi, aucune erreur de panneau
+- [x] Trois camemberts avec légende, graphique empilé affiché
+- [x] Test `pg_sleep(60)` visible dans les camemberts
+- [x] Graphiques système cohérents avec `ASEMON-PG`
+- [x] `asemon-macro.json` réimporté, liens de navigation fonctionnels dans les deux sens
