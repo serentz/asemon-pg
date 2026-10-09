@@ -49,7 +49,7 @@ Deux particularités qui dictent le code :
 - À la **connexion**, `application_name` n'est pas un champ du JSON : il faut le lire dans le message. À la **déconnexion**, c'est l'inverse (champ JSON présent).
 - `remote_host` vaut `[local]` pour une connexion par socket Unix : `client_addr` reste alors `NULL`.
 
-`log_timezone` est `Etc/UTC` sur la VM-Cible, ce que `parse_timestamp()` suppose (suffixe `UTC`).
+`log_timezone` est `Etc/UTC` sur la VM-Cible, ce que `parse_timestamp()` suppose (suffixe `UTC`). C'est un **prérequis** : avec un fuseau local, les horodatages portent `CEST` ou `CET` et sont mal interprétés. À fixer explicitement : `log_timezone = 'UTC'` (le script d'installation le fait, `15-installation-scriptee.md`).
 
 ---
 

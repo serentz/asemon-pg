@@ -10,3 +10,6 @@ asemon-collector/
 # Fichiers Python compilés
 __pycache__/
 *.pyc
+
+# Paramètres des scripts d'installation (mots de passe)
+scripts/asemon.env

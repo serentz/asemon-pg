@@ -55,6 +55,7 @@ Suites possibles : alertes Grafana, mesure du volume réel après plusieurs jour
 | `sql/` | Schéma du dépôt, rôles et droits, fonctions (rollup, purge, partitions, répartition `kcache_attr`). Numérotés dans l'ordre d'application |
 | `systemd/` | Services (`collector`, `sampler`, `logparser`) et timers (`rollup`, `purge`, `samples-maintenance`) |
 | `grafana/` | 6 dashboards en JSON, importables |
+| `scripts/` | Installation scriptée (`install-monitoring.sh`, `install-target.sh`, `grafana-provision.sh`, `verify.sh`) |
 | `docs/` | Fiches d'installation et de fonctionnement, une par étape |
 | `images/` | Captures et références visuelles |
 
@@ -76,8 +77,18 @@ Suites possibles : alertes Grafana, mesure du volume réel après plusieurs jour
 | 10. Rétention | VM-Monitoring | [10-retention](docs/10-retention.md) |
 | 11. `pg_stat_kcache` : extension, schéma, collecte | les deux | [14-kcache-phase3](docs/14-kcache-phase3.md) |
 | 12. Dashboards macro, intermédiaire, micro | Grafana | [11](docs/11-dashboard-macro.md), [12](docs/12-dashboard-intermediaire.md), [13](docs/13-dashboard-micro.md) |
+| Tout en un | les deux | [15-installation-scriptee](docs/15-installation-scriptee.md) |
 
-Les scripts SQL récents (08 à 11) se rejouent sans risque (`IF NOT EXISTS`, `CREATE OR REPLACE`). Appliquer les fichiers `sql/` dans l'ordre de leur numéro, **en commençant par VM-Monitoring** avant de déployer un collecteur qui écrit dans une nouvelle table.
+**Chemin court : installation scriptée** (VM déjà créées, Ubuntu installé) : deux scripts enchaînent toutes les étapes ci-dessus, voir [docs/15-installation-scriptee.md](docs/15-installation-scriptee.md).
+
+```bash
+cp scripts/asemon.env.example scripts/asemon.env && nano scripts/asemon.env   # IP, mots de passe
+sudo ./scripts/install-monitoring.sh      # d'abord, sur VM-Monitoring
+sudo ./scripts/install-target.sh          # ensuite, sur VM-Cible
+sudo ./scripts/verify.sh monitoring|target
+```
+
+Ordre des scripts SQL (VM-Monitoring) : `01, 02, 04, 05, 06, 08, 09, 10, 11` ; `03` sur VM-Cible ; `07` est un brouillon, **ne pas l'appliquer**. Les scripts sont rejouables. Toujours VM-Monitoring avant VM-Cible : le schéma doit exister avant que le collecteur écrive dedans.
 
 ## Réglages courants
 
