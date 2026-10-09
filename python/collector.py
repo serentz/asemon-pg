@@ -31,6 +31,11 @@ logging.basicConfig(
 )
 log = logging.getLogger("asemon-collector")
 
+# Nom sous lequel le collecteur apparaît dans pg_stat_activity et dans les logs
+# de connexion (snap_sessions.application_name) : permet de le distinguer des
+# sessions utilisateur (camemberts "par programme", Phase 3).
+APP_NAME = "asemon-collector"
+
 # Compteurs précédents pour calculer les deltas réseau/disque
 _prev_disk = None
 _prev_net = None
@@ -384,8 +389,8 @@ def run_cycle(target_conn, repo_conn):
 def main():
     log.info("Démarrage du collecteur ASEMON-PG (intervalle=%ss)", INTERVAL)
 
-    target_conn = psycopg.connect(TARGET_DSN, autocommit=True)
-    repo_conn = psycopg.connect(REPO_DSN)
+    target_conn = psycopg.connect(TARGET_DSN, autocommit=True, application_name=APP_NAME)
+    repo_conn = psycopg.connect(REPO_DSN, application_name=APP_NAME)
 
     try:
         while True:
@@ -395,8 +400,8 @@ def main():
                 log.exception("Erreur pendant le cycle de collecte")
                 # Reconnexion défensive en cas de coupure réseau/DB
                 try:
-                    target_conn = psycopg.connect(TARGET_DSN, autocommit=True)
-                    repo_conn = psycopg.connect(REPO_DSN)
+                    target_conn = psycopg.connect(TARGET_DSN, autocommit=True, application_name=APP_NAME)
+                    repo_conn = psycopg.connect(REPO_DSN, application_name=APP_NAME)
                 except Exception:
                     log.exception("Échec de reconnexion, nouvelle tentative dans %ss", INTERVAL)
 
