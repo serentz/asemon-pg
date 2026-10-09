@@ -87,9 +87,14 @@ Tous sont calculables à partir de ce qui est déjà collecté ; une ligne par h
 
 `snap_hourly_summary` reçoit ces colonnes, calculées par instance.
 
-### 3.6 Modifier les seuils « sur une page »
+### 3.6 Modifier les seuils « sur une page » (décision : plugin de formulaire Grafana)
 
-Les dashboards Grafana sont **en lecture seule** (le rôle `grafana_ro` ne peut pas écrire) et un tableau Grafana n'est pas éditable. Trois voies (§6) : une **petite page web dédiée**, un **plugin de formulaire Grafana**, ou la modification en SQL documentée. Dans tous les cas, l'écriture passe par un rôle limité à la table `kpi_thresholds`.
+Les dashboards Grafana sont en lecture seule et un tableau Grafana n'est pas éditable. **Choix retenu : le plugin de formulaire Grafana** (panneau « Business Forms » de Volkov Labs), pour que tout reste dans Grafana.
+
+- Installation sur VM-Monitoring : `sudo grafana cli plugins install volkovlabs-form-panel`, puis redémarrage de Grafana (accès Internet nécessaire ; à intégrer dans `install-monitoring.sh`). À valider à l'installation : nom exact du plugin et compatibilité avec la version de Grafana installée.
+- Une **seconde datasource** PostgreSQL, `ASEMON Seuils`, utilise un rôle `grafana_thresholds` qui n'a que `SELECT`, `INSERT` et `UPDATE` sur `asemon.kpi_thresholds` (rien d'autre). Les dashboards de lecture continuent d'utiliser `grafana_ro`.
+- La page « Seuils » affiche un tableau des seuils effectifs par instance et un formulaire (instance, KPI, avertissement, alarme, activé) dont la validation écrit dans la table.
+- **Limite à connaître** : dans Grafana open source, les permissions par datasource n'existent pas ; toute personne pouvant éditer un dashboard peut interroger cette datasource. Le rôle SQL limité à une seule table borne le risque. À restreindre en ne donnant le droit d'édition de la page qu'aux administrateurs.
 
 ### 3.7 Découpage proposé
 
@@ -127,12 +132,12 @@ Point d'attention : une réplique est en lecture seule ; l'agent y lit les vues 
 
 ---
 
-## 6. Points à trancher
+## 6. Décisions et points restants
 
-| # | Question | Ma proposition |
+| # | Question | Décision |
 |---|---|---|
-| 1 | Où modifie-t-on les seuils ? | Petite page web dédiée (Python, sur VM-Monitoring), liée depuis Grafana ; à défaut le plugin de formulaire Grafana |
-| 2 | « Valeur de blocage maximale » : quelle mesure ? | Durée maximale pendant laquelle une session a attendu un verrou dans l'heure (échantillons de 2 s), avec en complément le nombre maximal de sessions bloquées en même temps |
-| 3 | « Maximum de transactions actives » : quelle mesure ? | Nombre maximal de sessions ayant une transaction ouverte au même instant (en cours d'exécution ou `idle in transaction`) |
-| 4 | Valeurs par défaut des seuils | À fixer ensemble (par exemple CPU 80 % / 95 %, disque libre 20 % / 10 %) ; modifiables ensuite |
-| 5 | VM disponibles pour la suite | Deux VM neuves pour la Release 3, une troisième pour la Release 4 |
+| 1 | Où modifie-t-on les seuils ? | **Plugin de formulaire Grafana** (§3.6) |
+| 2 | « Valeur de blocage maximale » | **Durée maximale d'attente d'une session sur un verrou dans l'heure** (échantillons de 2 s), avec le nombre maximal de sessions bloquées en même temps en complément |
+| 3 | « Maximum de transactions actives » | **Nombre maximal de sessions ayant une transaction ouverte au même instant**, y compris `idle in transaction` |
+| 4 | Valeurs par défaut des seuils | **À fixer** (proposition : CPU 80 % / 95 %, disque libre 20 % / 10 %, blocage 30 s / 120 s, transaction la plus longue 300 s / 1 800 s, deadlocks 1 / 5 par heure) ; modifiables ensuite dans la page |
+| 5 | VM disponibles pour la suite | **À confirmer** : deux VM neuves pour la Release 3, une troisième pour la Release 4 |
