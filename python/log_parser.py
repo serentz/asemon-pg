@@ -6,14 +6,28 @@ Suit en continu le fichier de log JSON de l'instance PostgreSQL locale
 et alimente le repository distant avec :
   - les deadlocks détaillés (asemon.event_deadlocks)
   - les plans d'exécution capturés par auto_explain (asemon.event_plans)
+  - le cycle de vie des sessions : connexions / déconnexions
+    (asemon.snap_sessions, Phase 1 de la roadmap IHM)
 
 Détection des deadlocks basée sur le code SQLSTATE 40P01 (standard
 PostgreSQL, indépendant de la langue configurée sur le serveur) plutôt
 que sur le texte du message, qui varie selon lc_messages
 (ex. "deadlock detected" en anglais vs "interblocage (deadlock) détecté"
 en français).
+
+EXCEPTION — connexions / déconnexions : ces messages sont de simples
+LOG (SQLSTATE 00000), sans code qui les distingue. Ils sont donc
+reconnus par le début de leur texte ("connection authorized:",
+"disconnection:"), ce qui IMPOSE lc_messages = 'C' sur le serveur
+surveillé. Avec une autre langue, aucune session n'est enregistrée
+(sans erreur : même piège silencieux que pour les deadlocks).
+
+Chaque événement est rattaché à sa session par session_key, qui est le
+champ "session_id" du jsonlog (ex. "6ac8acf0.9bd" = epoch de début du
+backend en hexa + "." + pid en hexa).
 """
 
+import ipaddress
 import json
 import os
 import re
@@ -38,6 +52,13 @@ DEADLOCK_PROC_RE = re.compile(r"Processus?\s+(\d+)\s*:\s*(.+?)(?=\n(?:Processus?
 TABLE_RE = re.compile(r'\b(?:FROM|UPDATE|INTO|JOIN)\s+"?([A-Za-z_][A-Za-z0-9_\.]*)"?', re.IGNORECASE)
 PLAN_RE = re.compile(r"duration:\s*([\d.]+)\s*ms\s*plan:\s*(\{.*\})", re.DOTALL)
 
+# Sessions. Le session_id du jsonlog vaut "<epoch hexa>.<pid hexa>".
+SESSION_ID_RE = re.compile(r"^([0-9a-f]+)\.([0-9a-f]+)$")
+# Dans "connection authorized: user=u database=d application_name=a[ SSL enabled (...)]",
+# application_name n'est PAS un champ du JSON à ce stade de la connexion : on le lit
+# dans le message. Un éventuel suffixe " SSL enabled (...)" est écarté.
+CONN_APP_RE = re.compile(r" application_name=(.*?)(?: SSL enabled \(.*)?$")
+
 
 def get_current_jsonlog_path():
     try:
@@ -55,6 +76,64 @@ def extract_tables(text):
     return sorted(set(TABLE_RE.findall(text or "")))
 
 
+def session_key_of(entry):
+    """session_id du jsonlog si au format attendu, sinon None."""
+    session_id = entry.get("session_id")
+    return session_id if SESSION_ID_RE.match(session_id or "") else None
+
+
+def session_start_from_key(session_key):
+    """Début du backend (UTC, précision seconde) lu dans la clé de session."""
+    m = SESSION_ID_RE.match(session_key or "")
+    if not m:
+        return None
+    return datetime.fromtimestamp(int(m.group(1), 16), tz=timezone.utc)
+
+
+def parse_client_addr(remote_host):
+    """Adresse IP du client, ou None (socket Unix "[local]", nom d'hôte, vide)."""
+    try:
+        return str(ipaddress.ip_address(remote_host))
+    except ValueError:
+        return None
+
+
+def parse_session_event(entry):
+    """Connexion / déconnexion d'une session cliente, ou None pour toute autre ligne.
+
+    Repose sur le texte du message : suppose lc_messages = 'C' (voir docstring).
+    """
+    message = entry.get("message", "")
+    if message.startswith("connection authorized:"):
+        kind = "connect"
+    elif message.startswith("disconnection:"):
+        kind = "disconnect"
+    else:
+        return None
+
+    session_key = session_key_of(entry)
+    if not session_key:
+        return None
+
+    if kind == "connect":
+        m = CONN_APP_RE.search(message)
+        application_name = m.group(1) if m else None
+    else:
+        application_name = entry.get("application_name")
+
+    return {
+        "kind": kind,
+        "session_key": session_key,
+        "pid": entry.get("pid"),
+        "usename": entry.get("user") or None,
+        "datname": entry.get("dbname") or None,
+        "application_name": application_name or None,
+        "client_addr": parse_client_addr(entry.get("remote_host")),
+        "connected_at": session_start_from_key(session_key),
+        "event_at": parse_timestamp(entry.get("timestamp")),
+    }
+
+
 def parse_deadlock(entry):
     detail = entry.get("detail", "")
     procs = DEADLOCK_PROC_RE.findall(detail)
@@ -62,6 +141,7 @@ def parse_deadlock(entry):
     tables = sorted(set(t for q in queries for t in extract_tables(q)))
     return {
         "occurred_at": entry.get("timestamp"),
+        "session_key": session_key_of(entry),
         "process_id": entry.get("pid"),
         "involved_tables": tables,
         "involved_users": [entry.get("user")] if entry.get("user") else [],
@@ -82,6 +162,7 @@ def parse_plan(entry):
         return None
     return {
         "occurred_at": entry.get("timestamp"),
+        "session_key": session_key_of(entry),
         "duration_ms": duration_ms,
         "query": entry.get("statement") or "",
         "plan": json.dumps(plan),
@@ -95,26 +176,66 @@ def parse_timestamp(ts_str):
         return datetime.now(timezone.utc)
 
 
+SQL_DEADLOCK = """
+    INSERT INTO asemon.event_deadlocks
+    (occurred_at, process_id, involved_tables, involved_users, queries, raw_log, session_key)
+    VALUES (%s, %s, %s, %s, %s, %s, %s)
+"""
+
+SQL_PLAN = """
+    INSERT INTO asemon.event_plans (occurred_at, duration_ms, query, plan, session_key)
+    VALUES (%s, %s, %s, %s, %s)
+"""
+
+# Connexion : on n'écrase jamais une ligne existante.
+SQL_SESSION_CONNECT = """
+    INSERT INTO asemon.snap_sessions
+    (session_key, pid, usename, application_name, client_addr, datname, connected_at)
+    VALUES (%(session_key)s, %(pid)s, %(usename)s, %(application_name)s,
+            %(client_addr)s, %(datname)s, %(connected_at)s)
+    ON CONFLICT (session_key) DO NOTHING
+"""
+
+# Déconnexion : crée la ligne complète si la connexion n'a pas été vue (parseur
+# démarré en cours de session), sinon se contente de poser disconnected_at.
+SQL_SESSION_DISCONNECT = """
+    INSERT INTO asemon.snap_sessions
+    (session_key, pid, usename, application_name, client_addr, datname,
+     connected_at, disconnected_at)
+    VALUES (%(session_key)s, %(pid)s, %(usename)s, %(application_name)s,
+            %(client_addr)s, %(datname)s, %(connected_at)s, %(event_at)s)
+    ON CONFLICT (session_key) DO UPDATE SET disconnected_at = %(event_at)s
+"""
+# NB : on réutilise le paramètre plutôt que EXCLUDED.disconnected_at, car lire
+# EXCLUDED exige le droit SELECT sur la colonne, que collector_writer n'a pas
+# (seul SELECT (session_key) lui est accordé, voir sql/05-schema-sessions.sql).
+
+
 def write_deadlock(repo_conn, d):
     with repo_conn.cursor() as cur:
-        cur.execute("""
-            INSERT INTO asemon.event_deadlocks
-            (occurred_at, process_id, involved_tables, involved_users, queries, raw_log)
-            VALUES (%s, %s, %s, %s, %s, %s)
-        """, (parse_timestamp(d["occurred_at"]), d["process_id"],
-              d["involved_tables"], d["involved_users"], d["queries"], d["raw_log"]))
+        cur.execute(SQL_DEADLOCK, (parse_timestamp(d["occurred_at"]), d["process_id"],
+                                   d["involved_tables"], d["involved_users"], d["queries"],
+                                   d["raw_log"], d["session_key"]))
     repo_conn.commit()
     log.info("Deadlock enregistré | pid=%s tables=%s", d["process_id"], d["involved_tables"])
 
 
 def write_plan(repo_conn, p):
     with repo_conn.cursor() as cur:
-        cur.execute("""
-            INSERT INTO asemon.event_plans (occurred_at, duration_ms, query, plan)
-            VALUES (%s, %s, %s, %s)
-        """, (parse_timestamp(p["occurred_at"]), p["duration_ms"], p["query"], p["plan"]))
+        cur.execute(SQL_PLAN, (parse_timestamp(p["occurred_at"]), p["duration_ms"],
+                               p["query"], p["plan"], p["session_key"]))
     repo_conn.commit()
     log.info("Plan enregistré | duration=%.1fms", p["duration_ms"])
+
+
+def write_session(repo_conn, s):
+    sql = SQL_SESSION_CONNECT if s["kind"] == "connect" else SQL_SESSION_DISCONNECT
+    with repo_conn.cursor() as cur:
+        cur.execute(sql, s)
+    repo_conn.commit()
+    log.info("Session %s | key=%s user=%s app=%s",
+             "connectée" if s["kind"] == "connect" else "déconnectée",
+             s["session_key"], s["usename"], s["application_name"])
 
 
 def follow(filepath):
@@ -175,6 +296,10 @@ def main():
                 p = parse_plan(entry)
                 if p:
                     write_plan(repo_conn, p)
+            else:
+                s = parse_session_event(entry)
+                if s:
+                    write_session(repo_conn, s)
         except Exception:
             log.exception("Erreur lors du traitement d'une ligne de log")
             try:

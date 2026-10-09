@@ -93,7 +93,9 @@ def collect_activity(target_conn):
         SELECT pid, usename, datname, application_name,
                client_addr::text, state,
                wait_event_type, wait_event,
-               query, query_start, xact_start, backend_start
+               query, query_start, xact_start, backend_start,
+               -- session_key = session_id natif (celui du jsonlog), cf. sql/05-schema-sessions.sql
+               to_hex(floor(extract(epoch FROM backend_start))::bigint) || '.' || to_hex(pid)
         FROM pg_stat_activity
         WHERE pid <> pg_backend_pid()
     """
@@ -279,8 +281,9 @@ def write_snapshots(repo_conn, os_metrics, activity, locks, io, statements,
             cur.executemany("""
                 INSERT INTO asemon.snap_activity
                 (pid, usename, datname, application_name, client_addr, state,
-                 wait_event_type, wait_event, query, query_start, xact_start, backend_start)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                 wait_event_type, wait_event, query, query_start, xact_start, backend_start,
+                 session_key)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """, activity)
 
         if locks:

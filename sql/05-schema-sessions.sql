@@ -1,32 +1,44 @@
 -- ============================================================
--- ASEMON-PG — Proposition de schéma pour la réconciliation
--- session / requête (voir docs/06-roadmap-ihm.md)
+-- ASEMON-PG — Phase 1 : cycle de vie des sessions
+-- (voir docs/06-roadmap-ihm.md et docs/07-sessions-phase1.md)
 --
--- STATUT : NON DÉPLOYÉ. Ce script est une proposition de travail
--- pour la Phase 1 / Phase 2 de la roadmap IHM, à relire et adapter
--- avant toute exécution sur VM-Monitoring. Il n'est référencé par
--- aucun code (collector.py / log_parser.py) pour l'instant.
+-- STATUT : prêt à déployer après relecture (jamais exécuté en
+-- production). Les tables des phases suivantes (snap_query_exec,
+-- snap_hourly_summary) sont dans 06-schema-phase2-brouillon.sql.
 --
--- À exécuter (une fois validé) sur VM-Monitoring, base `monitoring` :
+-- ORDRE DE DÉPLOIEMENT : ce script AVANT de mettre à jour
+-- log_parser.py et collector.py sur VM-Cible, car les nouvelles
+-- versions écrivent dans les colonnes session_key créées ici.
+--
+-- À exécuter sur VM-Monitoring, base `monitoring` :
 --   sudo -u postgres psql -d monitoring -f 05-schema-sessions.sql
+-- (idempotent : peut être rejoué sans effet de bord)
 -- ============================================================
 
 -- ------------------------------------------------------------
--- Phase 1 : cycle de vie des sessions, alimenté par le parsing
--- des logs de connexion/déconnexion (log_connections/log_disconnections
--- à activer côté PostgreSQL sur VM-Cible, puis extension de
--- log_parser.py pour peupler cette table).
+-- Clé de session : session_key = session_id natif de PostgreSQL,
+-- au format '<epoch de début du backend en hexa>.<pid en hexa>'
+-- (ex. '6ac8acf0.9bd').
+--
+-- Pourquoi ce format plutôt que pid || '-' || epoch(backend_start) :
+--   * il figure tel quel dans CHAQUE ligne du jsonlog (champ
+--     "session_id"), donc le parseur n'a rien à calculer et les
+--     deadlocks / plans auto_explain sont rattachés à leur session ;
+--   * côté pg_stat_activity, il se reconstruit à l'identique avec
+--       to_hex(floor(extract(epoch FROM backend_start))::bigint)
+--         || '.' || to_hex(pid)
+--     (PostgreSQL tronque lui-même le début du backend à la seconde).
 -- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS asemon.snap_sessions (
     id BIGSERIAL PRIMARY KEY,
-    session_key TEXT NOT NULL,          -- pid || '-' || epoch(backend_start), stable sur la durée de vie du backend
+    session_key TEXT NOT NULL,          -- session_id natif, voir ci-dessus
     pid INT,
     usename TEXT,
     application_name TEXT,
-    client_addr INET,
+    client_addr INET,                   -- NULL pour une connexion locale (socket Unix)
     datname TEXT,
-    connected_at TIMESTAMPTZ,
-    disconnected_at TIMESTAMPTZ,        -- NULL tant que la session est active
+    connected_at TIMESTAMPTZ,           -- précision à la seconde (issue du session_id)
+    disconnected_at TIMESTAMPTZ,        -- NULL tant que la session est ouverte
     total_cpu_ms NUMERIC,               -- agrégé a posteriori (Phase 3, pg_stat_kcache)
     total_io_bytes BIGINT,              -- agrégé a posteriori
     query_count INT,                    -- nombre de requêtes exécutées sur la session
@@ -38,32 +50,10 @@ CREATE INDEX IF NOT EXISTS idx_snap_sessions_usename ON asemon.snap_sessions (us
 CREATE INDEX IF NOT EXISTS idx_snap_sessions_application_name ON asemon.snap_sessions (application_name);
 
 -- ------------------------------------------------------------
--- Phase 2 : une ligne par exécution de requête détectée par
--- échantillonnage resserré de pg_stat_activity (1-5s), reliée à
--- la session et au queryid (pg_stat_statements).
--- ------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS asemon.snap_query_exec (
-    id BIGSERIAL PRIMARY KEY,
-    session_key TEXT NOT NULL,          -- FK logique vers snap_sessions.session_key
-    query_id TEXT,                      -- query_id de pg_stat_activity / queryid de pg_stat_statements
-    query_text TEXT,
-    started_at TIMESTAMPTZ,
-    ended_at TIMESTAMPTZ,               -- déduit de la disparition de la requête au sampling suivant
-    duration_ms NUMERIC,
-    wait_event_type TEXT,
-    wait_event TEXT,
-    estimated_cpu_ms NUMERIC,           -- NULL tant que pg_stat_kcache n'est pas en place (Phase 3)
-    estimated_io_bytes BIGINT
-);
-
-CREATE INDEX IF NOT EXISTS idx_snap_query_exec_session ON asemon.snap_query_exec (session_key);
-CREATE INDEX IF NOT EXISTS idx_snap_query_exec_queryid ON asemon.snap_query_exec (query_id);
-CREATE INDEX IF NOT EXISTS idx_snap_query_exec_started_at ON asemon.snap_query_exec (started_at);
-
--- ------------------------------------------------------------
 -- session_key ajoutée aux tables existantes, pour permettre les
--- jointures macro → session → requête / deadlock / plan.
--- (ALTER TABLE idempotent — ADD COLUMN IF NOT EXISTS)
+-- jointures macro → session → deadlock / plan / activité.
+-- Les lignes déjà présentes gardent NULL (voir le rattrapage
+-- optionnel plus bas pour snap_activity).
 -- ------------------------------------------------------------
 ALTER TABLE asemon.snap_activity   ADD COLUMN IF NOT EXISTS session_key TEXT;
 ALTER TABLE asemon.event_plans     ADD COLUMN IF NOT EXISTS session_key TEXT;
@@ -73,35 +63,38 @@ CREATE INDEX IF NOT EXISTS idx_snap_activity_session_key   ON asemon.snap_activi
 CREATE INDEX IF NOT EXISTS idx_event_plans_session_key     ON asemon.event_plans (session_key);
 CREATE INDEX IF NOT EXISTS idx_event_deadlocks_session_key ON asemon.event_deadlocks (session_key);
 
--- ------------------------------------------------------------
--- Rollup horaire pour la page macro (évite de ré-agréger les
--- snapshots bruts à chaque ouverture de dashboard).
--- À peupler par un job planifié (timer systemd ou vue matérialisée
--- rafraîchie périodiquement), pas calculé à la volée.
--- ------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS asemon.snap_hourly_summary (
-    id BIGSERIAL PRIMARY KEY,
-    hour_bucket TIMESTAMPTZ NOT NULL,   -- date_trunc('hour', collected_at)
-    avg_cpu_percent NUMERIC,
-    avg_mem_percent NUMERIC,
-    avg_active_sessions NUMERIC,
-    max_active_sessions INT,
-    total_deadlocks INT,
-    total_slow_queries INT,
-    cache_hit_ratio NUMERIC,
-    UNIQUE (hour_bucket)
-);
-
-CREATE INDEX IF NOT EXISTS idx_snap_hourly_summary_bucket ON asemon.snap_hourly_summary (hour_bucket);
+-- Rattrapage optionnel de l'historique de snap_activity (à lancer
+-- à la main, peut être long si la table est volumineuse) :
+--
+-- UPDATE asemon.snap_activity
+--    SET session_key = to_hex(floor(extract(epoch FROM backend_start))::bigint)
+--                      || '.' || to_hex(pid)
+--  WHERE session_key IS NULL AND backend_start IS NOT NULL;
 
 -- ------------------------------------------------------------
 -- Droits (cohérents avec sql/02-roles-and-grants.sql)
+--
+-- collector_writer reste un rôle quasi « écriture seule » :
+--   * INSERT (déjà couvert par les privilèges par défaut de 02,
+--     rappelé ici pour être explicite) ;
+--   * UPDATE limité aux colonnes qui évoluent après coup ;
+--   * SELECT limité à la seule colonne session_key : l'upsert
+--     INSERT ... ON CONFLICT (session_key) en a besoin pour
+--     détecter le conflit.
 -- ------------------------------------------------------------
-GRANT INSERT ON asemon.snap_sessions, asemon.snap_query_exec, asemon.snap_hourly_summary
-    TO collector_writer;
-GRANT UPDATE (disconnected_at, total_cpu_ms, total_io_bytes, query_count) ON asemon.snap_sessions
-    TO collector_writer;
+GRANT INSERT ON asemon.snap_sessions TO collector_writer;
+GRANT SELECT (session_key) ON asemon.snap_sessions TO collector_writer;
+GRANT UPDATE (disconnected_at, total_cpu_ms, total_io_bytes, query_count)
+    ON asemon.snap_sessions TO collector_writer;
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA asemon TO collector_writer;
 
-GRANT SELECT ON asemon.snap_sessions, asemon.snap_query_exec, asemon.snap_hourly_summary
-    TO grafana_ro;
+GRANT SELECT ON asemon.snap_sessions TO grafana_ro;
+
+-- ------------------------------------------------------------
+-- Vérification après déploiement (doit renvoyer 4 lignes, une par
+-- table, avec la colonne session_key) :
+--
+-- SELECT table_name, column_name FROM information_schema.columns
+--  WHERE table_schema = 'asemon' AND column_name = 'session_key'
+--  ORDER BY table_name;
+-- ------------------------------------------------------------

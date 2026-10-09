@@ -60,7 +60,7 @@ Le collecteur actuel (`python/collector.py`) fonctionne par **snapshots périodi
 - si une connexion est trop courte, elle peut être manquée entre deux cycles de collecte ;
 - l'heure de connexion exacte n'est pas garantie (on prend `backend_start`, disponible, mais la déconnexion n'est **jamais** visible dans ce flux — on ne peut que déduire "le pid a disparu entre deux snapshots").
 
-**Solution retenue** : exploiter les logs serveur, comme cela a déjà été fait pour les deadlocks. Activer `log_connections` et `log_disconnections` dans `postgresql.conf`, et étendre `log_parser.py` pour alimenter une nouvelle table `asemon.snap_sessions` avec des horodatages exacts.
+**Solution retenue** : exploiter les logs serveur, comme cela a déjà été fait pour les deadlocks. Activer `log_connections` et `log_disconnections` dans `postgresql.conf`, et étendre `log_parser.py` pour alimenter une nouvelle table `asemon.snap_sessions` avec des horodatages exacts. Ces messages n'ont pas de SQLSTATE exploitable : le serveur doit être en `lc_messages = 'C'` (voir `07-sessions-phase1.md`).
 
 ### 3.2 PostgreSQL ne trace pas l'exécution individuelle d'une requête
 
@@ -85,7 +85,7 @@ Il manque une **clé de session stable** traversant les tables, pour permettre l
 
 - `asemon.snap_sessions` : une ligne par session, alimentée par le parsing des logs de connexion/déconnexion (`log_parser.py` étendu).
 - `asemon.snap_query_exec` : une ligne par exécution de requête détectée par échantillonnage (approche A), avec `session_key` et `query_id` en clé étrangère logique.
-- Ajout de la colonne `session_key` (calculée comme `pid || '-' || extract(epoch from backend_start)`, stable sur toute la durée de vie du backend) dans `snap_activity`, `event_plans`, `event_deadlocks`, pour pouvoir reconstituer "quelles requêtes/plans/deadlocks appartiennent à quelle session".
+- Ajout de la colonne `session_key` dans `snap_activity`, `event_plans`, `event_deadlocks`, pour pouvoir reconstituer "quelles requêtes/plans/deadlocks appartiennent à quelle session". **Définition retenue** : le `session_id` natif de PostgreSQL (`<epoch hexa>.<pid hexa>`, ex. `6ac8acf0.9bd`), présent dans chaque ligne du jsonlog et reconstructible depuis `pg_stat_activity` — la formule initiale `pid || '-' || extract(epoch from backend_start)` ne pouvait pas être reproduite côté logs (secondes entières seulement). Voir `07-sessions-phase1.md`.
 - Table de rollup `asemon.snap_hourly_summary`, pré-calculée (vue matérialisée ou job planifié), pour que la page 1 n'ait jamais à agréger les snapshots bruts à la volée.
 
 ---
@@ -95,7 +95,7 @@ Il manque une **clé de session stable** traversant les tables, pour permettre l
 | Phase | Contenu | Prérequis | Statut |
 |---|---|---|---|
 | **Phase 0** | Existant : snapshots 15s, dashboard Grafana actuel | — | ✅ Fait |
-| **Phase 1** | `snap_sessions` via logs de connexion/déconnexion ; `session_key` ajoutée aux tables existantes ; page macro avec rollup horaire | Activer `log_connections`/`log_disconnections` ; étendre `log_parser.py` | À faire |
+| **Phase 1** | `snap_sessions` via logs de connexion/déconnexion ; `session_key` ajoutée aux tables existantes ; page macro avec rollup horaire | Activer `log_connections`/`log_disconnections` ; étendre `log_parser.py` | **En cours** — logs activés sur VM-Cible, code et schéma prêts et testés en local, déploiement à faire (`07-sessions-phase1.md`). Reste : le rollup horaire `snap_hourly_summary` (brouillon dans `sql/06-schema-phase2-brouillon.sql`) |
 | **Phase 2** | Échantillonnage `snap_activity` resserré (1-5s) ; `snap_query_exec` ; camemberts par login (via `pg_stat_statements.userid`) | Évaluer l'impact volumétrique et la politique de rétention | À faire |
 | **Phase 3** | Camemberts par programme ; CPU réel par requête | Installer `pg_stat_kcache` (+ éventuellement `pg_wait_sampling`) sur VM-Cible | À faire |
 | **Phase 4** | Pages 1/2/3 complètes dans Grafana (ou interface dédiée si Grafana atteint ses limites de navigation drill-down inter-pages) | Phases 1-3 | À faire |
