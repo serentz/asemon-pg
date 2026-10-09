@@ -14,6 +14,12 @@ REPO_DSN = "host=192.168.1.28 dbname=monitoring user=collector_writer password=C
 # Intervalle de collecte, en secondes
 INTERVAL = 15
 
+# Échantillonneur de sessions actives (sampler.py, Phase 2) : secondes entre
+# deux relevés. Optionnel (2 par défaut), borné à 0.5 - 60. Après modification :
+#   sudo systemctl restart asemon-sampler
+# Voir docs/09-echantillonnage-phase2.md (volume attendu selon la valeur).
+SAMPLE_INTERVAL = 2
+
 # Répertoire de données PostgreSQL local (utilisé par log_parser.py pour
 # retrouver le fichier de log actif via current_logfiles)
 PG_DATA_DIR = "/var/lib/postgresql/17/main"

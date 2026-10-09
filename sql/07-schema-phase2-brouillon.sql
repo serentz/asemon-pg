@@ -6,6 +6,10 @@
 -- Extrait de l'ancienne version de 05-schema-sessions.sql lors du
 -- découpage de la Phase 1. Dépend de 05-schema-sessions.sql
 -- (session_key = session_id natif de PostgreSQL, voir ce fichier).
+-- L'échantillonnage resserré (relevé des sessions actives, rétention) est
+-- réalisé par snap_samples : voir 08-schema-samples.sql et
+-- docs/09-echantillonnage-phase2.md. Seule snap_query_exec reste à trancher
+-- (dérivable des échantillons : une exécution = (session_key, query_start)).
 -- Le rollup horaire (snap_hourly_summary) n'est plus ici : il est
 -- déployable, voir 06-rollup-horaire.sql et docs/08-rollup-horaire.md.
 --

@@ -1,0 +1,11 @@
+[Unit]
+Description=ASEMON-PG Maintenance des partitions snap_samples, toutes les heures
+
+[Timer]
+OnCalendar=*:07
+# Rattrape un déclenchement manqué (VM éteinte) au démarrage suivant
+Persistent=true
+Unit=asemon-samples-maintenance.service
+
+[Install]
+WantedBy=timers.target

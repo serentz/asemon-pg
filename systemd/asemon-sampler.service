@@ -1,0 +1,20 @@
+[Unit]
+Description=ASEMON-PG Echantillonneur de sessions actives (snap_samples)
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+# À installer sur VM-Cible, à côté de asemon-collector. L'intervalle se règle
+# dans /opt/asemon/app/config.py (SAMPLE_INTERVAL), puis : systemctl restart asemon-sampler
+Type=simple
+User=admin01
+WorkingDirectory=/opt/asemon/app
+ExecStart=/opt/asemon/venv/bin/python3 /opt/asemon/app/sampler.py
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=asemon-sampler
+
+[Install]
+WantedBy=multi-user.target
