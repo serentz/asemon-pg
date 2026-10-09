@@ -169,7 +169,7 @@
     {
       "id": 3,
       "type": "stat",
-      "title": "Temps actif (total)",
+      "title": "Temps actif",
       "gridPos": {
         "h": 4,
         "w": 4,
@@ -419,7 +419,7 @@
       "fieldConfig": {
         "defaults": {
           "unit": "short",
-          "decimals": 1,
+          "decimals": 0,
           "color": {
             "mode": "fixed",
             "fixedColor": "orange"
@@ -478,7 +478,7 @@
       "fieldConfig": {
         "defaults": {
           "unit": "short",
-          "decimals": 1,
+          "decimals": 0,
           "color": {
             "mode": "fixed",
             "fixedColor": "orange"
@@ -675,6 +675,10 @@
                     "url": "/d/asemon-query?var-query_id=${__value.raw}&${__url_time_range}"
                   }
                 ]
+              },
+              {
+                "id": "custom.width",
+                "value": 200
               }
             ]
           },
@@ -793,6 +797,10 @@
                     "url": "/d/asemon-query?var-query_id=${__value.raw}&${__url_time_range}"
                   }
                 ]
+              },
+              {
+                "id": "custom.width",
+                "value": 200
               }
             ]
           }

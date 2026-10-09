@@ -144,7 +144,7 @@
     {
       "id": 3,
       "type": "stat",
-      "title": "Temps actif (période)",
+      "title": "Temps actif",
       "gridPos": {
         "h": 4,
         "w": 4,
@@ -380,7 +380,7 @@
     {
       "id": 7,
       "type": "stat",
-      "title": "Appels (cumul serveur)",
+      "title": "Appels",
       "gridPos": {
         "h": 4,
         "w": 4,
@@ -394,7 +394,7 @@
       "fieldConfig": {
         "defaults": {
           "unit": "short",
-          "decimals": 1,
+          "decimals": 0,
           "color": {
             "mode": "fixed",
             "fixedColor": "orange"
@@ -439,7 +439,7 @@
     {
       "id": 8,
       "type": "stat",
-      "title": "Temps moyen (cumul serveur)",
+      "title": "Temps moyen",
       "gridPos": {
         "h": 4,
         "w": 4,
@@ -453,7 +453,7 @@
       "fieldConfig": {
         "defaults": {
           "unit": "ms",
-          "decimals": 1,
+          "decimals": 3,
           "color": {
             "mode": "fixed",
             "fixedColor": "orange"
@@ -648,6 +648,10 @@
                     "url": "/d/asemon-session?var-session_key=${__value.raw}&${__url_time_range}"
                   }
                 ]
+              },
+              {
+                "id": "custom.width",
+                "value": 200
               }
             ]
           },
@@ -766,6 +770,10 @@
                     "url": "/d/asemon-session?var-session_key=${__value.raw}&${__url_time_range}"
                   }
                 ]
+              },
+              {
+                "id": "custom.width",
+                "value": 200
               }
             ]
           }

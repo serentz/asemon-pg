@@ -186,6 +186,10 @@
                     "url": "/d/asemon-session?var-session_key=${__value.raw}&${__url_time_range}"
                   }
                 ]
+              },
+              {
+                "id": "custom.width",
+                "value": 200
               }
             ]
           }
@@ -304,6 +308,10 @@
                     "url": "/d/asemon-query?var-query_id=${__value.raw}&${__url_time_range}"
                   }
                 ]
+              },
+              {
+                "id": "custom.width",
+                "value": 200
               }
             ]
           }

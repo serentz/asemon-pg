@@ -2,7 +2,7 @@
 
 > Troisième page de l'IHM cible (`06-roadmap-ihm.md` §2) : les 10 sessions et les 10 requêtes qui ont le plus travaillé, avec un clic vers le détail de la session (toutes ses exécutions) ou de la requête (texte, sessions qui l'ont exécutée, plans). La boucle est fermée : session → requête → sessions, et retour.
 >
-> **Statut : écrit, requêtes SQL testées en local (PostgreSQL 16), mise en page et déploiement pas encore faits.**
+> **Statut : déployé et validé (2026-10-09) : lien plan / requête, trois dashboards, navigation session ↔ requête dans les deux sens, test avec `pgbench`.**
 
 Fichiers :
 - `grafana/asemon-micro.json` (uid `asemon-micro`), `grafana/asemon-session.json` (uid `asemon-session`), `grafana/asemon-query.json` (uid `asemon-query`)
@@ -25,7 +25,7 @@ Dépend de `snap_samples` (doc `09`), `snap_sessions` (doc `07`) et `snap_statem
 Identité (login, programme, base, adresse, connexion, déconnexion), six compteurs (temps actif, CPU, I/O, verrous, exécutions, requêtes distinctes), graphique de charge par type d'attente, **une ligne par exécution relevée** (début, fin approximative, coûts, requête), plans et deadlocks de la session.
 
 ### Détail d'une requête
-Texte SQL, temps actif sur la période et sa répartition, appels et temps moyen (pg_stat_statements), graphique de charge, évolution du temps moyen, **sessions qui l'ont exécutée** (clic : retour au détail de session), plans capturés.
+Texte SQL, temps actif sur la période et sa répartition, appels et temps moyen (cumul `pg_stat_statements` depuis le dernier reset des statistiques, donc pas limités à la période), graphique de charge, évolution du temps moyen, **sessions qui l'ont exécutée** (clic : retour au détail de session), plans capturés.
 
 ### Navigation
 Les deux pages de détail s'ouvrent depuis les tableaux de la page micro, en conservant la période. Elles sont pilotées par les variables `session_key` et `query_id` (champs texte en haut) : on peut aussi les coller à la main.
@@ -131,11 +131,11 @@ Puis dans Grafana, page **Micro** (30 s plus tard) :
 
 ## 6. Checklist de validation
 
-- [ ] `10-plans-query-id.sql` exécuté sur VM-Monitoring, colonne `query_id` présente
-- [ ] `log_parser.py` déployé, service `asemon-logparser` actif
-- [ ] Un plan récent a un `query_id` non nul, relié à des échantillons
-- [ ] Trois dashboards importés, aucune erreur de panneau
-- [ ] Test `demo-micro` : visible dans le top 10 sessions et requêtes
-- [ ] Navigation session ↔ requête dans les deux sens
-- [ ] « Trier par » modifie le classement
-- [ ] Liens « Micro » présents sur Macro et Intermédiaire
+- [x] `10-plans-query-id.sql` exécuté sur VM-Monitoring, colonne `query_id` présente
+- [x] `log_parser.py` déployé, service `asemon-logparser` actif
+- [x] Un plan récent a un `query_id` non nul, relié à des échantillons
+- [x] Trois dashboards importés, aucune erreur de panneau
+- [x] Test `demo-micro` : visible dans le top 10 sessions et requêtes
+- [x] Navigation session ↔ requête dans les deux sens
+- [x] « Trier par » modifie le classement
+- [x] Liens « Micro » présents sur Macro et Intermédiaire
