@@ -13,7 +13,7 @@
 -- concernée. snap_hourly_summary n'est jamais purgée (une ligne par heure).
 --
 -- PARAMÈTRES (table asemon.settings) :
---   snapshot_retention_days  snapshots bruts (snap_*)            défaut 30
+--   snapshot_retention_days  snapshots bruts (snap_*, snap_kcache) défaut 30
 --   event_retention_days     événements (deadlocks, plans)        défaut 90
 --   session_retention_days   snap_sessions (sessions terminées)   défaut 90
 --   Une valeur <= 0 désactive la purge du groupe (conservation illimitée).
@@ -56,6 +56,13 @@ BEGIN
             GET DIAGNOSTICS n = ROW_COUNT;
             v_out := v_out || format('%s=%s ', t, n);
         END LOOP;
+        -- snap_kcache (Phase 3) : horodatée par sampled_at, absente tant que
+        -- 11-schema-kcache.sql n'est pas déployé.
+        IF to_regclass('asemon.snap_kcache') IS NOT NULL THEN
+            DELETE FROM asemon.snap_kcache WHERE sampled_at < v_cut;
+            GET DIAGNOSTICS n = ROW_COUNT;
+            v_out := v_out || format('snap_kcache=%s ', n);
+        END IF;
     ELSE
         v_out := v_out || 'snapshots=illimité ';
     END IF;
