@@ -2,7 +2,7 @@
 
 > Jusqu'ici, les coûts affichés (pages 2 et 3) étaient du **temps actif échantillonné** : une approximation. `pg_stat_kcache` mesure, pour chaque requête, le **temps CPU réellement consommé** et les **octets réellement lus et écrits sur le disque**, à partir des compteurs du noyau (`getrusage`). Le collecteur lit ces compteurs à chaque cycle et stocke les écarts.
 >
-> **Statut : extension installée et validée sur VM-Cible (2026-10-09). Collecte déployée et validée sur les VM (2026-10-09) : totaux exacts conservés par l'attribution (CPU 11 787 ms contre 11 786 ms ; écritures 161 Mo contre 162 Mo). Les dashboards ne sont pas encore modifiés.**
+> **Statut : extension installée et validée sur VM-Cible (2026-10-09). Collecte déployée et validée sur les VM (2026-10-09) : totaux exacts conservés par l'attribution (CPU 11 787 ms contre 11 786 ms ; écritures 161 Mo contre 162 Mo). Dashboards pages 2 et 3 et détails mis à jour et validés (§8).**
 
 Fichiers :
 - `python/collector.py` : lecture de `pg_stat_kcache()`, calcul des écarts, écriture dans `snap_kcache` (VM-Cible)
@@ -192,8 +192,9 @@ Rappels : les lectures disque restent à 0 tant que les données tiennent dans l
 ## 9. Checklist de validation
 
 - [x] `postgresql-17-pg-stat-kcache` installé, `shared_preload_libraries` correct, extension créée, serveur en ligne
-- [ ] `11-schema-kcache.sql` et `09-retention.sql` exécutés sur VM-Monitoring, sans erreur
-- [ ] `collector.py` déployé, `kcache=N` visible dans le journal
-- [ ] Test `pgbench` : `snap_kcache` rempli, requêtes `pgbench` en tête du CPU
-- [ ] `kcache_attr()` répartit le CPU par login et par programme
+- [x] `11-schema-kcache.sql` et `09-retention.sql` exécutés sur VM-Monitoring, sans erreur
+- [x] `collector.py` déployé, `kcache=N` visible dans le journal
+- [x] Test `pgbench` : `snap_kcache` rempli, requêtes `pgbench` en tête du CPU
+- [x] `kcache_attr()` répartit le CPU par login et par programme
 - [ ] Volume relevé après une journée
+- [x] Dashboards réimportés et validés
