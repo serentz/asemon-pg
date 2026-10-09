@@ -53,6 +53,8 @@ Toutes les captures de la version 2 : [images/Release_2](images/Release_2/README
 | 3 | CPU et disque réels par requête (`pg_stat_kcache`) | Fait, validé (I/O réseau non mesurable) |
 | 4 | Dashboards Grafana : macro, intermédiaire, micro, détails session et requête | Fait, validé |
 
+**Prochaines releases** (conception, rien de réalisé) : multi-instance, seuils et page instance (Release 3) ; réplication (Release 4). Voir [docs/16-roadmap-releases-3-4.md](docs/16-roadmap-releases-3-4.md).
+
 Suites possibles : alertes Grafana, mesure du volume réel après plusieurs jours, ajustement des durées de rétention. Réflexion et historique des choix : [docs/06-roadmap-ihm.md](docs/06-roadmap-ihm.md).
 
 ## Contenu du dépôt
