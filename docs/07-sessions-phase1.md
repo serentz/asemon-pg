@@ -119,7 +119,8 @@ Jointure avec l'activité (le collecteur doit voir la session pendant le `pg_sle
 sudo -u postgres psql -d monitoring -c "SELECT a.pid, a.application_name, a.session_key, s.connected_at FROM asemon.snap_activity a LEFT JOIN asemon.snap_sessions s USING (session_key) WHERE a.collected_at > now() - interval '2 minutes' ORDER BY a.collected_at DESC LIMIT 10;"
 ```
 
-Deadlock rattaché à sa session : rejouer le test de `03-VM-Cible-parseur-systemd.md` §5, puis
+Deadlock rattaché à sa session : rejouer le test de `03-VM-Cible-parseur-systemd.md` §5, puis contrôler que `session_key` **et** `involved_tables` sont renseignés (`{test_a,test_b}`). Un `involved_tables` vide signale que la regex `DEADLOCK_PROC_RE` ne reconnaît pas la langue du serveur : l'ancienne version ne lisait que le français (`Processus 123 :`) et perdait les tables dès que `lc_messages = 'C'` (`Process 123:`) ; corrigé en `Process(?:us)?`.
+
 ```bash
 sudo -u postgres psql -d monitoring -c "SELECT occurred_at, session_key, involved_tables FROM asemon.event_deadlocks ORDER BY occurred_at DESC LIMIT 3;"
 ```

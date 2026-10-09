@@ -47,8 +47,10 @@ POLL_INTERVAL = 5
 # Extraction des lignes "Processus <pid> : <requête>" dans le détail du
 # deadlock. Le texte est produit par PostgreSQL dans la langue du serveur
 # (lc_messages) — le format observé en français est "Processus 123 : ..."
-# et en anglais "Process 123: ...". Le "s?" couvre les deux variantes.
-DEADLOCK_PROC_RE = re.compile(r"Processus?\s+(\d+)\s*:\s*(.+?)(?=\n(?:Processus?)\s+\d+\s*:|\Z)", re.DOTALL)
+# et en anglais "Process 123: ...". "Process(?:us)?" couvre les deux variantes
+# (attention : l'ancien "Processus?" ne reconnaissait QUE le français, car il
+# se lit "Processu" + "s" facultatif).
+DEADLOCK_PROC_RE = re.compile(r"Process(?:us)?\s+(\d+)\s*:\s*(.+?)(?=\n(?:Process(?:us)?)\s+\d+\s*:|\Z)", re.DOTALL)
 TABLE_RE = re.compile(r'\b(?:FROM|UPDATE|INTO|JOIN)\s+"?([A-Za-z_][A-Za-z0-9_\.]*)"?', re.IGNORECASE)
 PLAN_RE = re.compile(r"duration:\s*([\d.]+)\s*ms\s*plan:\s*(\{.*\})", re.DOTALL)
 
