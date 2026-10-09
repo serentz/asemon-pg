@@ -132,6 +132,11 @@ sudo -u postgres psql -d monitoring -c "SELECT occurred_at, session_key, involve
 - **Sessions manquées** : le parseur démarre en fin de fichier. Les connexions survenues pendant un arrêt du parseur ne sont pas enregistrées. Une déconnexion dont la connexion n'a pas été vue crée quand même la ligne complète (début déduit du `session_id`).
 - **Sessions ouvertes avant l'activation des logs** : elles n'ont pas de ligne de connexion ; `snap_activity` les voit (avec `session_key`) mais `snap_sessions` ne les connaît qu'à leur déconnexion.
 - **Historique** : les lignes déjà présentes dans `snap_activity`, `event_plans` et `event_deadlocks` gardent `session_key` à `NULL`. Un rattrapage optionnel pour `snap_activity` est fourni (commenté) à la fin de la partie 2 de `05-schema-sessions.sql`.
+- **Texte des requêtes dans `event_plans`** : `auto_explain` masque le champ `statement` du jsonlog ; le parseur lisait donc une valeur toujours vide. Il lit désormais `"Query Text"` dans le plan. Rattrapage de l'historique (les plans déjà stockés contiennent ce texte), à lancer une fois sur VM-Monitoring :
+  ```sql
+  UPDATE asemon.event_plans SET query = plan->>'Query Text'
+   WHERE (query IS NULL OR query = '') AND plan ? 'Query Text';
+  ```
 - **Connexions de réplication** (`replication connection authorized:`) : ignorées pour l'instant.
 - **Précision** : `connected_at` est à la seconde (limite du `session_id`), `disconnected_at` à la milliseconde.
 - **Droits** : `collector_writer` n'a que `INSERT`, `UPDATE` sur 4 colonnes et `SELECT (session_key)` sur `snap_sessions`. L'`upsert` du parseur est écrit en conséquence : il n'utilise pas `EXCLUDED.disconnected_at` (qui exigerait le droit de lecture sur la colonne). Vérifié avec le rôle réel sur PostgreSQL 16.
