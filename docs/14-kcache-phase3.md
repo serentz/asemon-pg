@@ -155,7 +155,11 @@ Intervalle de lecture : c'est celui du collecteur (`INTERVAL`, 15 s dans `config
 
 ## 6. Volume
 
-Une ligne par requête **ayant consommé quelque chose** pendant le cycle (pas une ligne par requête connue) : de quelques lignes (base au repos) à quelques dizaines (charge). Environ 100 octets par ligne : de l'ordre de 5 à 20 Mo par jour sous charge continue, nettement moins au repos, purgés après 30 jours. À mesurer après une journée :
+Une ligne par requête **ayant consommé quelque chose** pendant le cycle (pas une ligne par requête connue).
+
+**Mesuré le 2026-10-09** (51 minutes, dont quelques minutes de `pgbench`) : 2 343 lignes pour 560 ko index compris, soit **environ 240 octets par ligne**. Même **au repos**, le collecteur écrit environ **12 lignes par cycle** : ses propres requêtes sont comptées par `pg_stat_kcache`, et elles consomment un peu de CPU à chaque cycle. À 15 s par cycle : environ 69 000 lignes et **16 Mo par jour**, soit environ **500 Mo** avec les 30 jours de rétention par défaut. Sous charge, quelques dizaines de lignes par cycle s'ajoutent.
+
+À mesurer sur une période plus longue :
 
 ```sql
 SELECT pg_size_pretty(pg_total_relation_size('asemon.snap_kcache')), count(*) FROM asemon.snap_kcache;

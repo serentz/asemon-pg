@@ -29,6 +29,25 @@ Règles de la purge :
 
 ---
 
+## 1 bis. Volume mesuré : `snap_statements` domine
+
+Mesures du 2026-10-09 sur VM-Monitoring (collecte irrégulière sur 14 jours, environ 8 heures de collecte réelle) :
+
+| Table | Mesure | Estimation en collecte continue (cycle de 15 s) |
+|---|---|---|
+| `snap_statements` | 200 525 lignes, 73 Mo, soit environ **365 octets par ligne** (texte SQL de 211 octets en moyenne) | 100 lignes par cycle, donc 576 000 lignes et **environ 210 Mo par jour**, soit **environ 6 Go pour 30 jours** |
+| `snap_kcache` | 2 343 lignes, 560 ko (240 octets par ligne) | environ 16 Mo par jour, 500 Mo pour 30 jours |
+| `snap_samples` | 614 lignes, 168 ko | dépend de la charge (voir `09`) |
+| autres `snap_*` | quelques ko à quelques Mo | faible |
+
+**Conséquence** : `snap_statements` représente l'essentiel de l'espace. Le collecteur y écrit les 100 requêtes les plus coûteuses **à chaque cycle**, avec leur texte, même si rien n'a changé depuis le cycle précédent. Avec la rétention par défaut (30 jours), compter **environ 6,5 Go** sur VM-Monitoring pour l'ensemble.
+
+Leviers :
+- **Réduire la rétention** (immédiat, sans code) : `snapshot_retention_days` à 7 ramène l'ensemble à environ 1,5 Go (voir §2). Elle s'applique à toutes les tables `snap_*` ; les graphiques de tendance en dehors des 7 derniers jours n'auront plus de données brutes (le résumé horaire, lui, reste).
+- **Piste d'évolution, non réalisée** : n'écrire que les requêtes dont les compteurs ont changé (ou ne stocker le texte qu'une fois). À étudier avec soin avant de la faire : les panneaux « état courant » du dashboard d'origine lisent le dernier snapshot complet.
+
+---
+
 ## 2. Modifier les durées
 
 Sur **VM-Monitoring** :
