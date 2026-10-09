@@ -2,7 +2,7 @@
 
 > Jusqu'ici, les coûts affichés (pages 2 et 3) étaient du **temps actif échantillonné** : une approximation. `pg_stat_kcache` mesure, pour chaque requête, le **temps CPU réellement consommé** et les **octets réellement lus et écrits sur le disque**, à partir des compteurs du noyau (`getrusage`). Le collecteur lit ces compteurs à chaque cycle et stocke les écarts.
 >
-> **Statut : extension installée et validée sur VM-Cible (2026-10-09). Collecte écrite et testée en local (PostgreSQL 16, avec une fausse `pg_stat_kcache()` au schéma relevé sur VM-Cible), à déployer. Les dashboards ne sont pas encore modifiés.**
+> **Statut : extension installée et validée sur VM-Cible (2026-10-09). Collecte déployée et validée sur les VM (2026-10-09) : totaux exacts conservés par l'attribution (CPU 11 787 ms contre 11 786 ms ; écritures 161 Mo contre 162 Mo). Les dashboards ne sont pas encore modifiés.**
 
 Fichiers :
 - `python/collector.py` : lecture de `pg_stat_kcache()`, calcul des écarts, écriture dans `snap_kcache` (VM-Cible)
