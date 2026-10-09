@@ -52,9 +52,15 @@ Le collecteur lit des **fichiers et des mesures locales** (journaux PostgreSQL, 
 - **VM-Monitoring devient aussi une instance supervisée** : on y installe les trois services, qui écrivent dans la base locale. Ses propres sessions (collecteurs, Grafana) restent exclues des dashboards comme aujourd'hui (`is_internal`), à étendre au rôle `grafana_ro`.
 - `scripts/install-target.sh` reçoit `INSTANCE_NAME` ; `install-monitoring.sh` appelle la même installation d'agent en local.
 
-### 3.3 Volume : à traiter dans cette release
+### 3.3 Volume et index (point d'attention : performances)
 
-`snap_statements` pèse déjà environ **6 Go pour 30 jours et une instance** (`10-retention.md`, section « Volume mesuré »). Avec N instances, c'est N fois plus. **Ne n'écrire que les requêtes dont les compteurs ont changé** devient nécessaire. Les panneaux « état courant » du dashboard d'origine, qui lisent le dernier snapshot complet, sont à adapter dans la même release.
+Une grosse `snap_statements` est normale pour ce type de table (environ 6 Go pour 30 jours et une instance, `10-retention.md`) : **la taille n'est pas un problème en soi, on ne change pas la collecte** (décision du 2026-10-09). Ce qui compte, c'est la **performance** :
+
+- Avec plusieurs instances, **chaque index doit commencer par `instance_id`** (par exemple `(instance_id, collected_at)` à la place de `(collected_at)`), puisque toutes les requêtes des dashboards filtrent d'abord sur l'instance puis sur la période. Un index sur le temps seul obligerait à parcourir les lignes de toutes les instances.
+- Chaque index ajouté **ralentit les écritures** : le collecteur insère 100 lignes par cycle dans `snap_statements`, par instance. On garde le strict nécessaire, on mesure avant et après avec `EXPLAIN (ANALYZE, BUFFERS)` sur les requêtes des dashboards, et on ne conserve que les index réellement utilisés (`pg_stat_user_indexes`, `idx_scan`).
+- Les requêtes « dernier snapshot par requête » (texte SQL, appels, temps moyen) sont les plus coûteuses sur cette table : à vérifier en priorité, avec un index `(instance_id, queryid, collected_at DESC)`.
+- La création des index sur des tables déjà grosses se fait hors des heures de collecte (`CREATE INDEX CONCURRENTLY`), et le script de migration doit être rejouable.
+- La rétention (`purge_old_data()`) supprime par `DELETE` sur ces tables : le coût d'une purge croît avec le volume ; à mesurer, et à passer en partitionnement par jour (comme `snap_samples`) si elle devient trop longue.
 
 ### 3.4 Seuils
 
@@ -100,7 +106,7 @@ Les dashboards Grafana sont en lecture seule et un tableau Grafana n'est pas éd
 
 | Étape | Contenu |
 |---|---|
-| 3a | `instances`, `instance_id` partout, agent paramétré par `INSTANCE_NAME`, migration des données existantes, `snap_statements` allégé |
+| 3a | `instances`, `instance_id` partout, **index revus** (§3.3), agent paramétré par `INSTANCE_NAME`, migration des données existantes |
 | 3b | Dashboards existants filtrés par instance (variable, liens, requêtes) ; supervision de VM-Monitoring |
 | 3c | `kpi_thresholds`, `kpi_values`, `v_instance_status`, page de modification |
 | 3d | Niveau zéro (parc) et page instance (3 heures) |
@@ -128,7 +134,7 @@ Point d'attention : une réplique est en lecture seule ; l'agent y lit les vues 
 - **Installation scriptée** : `INSTANCE_NAME`, enregistrement de l'instance, installation d'agent sur VM-Monitoring ; nouveau rôle d'écriture des seuils ; VM-Replica (Release 4).
 - **Rétention** : `purge_old_data()` à écrire par instance ; durées globales au départ.
 - **Documentation** : une fiche par étape (comme `07` à `14`), mise à jour de `00-architecture.md`.
-- **Tests** : deux instances au minimum (VM-Cible et VM-Monitoring) ; trois avec la réplique. Les VM du POC actuel sont voués à être détruits : **il faudra des VM neuves**, ce qui fera aussi office d'essai des scripts d'installation (`15-installation-scriptee.md` §7).
+- **Tests** : deux instances au minimum (VM-Cible et VM-Monitoring, **les VM actuelles, conservées jusqu'à la fin du projet**) ; trois avec la réplique (Release 4, VM à créer). Les scripts d'installation (`15-installation-scriptee.md` §7) seront essayés sur des VM neuves à la fin.
 
 ---
 
@@ -139,5 +145,6 @@ Point d'attention : une réplique est en lecture seule ; l'agent y lit les vues 
 | 1 | Où modifie-t-on les seuils ? | **Plugin de formulaire Grafana** (§3.6) |
 | 2 | « Valeur de blocage maximale » | **Durée maximale d'attente d'une session sur un verrou dans l'heure** (échantillons de 2 s), avec le nombre maximal de sessions bloquées en même temps en complément |
 | 3 | « Maximum de transactions actives » | **Nombre maximal de sessions ayant une transaction ouverte au même instant**, y compris `idle in transaction` |
-| 4 | Valeurs par défaut des seuils | **À fixer** (proposition : CPU 80 % / 95 %, disque libre 20 % / 10 %, blocage 30 s / 120 s, transaction la plus longue 300 s / 1 800 s, deadlocks 1 / 5 par heure) ; modifiables ensuite dans la page |
-| 5 | VM disponibles pour la suite | **À confirmer** : deux VM neuves pour la Release 3, une troisième pour la Release 4 |
+| 4 | Valeurs par défaut des seuils | **Validées** : CPU 80 % / 95 %, disque libre 20 % / 10 %, blocage 30 s / 120 s, transaction la plus longue 300 s / 1 800 s, deadlocks 1 / 5 par heure (avertissement / alarme) ; modifiables ensuite dans la page |
+| 5 | VM disponibles pour la suite | **Release 3 : les deux VM actuelles** (VM-Cible, VM-Monitoring), toujours en service. **Release 4 : une troisième VM à créer** (réplique) |
+| 6 | Taille de `snap_statements` | Normale, **pas de changement de collecte** ; vigilance sur les index (§3.3) |
