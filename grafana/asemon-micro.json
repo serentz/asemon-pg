@@ -33,7 +33,7 @@
   ],
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 2,
+  "version": 3,
   "refresh": "30s",
   "time": {
     "from": "now-6h",
@@ -384,6 +384,22 @@
               {
                 "id": "unit",
                 "value": "bytes"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Requête"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 1500
+              },
+              {
+                "id": "custom.inspect",
+                "value": true
               }
             ]
           }

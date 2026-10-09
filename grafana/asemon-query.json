@@ -34,7 +34,7 @@
   ],
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 2,
+  "version": 3,
   "refresh": "30s",
   "time": {
     "from": "now-6h",
@@ -122,7 +122,24 @@
             "align": "auto"
           }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Requête"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 3000
+              },
+              {
+                "id": "custom.inspect",
+                "value": true
+              }
+            ]
+          }
+        ]
       },
       "options": {
         "showHeader": true,
@@ -954,6 +971,22 @@
               {
                 "id": "custom.width",
                 "value": 200
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Plan"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 8000
+              },
+              {
+                "id": "custom.inspect",
+                "value": true
               }
             ]
           }

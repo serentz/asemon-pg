@@ -139,3 +139,9 @@ Puis dans Grafana, page **Micro** (30 s plus tard) :
 - [x] Navigation session ↔ requête dans les deux sens
 - [x] « Trier par » modifie le classement
 - [x] Liens « Micro » présents sur Macro et Intermédiaire
+
+---
+
+## 7. Lire un texte long (plan, requête)
+
+Les colonnes « Plan » et « Requête » sont plus larges que le panneau : une **barre de défilement horizontale** apparaît en bas du tableau. Pour lire un texte en entier, on peut aussi survoler la cellule et cliquer sur l'icône « Inspecter la valeur » (affichage complet dans une fenêtre).
