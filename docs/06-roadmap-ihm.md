@@ -1,6 +1,6 @@
 # ASEMON-PG — Réflexion IHM et roadmap (session / requête)
 
-> Ce document est une **réflexion d'architecture et une feuille de route**, pas une fiche d'installation comme les précédentes. Il formalise la vision cible de l'interface (navigation du général vers la requête SQL, en passant par la session) et liste ce qui doit changer dans le collecteur et le schéma pour la rendre possible. Rien ici n'est encore déployé — ce document sert de point de départ pour la prochaine itération du POC.
+> Ce document est une **réflexion d'architecture et une feuille de route**, pas une fiche d'installation comme les précédentes. Il formalise la vision cible de l'interface (navigation du général vers la requête SQL, en passant par la session) et liste ce qui doit changer dans le collecteur et le schéma pour la rendre possible. Au départ, rien de ce qui est décrit ici n'était déployé. Les phases 1 à 4 sont maintenant réalisées (voir le tableau du §5) ; ce document est conservé comme **historique des choix**. Pour l'état actuel, voir `README.md` et `00-architecture.md`.
 
 ## 1. Principe directeur
 
@@ -84,7 +84,7 @@ Le collecteur actuel (`python/collector.py`) fonctionne par **snapshots périodi
 Il manque une **clé de session stable** traversant les tables, pour permettre les jointures nécessaires au drill-down (macro → session → requête). Proposition détaillée dans `sql/05-schema-sessions.sql` (non déployé, à relire et adapter avant exécution) :
 
 - `asemon.snap_sessions` : une ligne par session, alimentée par le parsing des logs de connexion/déconnexion (`log_parser.py` étendu).
-- `asemon.snap_query_exec` : une ligne par exécution de requête détectée par échantillonnage (approche A), avec `session_key` et `query_id` en clé étrangère logique.
+- `asemon.snap_query_exec` : une ligne par exécution de requête détectée par échantillonnage (approche A). **Finalement non créée** : une exécution se déduit de `snap_samples` (`session_key`, `query_start`), ce que montrent les dashboards de détail.
 - Ajout de la colonne `session_key` dans `snap_activity`, `event_plans`, `event_deadlocks`, pour pouvoir reconstituer "quelles requêtes/plans/deadlocks appartiennent à quelle session". **Définition retenue** : le `session_id` natif de PostgreSQL (`<epoch hexa>.<pid hexa>`, ex. `6ac8acf0.9bd`), présent dans chaque ligne du jsonlog et reconstructible depuis `pg_stat_activity` — la formule initiale `pid || '-' || extract(epoch from backend_start)` ne pouvait pas être reproduite côté logs (secondes entières seulement). Voir `07-sessions-phase1.md`.
 - Table de rollup `asemon.snap_hourly_summary`, pré-calculée (vue matérialisée ou job planifié), pour que la page 1 n'ait jamais à agréger les snapshots bruts à la volée.
 

@@ -4,13 +4,23 @@
 -- Usage : sudo -u postgres psql -d monitoring -f 02-roles-and-grants.sql
 --
 -- ATTENTION : remplacer les mots de passe avant exécution en environnement réel.
+-- Le script est rejouable : un rôle déjà présent est conservé tel quel (son mot
+-- de passe n'est PAS modifié). Pour changer un mot de passe :
+--   ALTER USER collector_writer WITH PASSWORD '...';
 -- ============================================================
 
--- Rôle utilisé par le collecteur (tourne sur VM-Cible) pour écrire les snapshots
-CREATE USER collector_writer WITH PASSWORD 'CHANGEME_collector';
-
--- Rôle utilisé par Grafana en lecture seule
-CREATE USER grafana_ro WITH PASSWORD 'CHANGEME_grafana';
+DO $$
+BEGIN
+    -- Rôle utilisé par le collecteur (tourne sur VM-Cible) pour écrire les snapshots
+    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'collector_writer') THEN
+        CREATE USER collector_writer WITH PASSWORD 'CHANGEME_collector';
+    END IF;
+    -- Rôle utilisé par Grafana en lecture seule
+    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'grafana_ro') THEN
+        CREATE USER grafana_ro WITH PASSWORD 'CHANGEME_grafana';
+    END IF;
+END
+$$;
 
 -- Droits sur le schéma
 GRANT USAGE ON SCHEMA asemon TO collector_writer;

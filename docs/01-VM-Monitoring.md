@@ -175,6 +175,8 @@ sudo systemctl restart postgresql@17-main
 
 ## 4. Base repository et rôles
 
+> **Procédure à ne pas cumuler avec `01-VM-Monitoring-repository-grafana.md` §2-3** : les deux créent la base et les rôles. Cette fiche donne le principe ; la procédure suivie par le POC est celle des scripts `sql/01` et `sql/02` (rejouables), et `docs/15-installation-scriptee.md` enchaîne tout automatiquement.
+
 ```bash
 sudo -u postgres psql <<'EOF'
 CREATE DATABASE monitoring;

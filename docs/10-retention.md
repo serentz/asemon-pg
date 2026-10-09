@@ -14,7 +14,7 @@ Fichiers concernés :
 
 | Groupe | Tables | Paramètre (`asemon.settings`) | Défaut |
 |---|---|---|---|
-| Snapshots bruts | `snap_activity`, `snap_locks`, `snap_io`, `snap_os`, `snap_statements`, `snap_tables`, `snap_indexes`, `snap_checkpoints`, `snap_wal`, `snap_db_age`, `snap_connections` | `snapshot_retention_days` | 30 jours |
+| Snapshots bruts | `snap_activity`, `snap_locks`, `snap_io`, `snap_os`, `snap_statements`, `snap_tables`, `snap_indexes`, `snap_checkpoints`, `snap_wal`, `snap_db_age`, `snap_connections`, `snap_kcache` | `snapshot_retention_days` | 30 jours |
 | Événements | `event_deadlocks`, `event_plans` | `event_retention_days` | 90 jours |
 | Sessions | `snap_sessions` | `session_retention_days` | 90 jours |
 | Échantillons | `snap_samples` | `sample_retention_days` (doc `09`) | 14 jours |

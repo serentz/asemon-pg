@@ -133,6 +133,8 @@ auto_explain.log_nested_statements = on
 
 > `shared_preload_libraries` nécessite un **redémarrage complet** du service (pas un simple `reload`).
 
+> **À compléter pour la suite du projet** (ajoutés par les phases 1 et 3, voir `07-sessions-phase1.md` et `14-kcache-phase3.md`) : `log_connections = on`, `log_disconnections = on`, `lc_messages = 'C'`, **`log_timezone = 'UTC'`** (le parseur lit les horodatages en UTC ; avec un fuseau local les lignes de log portent `CEST` et sont mal datées), et `pg_stat_kcache` dans `shared_preload_libraries`. `docs/15-installation-scriptee.md` regroupe tous ces réglages dans un seul fichier `conf.d/asemon.conf`.
+
 ### 3.5 `pg_hba.conf`
 
 ```bash
