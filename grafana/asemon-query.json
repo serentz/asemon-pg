@@ -34,7 +34,7 @@
   ],
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 1,
+  "version": 2,
   "refresh": "30s",
   "time": {
     "from": "now-6h",
@@ -496,6 +496,186 @@
       ]
     },
     {
+      "id": 15,
+      "type": "stat",
+      "title": "CPU mesuré",
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 0,
+        "y": 10
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "${DS_MONITORING}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "decimals": 2,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "orange"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "orange",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "graphMode": "none",
+        "colorMode": "none",
+        "textMode": "value"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${DS_MONITORING}"
+          },
+          "format": "table",
+          "rawSql": "SELECT COALESCE(SUM(cpu_user_ms + cpu_system_ms), 0) / 1000.0 AS \"CPU mesuré\" FROM asemon.snap_kcache WHERE $__timeFilter(sampled_at) AND queryid = ${query_id:sqlstring}::bigint",
+          "rawQuery": true
+        }
+      ],
+      "description": "Coût réel mesuré par pg_stat_kcache sur la période du dashboard. Mesure exacte pour cette requête (tous logins confondus)."
+    },
+    {
+      "id": 16,
+      "type": "stat",
+      "title": "Lu sur disque",
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 8,
+        "y": 10
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "${DS_MONITORING}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "decimals": 1,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "orange"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "orange",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "graphMode": "none",
+        "colorMode": "none",
+        "textMode": "value"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${DS_MONITORING}"
+          },
+          "format": "table",
+          "rawSql": "SELECT COALESCE(SUM(reads_bytes), 0)::float8 AS \"Lu\" FROM asemon.snap_kcache WHERE $__timeFilter(sampled_at) AND queryid = ${query_id:sqlstring}::bigint",
+          "rawQuery": true
+        }
+      ],
+      "description": "Coût réel mesuré par pg_stat_kcache sur la période du dashboard. Mesure exacte pour cette requête (tous logins confondus)."
+    },
+    {
+      "id": 17,
+      "type": "stat",
+      "title": "Écrit sur disque",
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 16,
+        "y": 10
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "${DS_MONITORING}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "decimals": 1,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "orange"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "orange",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "graphMode": "none",
+        "colorMode": "none",
+        "textMode": "value"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${DS_MONITORING}"
+          },
+          "format": "table",
+          "rawSql": "SELECT COALESCE(SUM(writes_bytes), 0)::float8 AS \"Écrit\" FROM asemon.snap_kcache WHERE $__timeFilter(sampled_at) AND queryid = ${query_id:sqlstring}::bigint",
+          "rawQuery": true
+        }
+      ],
+      "description": "Coût réel mesuré par pg_stat_kcache sur la période du dashboard. Mesure exacte pour cette requête (tous logins confondus)."
+    },
+    {
       "id": 9,
       "type": "timeseries",
       "title": "Charge de la requête par type d'attente (par minute)",
@@ -504,7 +684,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 10
+        "y": 14
       },
       "datasource": {
         "type": "postgres",
@@ -563,7 +743,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 10
+        "y": 14
       },
       "datasource": {
         "type": "postgres",
@@ -597,7 +777,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 18
+        "y": 22
       }
     },
     {
@@ -609,7 +789,7 @@
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 19
+        "y": 23
       },
       "datasource": {
         "type": "postgres",
@@ -707,7 +887,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 28
+        "y": 32
       }
     },
     {
@@ -719,7 +899,7 @@
         "h": 10,
         "w": 24,
         "x": 0,
-        "y": 29
+        "y": 33
       },
       "datasource": {
         "type": "postgres",

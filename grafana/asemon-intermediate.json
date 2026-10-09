@@ -33,7 +33,7 @@
   ],
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 2,
+  "version": 3,
   "refresh": "30s",
   "time": {
     "from": "now-6h",
@@ -267,6 +267,254 @@
       ]
     },
     {
+      "id": 17,
+      "type": "row",
+      "title": "Coûts mesurés (pg_stat_kcache) : CPU et disque physique sur la période",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 10
+      }
+    },
+    {
+      "id": 18,
+      "type": "piechart",
+      "title": "CPU mesuré par login",
+      "description": "CPU réellement consommé (user + system, getrusage via pg_stat_kcache). Mesure exacte par login. Sessions de ASEMON-PG exclues.",
+      "gridPos": {
+        "h": 9,
+        "w": 6,
+        "x": 0,
+        "y": 11
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "${DS_MONITORING}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [],
+          "fields": "/^CPU$/",
+          "values": true
+        },
+        "pieType": "pie",
+        "displayLabels": [
+          "percent"
+        ],
+        "tooltip": {
+          "mode": "single",
+          "sort": "desc"
+        },
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "values": [
+            "value",
+            "percent"
+          ]
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${DS_MONITORING}"
+          },
+          "format": "table",
+          "rawSql": "SELECT COALESCE(NULLIF(usename, ''), '(inconnu)') AS \"Login\", SUM(cpu_user_ms + cpu_system_ms) / 1000.0 AS \"CPU\" FROM asemon.snap_kcache WHERE $__timeFilter(sampled_at) AND usename <> 'asemon_collect' GROUP BY 1 HAVING SUM(cpu_user_ms + cpu_system_ms) > 0 ORDER BY 2 DESC",
+          "rawQuery": true
+        }
+      ]
+    },
+    {
+      "id": 19,
+      "type": "piechart",
+      "title": "CPU mesuré par programme",
+      "description": "CPU réel réparti par application_name. Répartition approchée : le coût mesuré par requête est distribué sur les échantillons de session correspondants. « (non attribué) » = requêtes trop courtes pour être vues par l'échantillonnage (le total reste exact).",
+      "gridPos": {
+        "h": 9,
+        "w": 6,
+        "x": 6,
+        "y": 11
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "${DS_MONITORING}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [],
+          "fields": "/^CPU$/",
+          "values": true
+        },
+        "pieType": "pie",
+        "displayLabels": [
+          "percent"
+        ],
+        "tooltip": {
+          "mode": "single",
+          "sort": "desc"
+        },
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "values": [
+            "value",
+            "percent"
+          ]
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${DS_MONITORING}"
+          },
+          "format": "table",
+          "rawSql": "SELECT COALESCE(NULLIF(application_name, ''), CASE WHEN session_key IS NULL THEN '(non attribué)' ELSE '(sans nom)' END) AS \"Programme\", SUM(cpu_ms) / 1000.0 AS \"CPU\" FROM asemon.kcache_attr($__timeFrom(), $__timeTo()) WHERE NOT is_internal GROUP BY 1 HAVING SUM(cpu_ms) > 0 ORDER BY 2 DESC",
+          "rawQuery": true
+        }
+      ]
+    },
+    {
+      "id": 20,
+      "type": "piechart",
+      "title": "I/O disque mesuré par login",
+      "description": "Octets physiquement lus + écrits par les processus du serveur (hors cache OS, hors écritures différées du bgwriter/checkpointer, hors WAL). Mesure exacte par login.",
+      "gridPos": {
+        "h": 9,
+        "w": 6,
+        "x": 12,
+        "y": 11
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "${DS_MONITORING}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [],
+          "fields": "/^Octets$/",
+          "values": true
+        },
+        "pieType": "pie",
+        "displayLabels": [
+          "percent"
+        ],
+        "tooltip": {
+          "mode": "single",
+          "sort": "desc"
+        },
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "values": [
+            "value",
+            "percent"
+          ]
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${DS_MONITORING}"
+          },
+          "format": "table",
+          "rawSql": "SELECT COALESCE(NULLIF(usename, ''), '(inconnu)') AS \"Login\", SUM(reads_bytes + writes_bytes)::float8 AS \"Octets\" FROM asemon.snap_kcache WHERE $__timeFilter(sampled_at) AND usename <> 'asemon_collect' GROUP BY 1 HAVING SUM(reads_bytes + writes_bytes) > 0 ORDER BY 2 DESC",
+          "rawQuery": true
+        }
+      ]
+    },
+    {
+      "id": 21,
+      "type": "piechart",
+      "title": "I/O disque mesuré par programme",
+      "description": "Octets physiques lus + écrits, répartis par application_name (répartition approchée, voir « CPU mesuré par programme »).",
+      "gridPos": {
+        "h": 9,
+        "w": 6,
+        "x": 18,
+        "y": 11
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "${DS_MONITORING}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [],
+          "fields": "/^Octets$/",
+          "values": true
+        },
+        "pieType": "pie",
+        "displayLabels": [
+          "percent"
+        ],
+        "tooltip": {
+          "mode": "single",
+          "sort": "desc"
+        },
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "values": [
+            "value",
+            "percent"
+          ]
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${DS_MONITORING}"
+          },
+          "format": "table",
+          "rawSql": "SELECT COALESCE(NULLIF(application_name, ''), CASE WHEN session_key IS NULL THEN '(non attribué)' ELSE '(sans nom)' END) AS \"Programme\", SUM(reads_bytes + writes_bytes)::float8 AS \"Octets\" FROM asemon.kcache_attr($__timeFrom(), $__timeTo()) WHERE NOT is_internal GROUP BY 1 HAVING SUM(reads_bytes + writes_bytes) > 0 ORDER BY 2 DESC",
+          "rawQuery": true
+        }
+      ]
+    },
+    {
       "id": 5,
       "type": "timeseries",
       "title": "Charge active par type d'attente (sessions actives moyennes par minute)",
@@ -275,7 +523,7 @@
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 10
+        "y": 20
       },
       "datasource": {
         "type": "postgres",
@@ -334,7 +582,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 19
+        "y": 29
       }
     },
     {
@@ -345,7 +593,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 20
+        "y": 30
       },
       "fieldConfig": {
         "defaults": {
@@ -380,7 +628,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 20
+        "y": 30
       },
       "fieldConfig": {
         "defaults": {
@@ -413,7 +661,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 28
+        "y": 38
       },
       "fieldConfig": {
         "defaults": {
@@ -446,7 +694,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 28
+        "y": 38
       },
       "fieldConfig": {
         "defaults": {
@@ -498,7 +746,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 28
+        "y": 38
       },
       "fieldConfig": {
         "defaults": {
@@ -532,7 +780,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 36
+        "y": 46
       }
     },
     {
@@ -543,7 +791,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 37
+        "y": 47
       },
       "fieldConfig": {
         "defaults": {
@@ -577,7 +825,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 45
+        "y": 55
       }
     },
     {
@@ -588,7 +836,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 46
+        "y": 56
       },
       "fieldConfig": {
         "defaults": {
@@ -621,7 +869,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 46
+        "y": 56
       },
       "fieldConfig": {
         "defaults": {

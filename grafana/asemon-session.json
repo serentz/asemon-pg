@@ -34,7 +34,7 @@
   ],
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 1,
+  "version": 2,
   "refresh": "30s",
   "time": {
     "from": "now-6h",
@@ -521,6 +521,186 @@
       ]
     },
     {
+      "id": 15,
+      "type": "stat",
+      "title": "CPU mesuré",
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 0,
+        "y": 9
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "${DS_MONITORING}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "decimals": 2,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "orange"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "orange",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "graphMode": "none",
+        "colorMode": "none",
+        "textMode": "value"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${DS_MONITORING}"
+          },
+          "format": "table",
+          "rawSql": "SELECT COALESCE(SUM(cpu_ms), 0) / 1000.0 AS \"CPU mesuré\" FROM asemon.kcache_attr($__timeFrom(), $__timeTo()) WHERE session_key = ${session_key:sqlstring}",
+          "rawQuery": true
+        }
+      ],
+      "description": "Coût réel mesuré par pg_stat_kcache sur la période du dashboard. Répartition approchée entre les sessions qui exécutent la même requête."
+    },
+    {
+      "id": 16,
+      "type": "stat",
+      "title": "Lu sur disque",
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 8,
+        "y": 9
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "${DS_MONITORING}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "decimals": 1,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "orange"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "orange",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "graphMode": "none",
+        "colorMode": "none",
+        "textMode": "value"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${DS_MONITORING}"
+          },
+          "format": "table",
+          "rawSql": "SELECT COALESCE(SUM(reads_bytes), 0)::float8 AS \"Lu\" FROM asemon.kcache_attr($__timeFrom(), $__timeTo()) WHERE session_key = ${session_key:sqlstring}",
+          "rawQuery": true
+        }
+      ],
+      "description": "Coût réel mesuré par pg_stat_kcache sur la période du dashboard. Répartition approchée entre les sessions qui exécutent la même requête."
+    },
+    {
+      "id": 17,
+      "type": "stat",
+      "title": "Écrit sur disque",
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 16,
+        "y": 9
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "${DS_MONITORING}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "decimals": 1,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "orange"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "orange",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "graphMode": "none",
+        "colorMode": "none",
+        "textMode": "value"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${DS_MONITORING}"
+          },
+          "format": "table",
+          "rawSql": "SELECT COALESCE(SUM(writes_bytes), 0)::float8 AS \"Écrit\" FROM asemon.kcache_attr($__timeFrom(), $__timeTo()) WHERE session_key = ${session_key:sqlstring}",
+          "rawQuery": true
+        }
+      ],
+      "description": "Coût réel mesuré par pg_stat_kcache sur la période du dashboard. Répartition approchée entre les sessions qui exécutent la même requête."
+    },
+    {
       "id": 9,
       "type": "timeseries",
       "title": "Charge de la session par type d'attente (par minute)",
@@ -529,7 +709,7 @@
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 9
+        "y": 13
       },
       "datasource": {
         "type": "postgres",
@@ -588,7 +768,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 16
+        "y": 20
       }
     },
     {
@@ -600,7 +780,7 @@
         "h": 11,
         "w": 24,
         "x": 0,
-        "y": 17
+        "y": 21
       },
       "datasource": {
         "type": "postgres",
@@ -734,7 +914,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 28
+        "y": 32
       }
     },
     {
@@ -746,7 +926,7 @@
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 29
+        "y": 33
       },
       "datasource": {
         "type": "postgres",
@@ -832,7 +1012,7 @@
         "h": 9,
         "w": 12,
         "x": 12,
-        "y": 29
+        "y": 33
       },
       "datasource": {
         "type": "postgres",

@@ -173,11 +173,19 @@ SELECT pg_size_pretty(pg_total_relation_size('asemon.snap_kcache')), count(*) FR
 
 ---
 
-## 8. Suite : dashboards
+## 8. Dashboards (mis à jour)
 
-Les pages 2 et 3 seront modifiées après validation des données :
-- page 2 : camemberts de **CPU réel** et de **lectures disque** par login (exact) et par programme (réparti) ;
-- page 3 : colonnes **CPU réel** et **I/O disque** dans les top 10, et option « Trier par » correspondante ; tuiles de coûts réels dans les détails de session et de requête.
+Aucune modification de la base : il suffit de **réimporter les 4 JSON** (même uid, « Overwrite ») : `asemon-intermediate.json`, `asemon-micro.json`, `asemon-session.json`, `asemon-query.json`.
+
+| Page | Ajout |
+|---|---|
+| Page 2 (intermédiaire) | Rangée « Coûts mesurés » : 4 camemberts : CPU par login (exact), CPU par programme (réparti), I/O disque par login (exact), I/O disque par programme (réparti). Part « (non attribué) » = requêtes trop courtes pour l'échantillonnage. |
+| Page 3, top sessions | Colonnes « CPU mesuré », « Lu », « Écrit » (réparties) |
+| Page 3, top requêtes | Mêmes colonnes (exactes). Les requêtes invisibles à l'échantillonnage y apparaissent, avec un temps actif à 0. |
+| Page 3, « Trier par » | Nouvelles valeurs : CPU mesuré, Lectures disque, Écritures disque |
+| Détail session / requête | Tuiles « CPU mesuré », « Lu sur disque », « Écrit sur disque » (sur la période du dashboard) |
+
+Rappels : les lectures disque restent à 0 tant que les données tiennent dans le cache de l'OS ; ASEMON-PG lui-même est exclu (login `asemon_collect`, programmes `asemon-*`).
 
 ---
 
