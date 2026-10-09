@@ -35,6 +35,14 @@ Preuve de concept de **supervision de PostgreSQL**, inspirée d'ASEMON (supervis
 
 Schémas détaillés (flux, tables, clés, navigation des dashboards) : **[docs/00-architecture.md](docs/00-architecture.md)**.
 
+## Aperçu
+
+| Macro | Intermédiaire | Micro |
+|---|---|---|
+| ![Macro](images/Release_2/01-macro.png) | ![Intermédiaire](images/Release_2/02-intermediaire-repartition.png) | ![Micro](images/Release_2/05-micro-top10.png) |
+
+Toutes les captures de la version 2 : [images/Release_2](images/Release_2/README.md).
+
 ## État d'avancement
 
 | Phase | Contenu | État |
