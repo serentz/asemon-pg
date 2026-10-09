@@ -77,8 +77,10 @@ Il est présent dans **chaque** ligne du jsonlog, donc :
 Copier `05-schema-sessions.sql` sur la VM (par exemple depuis PowerShell : `scp .\sql\05-schema-sessions.sql admin01@192.168.1.28:~/`), puis :
 
 ```bash
-sudo -u postgres psql -d monitoring -f ~/05-schema-sessions.sql
+sudo -u postgres psql -d monitoring < ~/05-schema-sessions.sql
 ```
+
+> La redirection `<` (lue par ton shell) est nécessaire : avec `-f ~/05-schema-sessions.sql`, c'est l'utilisateur `postgres` qui ouvre le fichier, et il n'a pas accès à `/home/admin01` (même piège que dans `03-VM-Cible-parseur-systemd.md` §2).
 
 Le script est idempotent. Vérification (4 lignes attendues) :
 
