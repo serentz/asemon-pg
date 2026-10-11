@@ -52,9 +52,9 @@ Les sessions de ASEMON-PG lui-même (login `asemon_collect`, `application_name` 
 
 | Composant | Fréquence | Source | Tables alimentées |
 |---|---|---|---|
-| `collector.py` | 15 s (`INTERVAL`) | vues `pg_stat_*`, `/proc`, `pg_stat_kcache()` | `snap_os`, `snap_activity`, `snap_locks`, `snap_io`, `snap_statements`, `snap_kcache`, `snap_tables`, `snap_indexes`, `snap_checkpoints`, `snap_wal`, `snap_db_age`, `snap_connections` |
+| `collector.py` | 15 s (`INTERVAL`) | vues `pg_stat_*`, `/proc`, `pg_stat_kcache()` | `snap_os`, `snap_activity`, `snap_locks`, `snap_io`, `snap_statements`, `snap_kcache`, `query_text` (SQL indenté), `snap_tables`, `snap_indexes`, `snap_checkpoints`, `snap_wal`, `snap_db_age`, `snap_connections` |
 | `sampler.py` | 2 s (`SAMPLE_INTERVAL`) | `pg_stat_activity` (sessions actives seulement) | `snap_samples` (partitionnée par jour) |
-| `log_parser.py` | en continu | logs JSON de PostgreSQL | `snap_sessions` (connexion et déconnexion exactes), `event_deadlocks`, `event_plans` |
+| `log_parser.py` | en continu | logs JSON de PostgreSQL | `snap_sessions` (connexion et déconnexion exactes), `event_deadlocks`, `event_plans` (JSON + texte lisible `plan_text`, `plan_hash`, plafond 5 par requête et par heure) |
 | `rollup_hourly()` | 5 min | `snap_*` bruts | `snap_hourly_summary` (une ligne par heure, jamais purgée) |
 | `maintain_samples()` | 1 h | — | crée les partitions à venir de `snap_samples`, supprime les anciennes |
 | `purge_old_data()` | 1 j | — | supprime les anciennes lignes des autres tables |

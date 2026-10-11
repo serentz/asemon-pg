@@ -24,6 +24,7 @@ import logging
 import psutil
 import psycopg
 from config import TARGET_DSN, REPO_DSN, INTERVAL
+from plan_format import format_sql
 
 logging.basicConfig(
     level=logging.INFO,
@@ -467,6 +468,32 @@ def write_snapshots(repo_conn, os_metrics, activity, locks, io, statements,
     repo_conn.commit()
 
 
+_known_queryids = set()    # requêtes déjà présentes dans asemon.query_text (mémoire du processus)
+
+
+def write_query_texts(repo_conn, statements):
+    """v2.1 : texte SQL indenté, une ligne par requête (asemon.query_text).
+    Seules les requêtes encore inconnues sont mises en forme ; au redémarrage du
+    collecteur, les lignes déjà présentes sont ignorées (ON CONFLICT DO NOTHING)."""
+    new = [(row[0], row[1]) for row in statements
+           if row[0] is not None and row[1] and row[0] not in _known_queryids]
+    if not new:
+        return
+    rows = [(qid, text, format_sql(text)) for qid, text in new]
+    try:
+        with repo_conn.cursor() as cur:
+            cur.executemany("""
+                INSERT INTO asemon.query_text (queryid, query, query_formatted)
+                VALUES (%s, %s, %s)
+                ON CONFLICT DO NOTHING
+            """, rows)
+        repo_conn.commit()
+        _known_queryids.update(qid for qid, _ in new)
+    except Exception:
+        repo_conn.rollback()
+        log.exception("Écriture de asemon.query_text impossible (schéma sql/12 appliqué ?)")
+
+
 def run_cycle(target_conn, repo_conn):
     os_metrics = collect_os_metrics()
     activity = collect_activity(target_conn)
@@ -483,6 +510,7 @@ def run_cycle(target_conn, repo_conn):
 
     write_snapshots(repo_conn, os_metrics, activity, locks, io, statements,
                      tables, indexes, checkpoints, wal, db_age, connections, kcache)
+    write_query_texts(repo_conn, statements)
     commit_kcache(kcache_state)
 
     log.info(

@@ -23,7 +23,7 @@ check_password GRAFANA_RO_PASSWORD
 
 # Ordre d'application. 07 est un brouillon et n'est jamais appliqué.
 SQL_FILES=(01-schema-asemon 02-roles-and-grants 04-schema-extension 05-schema-sessions
-           06-rollup-horaire 08-schema-samples 09-retention 10-plans-query-id 11-schema-kcache)
+           06-rollup-horaire 08-schema-samples 09-retention 10-plans-query-id 11-schema-kcache 12-plans-lisibles)
 
 apply_schema() {
     log "Schéma du repository"
@@ -92,6 +92,17 @@ if ! command -v grafana-server >/dev/null 2>&1; then
     echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main" > /etc/apt/sources.list.d/grafana.list
     _APT_UPDATED=""
     apt_install grafana
+fi
+# Panneau « Business Text » (v2.1) : affiche le SQL et les plans dans une boîte défilante
+if [ ! -d /var/lib/grafana/plugins/marcusolsson-dynamictext-panel ]; then
+    log "Installation du plugin Grafana marcusolsson-dynamictext-panel"
+    if grafana cli plugins install marcusolsson-dynamictext-panel >/dev/null 2>&1; then
+        chown -R grafana:grafana /var/lib/grafana/plugins 2>/dev/null || true
+        systemctl restart grafana-server
+        ok "plugin installé"
+    else
+        warn "Plugin non installé (accès à grafana.com ?). Les boîtes SQL et plan resteront vides : grafana cli plugins install marcusolsson-dynamictext-panel puis redémarrer Grafana."
+    fi
 fi
 systemctl enable --now grafana-server >/dev/null 2>&1
 ok "Grafana installé et démarré (port 3000)"

@@ -23,3 +23,8 @@ SAMPLE_INTERVAL = 2
 # Répertoire de données PostgreSQL local (utilisé par log_parser.py pour
 # retrouver le fichier de log actif via current_logfiles)
 PG_DATA_DIR = "/var/lib/postgresql/17/main"
+
+# Plans d'exécution (log_parser.py, v2.1) : nombre maximal de plans conservés par
+# requête et par heure. Optionnel (5 par défaut ; 0 = illimité). Après modification :
+#   sudo systemctl restart asemon-logparser
+PLAN_MAX_PER_QUERY_HOUR = 5

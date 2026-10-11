@@ -123,7 +123,7 @@ log_autovacuum_min_duration = 0
 ### 3.4 auto_explain (capture des plans d'exécution)
 
 ```
-auto_explain.log_min_duration = 500
+auto_explain.log_min_duration = 100
 auto_explain.log_analyze = on
 auto_explain.log_buffers = on
 auto_explain.log_timing = on

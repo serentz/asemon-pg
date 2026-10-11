@@ -53,7 +53,9 @@ Toutes les captures de la version 2 : [images/Release_2](images/Release_2/README
 | 3 | CPU et disque réels par requête (`pg_stat_kcache`) | Fait, validé (I/O réseau non mesurable) |
 | 4 | Dashboards Grafana : macro, intermédiaire, micro, détails session et requête | Fait, validé |
 
-**Prochaines releases** (conception, rien de réalisé) : v2.1 (plans d'exécution lisibles et mieux capturés) ; Release 3 (capacity planning) ; Release 4 (multi-instance, seuils) ; Release 5 (réplication). Voir [docs/16-roadmap-releases.md](docs/16-roadmap-releases.md).
+**En cours** : v2.1, plans d'exécution lisibles et mieux capturés (codée, à valider sur les VM : [docs/17-plans-v2.1.md](docs/17-plans-v2.1.md)).
+
+**Prochaines releases** (conception, rien de réalisé) : Release 3 (capacity planning) ; Release 4 (multi-instance, seuils) ; Release 5 (réplication). Voir [docs/16-roadmap-releases.md](docs/16-roadmap-releases.md).
 
 Suites possibles : alertes Grafana, mesure du volume réel après plusieurs jours, ajustement des durées de rétention. Réflexion et historique des choix : [docs/06-roadmap-ihm.md](docs/06-roadmap-ihm.md).
 
@@ -61,11 +63,11 @@ Suites possibles : alertes Grafana, mesure du volume réel après plusieurs jour
 
 | Dossier | Contenu |
 |---|---|
-| `python/` | `collector.py` (snapshots toutes les 15 s, dont `pg_stat_kcache`), `sampler.py` (sessions actives toutes les 2 s), `log_parser.py` (connexions, deadlocks, plans), `config.py.example` |
+| `python/` | `collector.py` (snapshots toutes les 15 s, dont `pg_stat_kcache`), `sampler.py` (sessions actives toutes les 2 s), `log_parser.py` (connexions, deadlocks, plans), `plan_format.py` (SQL et plans lisibles), `backfill_plans.py`, `config.py.example` |
 | `sql/` | Schéma du dépôt, rôles et droits, fonctions (rollup, purge, partitions, répartition `kcache_attr`). Numérotés dans l'ordre d'application |
 | `systemd/` | Services (`collector`, `sampler`, `logparser`) et timers (`rollup`, `purge`, `samples-maintenance`) |
 | `grafana/` | 6 dashboards en JSON, importables |
-| `scripts/` | Installation scriptée (`install-monitoring.sh`, `install-target.sh`, `grafana-provision.sh`, `verify.sh`) |
+| `scripts/` | Installation scriptée (`install-monitoring.sh`, `install-target.sh`, `grafana-provision.sh`, `verify.sh`) ; `charge-lente.sh` (requêtes lentes pour tester les plans) |
 | `docs/` | Fiches d'installation et de fonctionnement, une par étape |
 | `images/` | Captures et références visuelles |
 
@@ -86,7 +88,8 @@ Suites possibles : alertes Grafana, mesure du volume réel après plusieurs jour
 | 9. Échantillonnage 2 s | les deux | [09-echantillonnage-phase2](docs/09-echantillonnage-phase2.md) |
 | 10. Rétention | VM-Monitoring | [10-retention](docs/10-retention.md) |
 | 11. `pg_stat_kcache` : extension, schéma, collecte | les deux | [14-kcache-phase3](docs/14-kcache-phase3.md) |
-| 12. Dashboards macro, intermédiaire, micro | Grafana | [11](docs/11-dashboard-macro.md), [12](docs/12-dashboard-intermediaire.md), [13](docs/13-dashboard-micro.md) |
+| 12. Plans lisibles (v2.1) : `sql/12`, plugin Grafana, rattrapage | les deux | [17-plans-v2.1](docs/17-plans-v2.1.md) |
+| 13. Dashboards macro, intermédiaire, micro | Grafana | [11](docs/11-dashboard-macro.md), [12](docs/12-dashboard-intermediaire.md), [13](docs/13-dashboard-micro.md) |
 | Tout en un | les deux | [15-installation-scriptee](docs/15-installation-scriptee.md) |
 
 **Chemin court : installation scriptée** (VM déjà créées, Ubuntu installé) : deux scripts enchaînent toutes les étapes ci-dessus, voir [docs/15-installation-scriptee.md](docs/15-installation-scriptee.md).
@@ -98,7 +101,7 @@ sudo ./scripts/install-target.sh          # ensuite, sur VM-Cible
 sudo ./scripts/verify.sh monitoring|target
 ```
 
-Ordre des scripts SQL (VM-Monitoring) : `01, 02, 04, 05, 06, 08, 09, 10, 11` ; `03` sur VM-Cible ; `07` est un brouillon, **ne pas l'appliquer**. Les scripts sont rejouables. Toujours VM-Monitoring avant VM-Cible : le schéma doit exister avant que le collecteur écrive dedans.
+Ordre des scripts SQL (VM-Monitoring) : `01, 02, 04, 05, 06, 08, 09, 10, 11, 12` ; `03` sur VM-Cible ; `07` est un brouillon, **ne pas l'appliquer**. Les scripts sont rejouables. Toujours VM-Monitoring avant VM-Cible : le schéma doit exister avant que le collecteur écrive dedans.
 
 ## Réglages courants
 

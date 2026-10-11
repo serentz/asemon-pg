@@ -67,7 +67,7 @@ lc_messages = 'C'
 log_timezone = 'UTC'
 
 # Plans d'exécution lents (auto_explain)
-auto_explain.log_min_duration = 500
+auto_explain.log_min_duration = 100
 auto_explain.log_analyze = on
 auto_explain.log_buffers = on
 auto_explain.log_timing = on
@@ -97,7 +97,7 @@ getent group asemon >/dev/null || groupadd --system asemon
 # (utilisateur du service + postgres, qui fait tourner le parseur de logs).
 usermod -aG asemon "$SERVICE_USER"
 usermod -aG asemon postgres
-for f in collector.py sampler.py log_parser.py; do
+for f in collector.py sampler.py log_parser.py plan_format.py backfill_plans.py; do
     install -m 0644 -o root -g root "$REPO_DIR/python/$f" "$INSTALL_DIR/app/$f"
 done
 if [ -f "$INSTALL_DIR/app/config.py" ] && [ "${FORCE_CONFIG:-0}" != "1" ]; then
