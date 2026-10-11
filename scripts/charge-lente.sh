@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ASEMON-PG v2.1 — Charge de test avec des requêtes lentes (VM-Cible)
 #
-# Produit des requêtes de 100 ms à quelques secondes pour alimenter auto_explain
+# Produit des requêtes d'environ 0,3 à 1 s (tri, jointure, filtre sur 1 million de lignes avec -s 10) pour alimenter auto_explain
 # (seuil 100 ms), donc la table event_plans et la page « Détail requête ».
 # Utilise la base « bench » et pgbench (voir docs/15-installation-scriptee.md).
 #
@@ -19,20 +19,17 @@ if ! run psql -Atc "SELECT 1 FROM pg_database WHERE datname='bench'" | grep -q 1
     run createdb bench
     run pgbench -i -s "$SCALE" bench >/dev/null
 fi
-# alimente pgbench_history pour que la jointure ci-dessous ait des lignes
-run pgbench -c 4 -T 20 bench >/dev/null
 
 cat > "$TMP/tri.sql" <<'SQL'
-SELECT aid, abalance FROM pgbench_accounts ORDER BY abalance DESC, filler LIMIT 10;
+SELECT aid FROM pgbench_accounts ORDER BY md5(aid::text) LIMIT 10;
 SQL
 cat > "$TMP/jointure.sql" <<'SQL'
-SELECT b.bid, count(*), sum(a.abalance)
-FROM pgbench_accounts a JOIN pgbench_branches b ON b.bid = a.bid
-JOIN pgbench_history h ON h.aid = a.aid
-GROUP BY b.bid;
+SELECT a.bid, count(*), avg(length(a.filler || b.filler))
+FROM pgbench_accounts a JOIN pgbench_accounts b ON b.aid = a.aid + 1
+GROUP BY a.bid;
 SQL
 cat > "$TMP/filtre.sql" <<'SQL'
-SELECT count(*) FROM pgbench_accounts WHERE filler LIKE '%00%' AND abalance <> 1;
+SELECT count(*) FROM pgbench_accounts WHERE md5(aid::text) LIKE '%ab%';
 SQL
 cat > "$TMP/lent.sql" <<'SQL'
 SELECT pg_sleep(0.3);

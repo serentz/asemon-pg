@@ -61,7 +61,7 @@ Rejouable : ne traite que les lignes sans `plan_text`.
 
 ## 4. Vérifier
 
-1. Générer des requêtes lentes (VM-Cible) : `sudo ./scripts/charge-lente.sh 120`
+1. Générer des requêtes lentes (VM-Cible) : `sudo ./scripts/charge-lente.sh 120` (tri, jointure et filtre de 0,3 à 1 s sur 1 million de lignes, plus un `pg_sleep(0.3)`)
 2. VM-Monitoring :
 ```sql
 SELECT count(*), count(DISTINCT query_id), count(plan_text) FROM asemon.event_plans WHERE occurred_at > now() - interval '10 minutes';
