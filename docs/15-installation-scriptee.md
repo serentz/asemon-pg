@@ -40,7 +40,7 @@ cp scripts/asemon.env.example scripts/asemon.env
 nano scripts/asemon.env
 ```
 
-Les valeurs essentielles : `MONITORING_IP`, `SUBNET`, les trois mots de passe, `SERVICE_USER`. Chaque paramètre est commenté dans le fichier. Il peut être **le même sur les deux VM** (copier-le). Il n'est jamais versionné (`.gitignore`).
+Les valeurs essentielles : la section 1 (comptes et mots de passe, `SERVICE_USER`), puis `MONITORING_IP` et `SUBNET`. Chaque paramètre est commenté dans le fichier. Il peut être **le même sur les deux VM** (copier-le). Il n'est jamais versionné (`.gitignore`).
 
 Mots de passe : 8 caractères minimum, lettres, chiffres et `. _ @ % + = -` seulement (ils sont recopiés dans des chaînes de connexion).
 
