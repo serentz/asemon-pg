@@ -30,6 +30,16 @@ Le parseur de logs (`log_parser.py`) n'est a priori **pas en cause** : il enregi
 
 Un point à connaître : avec `auto_explain.log_analyze = on` et `log_timing = on`, PostgreSQL **mesure déjà chaque requête** (le surcoût est payé que le plan soit journalisé ou non). **Baisser le seuil n'ajoute donc pas de surcoût de mesure** ; cela augmente seulement le volume de journaux, d'écritures du parseur et de lignes dans `event_plans`.
 
+### A.2 bis Résultats des vérifications (2026-10-11)
+
+| Mesure | Résultat | Lecture |
+|---|---|---|
+| `auto_explain.log_min_duration`, `sample_rate` | 500 ms, 1 | seuil confirmé, aucune réduction par échantillonnage |
+| Plans dans `event_plans` | 7 le 2026-09-25 (de 9,1 s à 120 s), 9 le 2026-10-09 (de 2 s à 60 s) | **16 plans en tout, tous de plus de 2 s** : ce sont les `pg_sleep` de test |
+| `pg_stat_statements` : durée moyenne ≥ 500 ms / ≥ 100 ms / total | 5 / 6 / 122 | **la charge du POC n'a presque aucune requête lente** : passer le seuil à 100 ms n'ajouterait qu'**une** requête |
+
+**Conclusion** : le seuil de 500 ms est bien la porte d'entrée, mais il n'est pas seul en cause : les requêtes de `pgbench` durent quelques millisecondes en moyenne. Pour capturer plus de plans, il faut **soit un seuil nettement plus bas** (quelques dizaines de millisecondes, à choisir d'après la distribution des durées, §A.3 bis), **soit une charge qui contient de vraies requêtes lentes**. Le comptage des lignes `plan:` des journaux n'a pas pu être fait (le caractère générique du nom de fichier est développé par un shell sans droit de lecture) ; commande corrigée au §A.3 bis.
+
 ### A.3 Vérifications à faire (VM-Cible puis VM-Monitoring)
 
 ```bash
@@ -44,16 +54,25 @@ sudo -u postgres psql -d monitoring -c "SELECT date_trunc('day', occurred_at) AS
 
 Lecture : si le nombre de lignes `plan:` des journaux est **égal** au nombre de lignes de `event_plans` et si `min_ms` est au-dessus de 500, c'est bien le seuil.
 
+### A.3 bis Compléments à relever
+
+```bash
+# VM-Cible : lignes plan: dans les journaux (le caractère générique doit être développé par root)
+sudo sh -c 'grep -c "plan:" /var/lib/postgresql/17/main/log/postgresql-*.json'
+# VM-Cible : distribution des durées, pour choisir le seuil
+sudo -u postgres psql -c "SELECT count(*) FILTER (WHERE max_exec_time >= 500) AS max_500, count(*) FILTER (WHERE max_exec_time >= 100) AS max_100, count(*) FILTER (WHERE max_exec_time >= 50) AS max_50, count(*) FILTER (WHERE max_exec_time >= 10) AS max_10, count(*) FILTER (WHERE mean_exec_time >= 10) AS moy_10, count(*) FILTER (WHERE mean_exec_time >= 1) AS moy_1 FROM pg_stat_statements;"
+```
+
 ### A.4 Corrections proposées
 
 | Levier | Proposition | Remarque |
 |---|---|---|
-| `auto_explain.log_min_duration` | **100 ms** (au lieu de 500) | réglage dans `conf.d/asemon.conf` ; un `reload` suffit, pour les nouvelles connexions |
+| `auto_explain.log_min_duration` | **à choisir d'après la distribution des durées** (§A.3 bis) : de l'ordre de 20 à 100 ms ; 500 ms ne capture que les requêtes très lentes | réglage dans `conf.d/asemon.conf` ; un `reload` suffit, pour les nouvelles connexions |
 | `auto_explain.sample_rate` | 1 (défaut) ; à baisser (par exemple 0,2) si le volume devient trop grand | n'explique que la fraction demandée des requêtes |
 | Limite par requête | **au plus 5 plans par requête (`query_id`) et par heure** (`PLAN_MAX_PER_QUERY_HOUR` dans `config.py`) | évite qu'une requête rapide mais très fréquente remplisse la table ; les plans conservés sont les premiers de l'heure |
 | Empreinte du plan (`plan_hash`) | colonne ajoutée à `event_plans` : hachage de la structure du plan sans les mesures | permet de voir qu'un plan **change** pour une même requête (étape ultérieure) |
 
-Le seuil exact se règle après essai : on regarde le nombre de plans par heure sous charge (`pgbench`) pour 100 ms, et on ajuste.
+Le seuil exact se règle après essai : on regarde le nombre de plans par heure sous charge (`pgbench`) et on ajuste. Pour tester la lisibilité des plans, on ajoute à la charge de test une requête volontairement lente (jointure sans index sur les tables `pgbench_*`).
 
 ### A.5 Lisibilité du SQL et des plans
 
@@ -81,7 +100,7 @@ Une nouvelle page **Capacity planning** pour suivre l'évolution du nombre de li
 - **Rétention** : sur VM-Monitoring, un script **`retention.py`** gère la rétention dans la base `monitoring`. Pour les tables de points de taille : **1 point par heure sur la dernière semaine, 1 point par jour au-delà, 3 ans au maximum**.
 - **Page**, deux parties :
   1. le **graphe de l'évolution de la taille de la base**, et dessous une ligne : **taille actuelle**, **extrapolation à 1 mois, 6 mois et 1 an** ;
-  2. un **tableau de 10 lignes avec ascenseur** : les 10 tables les plus grosses (nom de la table, nom des index, nombre de lignes, taille), et une dernière colonne : **extrapolation de la taille à 6 mois « à périmètre constant »**.
+  2. un **tableau de 10 lignes avec ascenseur** : les 10 tables les plus grosses (nom de la table, nombre d'index, nombre de lignes, taille), et une dernière colonne : **extrapolation de la taille à 6 mois « à périmètre constant »**.
 
 ### B.2 Collecte : un point par heure
 
@@ -90,7 +109,7 @@ Nouvelles tables (VM-Monitoring) :
 | Table | Une ligne par | Colonnes principales |
 |---|---|---|
 | `asemon.snap_db_size` | base et heure | `collected_at`, `datname`, `size_bytes` (`pg_database_size`) |
-| `asemon.snap_table_size` | table et heure | `collected_at`, `datname`, `schemaname`, `relname`, `row_estimate`, `table_bytes` (heap), `index_bytes`, `toast_bytes`, `total_bytes`, `indexes` (JSONB : nom et taille de chaque index) |
+| `asemon.snap_table_size` | table et heure | `collected_at`, `datname`, `schemaname`, `relname`, `row_estimate`, `table_bytes` (heap), `index_bytes`, `toast_bytes`, `total_bytes`, `index_count` (nombre d'index de la table) |
 
 - **Une fois par heure** : le collecteur garde en mémoire l'heure UTC du dernier point écrit et écrit au premier cycle d'une nouvelle heure. Au redémarrage, il lit la dernière heure écrite dans le repository (pas de doublon).
 - **Nombre de lignes = estimation** (`n_live_tup`, à défaut `reltuples`) : un `count(*)` exact sur toutes les tables, chaque heure, serait trop coûteux. L'estimation suit les passages d'autovacuum et d'analyze ; elle est précise à quelques pour cent près, ce qui suffit pour une tendance.
@@ -118,7 +137,7 @@ Un dashboard `asemon-capacity`, avec une variable **base** (une base, ou la somm
 
 **Partie 2 : les tables**
 - Un tableau avec ascenseur, 10 lignes triées par taille décroissante.
-- Colonnes : **table**, **index** (nom et taille de chacun), **lignes**, **taille**, **taille dans 6 mois**.
+- Colonnes : **table**, **nombre d'index** (il explique en partie la taille de la table), **lignes**, **taille** (totale : table + index + TOAST), **taille dans 6 mois**.
 - **« À périmètre constant »** : la projection suppose que rien ne change dans l'usage (pas de nouvelle table, pas d'archivage ni de purge ajoutés) : même régression linéaire, appliquée à chaque table sur la période du dashboard.
 
 ### B.5 Découpage proposé
@@ -280,11 +299,11 @@ Point d'attention : une réplique est en lecture seule ; l'agent y lit les vues 
 
 | # | Question | Proposition (à confirmer) |
 |---|---|---|
-| 7 | Les corrections de plans (§A) forment-elles une version **v2.1** avant la Release 3 ? | Oui : v2.1, puis Release 3 (capacity planning) |
-| 8 | Seuil `auto_explain` | 100 ms, plus au plus 5 plans par requête et par heure ; à ajuster après essai sous charge |
-| 9 | Périmètre de `retention.py` | Point d'entrée unique de la rétention : appelle `purge_old_data()` puis réduit les points de capacité ; remplace `asemon-purge.timer` ; `maintain_samples()` reste sur son timer horaire |
+| 7 | Les corrections de plans (§A) forment-elles une version **v2.1** avant la Release 3 ? | **Oui** : v2.1, puis Release 3 (capacity planning) |
+| 8 | Seuil `auto_explain` | **À fixer** d'après la distribution des durées (§A.3 bis) ; au plus 5 plans par requête et par heure |
+| 9 | Périmètre de `retention.py` | **Oui, point d'entrée unique de la rétention** : appelle `purge_old_data()` puis réduit les points de capacité ; remplace `asemon-purge.timer` ; `maintain_samples()` reste sur son timer horaire |
 | 10 | Point conservé par jour après réduction | Le **dernier** point du jour UTC |
-| 11 | Colonne « index » du tableau des 10 plus grosses tables | Une ligne par **table**, la cellule listant ses index avec leur taille |
-| 12 | « Taille de la table » | **Taille totale** : table + index + TOAST |
+| 11 | Colonne « index » du tableau des 10 plus grosses tables | **Le nombre d'index seulement** (il explique en partie la taille de la table) |
+| 12 | « Taille de la table » | **Taille totale** : table + index + TOAST (cohérent avec le choix du nombre d'index) |
 | 13 | Extrapolation | Régression linéaire sur la période du dashboard (30 jours par défaut) |
 
