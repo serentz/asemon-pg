@@ -17,6 +17,8 @@
 
 ## A. v2.1 : plans d'exécution
 
+> **Réalisation : voir [17-plans-v2.1.md](17-plans-v2.1.md)** (codé le 2026-10-11, à valider sur les VM).
+
 ### A.1 La demande
 
 - Comprendre **pourquoi on capture si peu de plans**.
@@ -300,7 +302,7 @@ Point d'attention : une réplique est en lecture seule ; l'agent y lit les vues 
 | # | Question | Proposition (à confirmer) |
 |---|---|---|
 | 7 | Les corrections de plans (§A) forment-elles une version **v2.1** avant la Release 3 ? | **Oui** : v2.1, puis Release 3 (capacity planning) |
-| 8 | Seuil `auto_explain` | **À fixer** d'après la distribution des durées (§A.3 bis) ; au plus 5 plans par requête et par heure |
+| 8 | Seuil `auto_explain` | **Décidé le 2026-10-11 : 100 ms** (la distribution n'a rien entre 1 ms et 500 ms : le seuil n'est pas le facteur limitant) ; au plus 5 plans par requête et par heure ; requêtes lentes ajoutées à la charge de test (`scripts/charge-lente.sh`) |
 | 9 | Périmètre de `retention.py` | **Oui, point d'entrée unique de la rétention** : appelle `purge_old_data()` puis réduit les points de capacité ; remplace `asemon-purge.timer` ; `maintain_samples()` reste sur son timer horaire |
 | 10 | Point conservé par jour après réduction | Le **dernier** point du jour UTC |
 | 11 | Colonne « index » du tableau des 10 plus grosses tables | **Le nombre d'index seulement** (il explique en partie la taille de la table) |

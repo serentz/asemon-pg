@@ -36,13 +36,21 @@ import logging
 from datetime import datetime, timezone
 
 import psycopg
+import config as _cfg
 from config import REPO_DSN, PG_DATA_DIR
+from plan_format import plan_to_text, plan_hash
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 log = logging.getLogger("asemon-log-parser")
 
 CURRENT_LOGFILES = os.path.join(PG_DATA_DIR, "current_logfiles")
 POLL_INTERVAL = 5
+
+# v2.1 : nombre maximal de plans conservés par requête et par heure (au-delà, les
+# plans suivants de la même requête sont ignorés). Évite qu'une requête lente
+# répétée sature event_plans. Optionnel dans config.py (5 par défaut ; 0 = illimité).
+PLAN_MAX_PER_QUERY_HOUR = getattr(_cfg, "PLAN_MAX_PER_QUERY_HOUR", 5)
+_plan_counts = {}      # (clé de la requête, heure) -> nombre de plans déjà écrits
 
 # Extraction des lignes "Processus <pid> : <requête>" dans le détail du
 # deadlock. Le texte est produit par PostgreSQL dans la langue du serveur
@@ -182,7 +190,24 @@ def parse_plan(entry):
         # de la requête se trouve dans le plan JSON, sous "Query Text".
         "query": entry.get("statement") or plan.get("Query Text") or "",
         "plan": json.dumps(plan),
+        "plan_text": plan_to_text(plan, duration_ms),
+        "plan_hash": plan_hash(plan),
     }
+
+
+def plan_quota_ok(p):
+    """True si ce plan est conservé (plafond PLAN_MAX_PER_QUERY_HOUR par requête et par heure)."""
+    if PLAN_MAX_PER_QUERY_HOUR <= 0:
+        return True
+    hour = parse_timestamp(p["occurred_at"]).strftime("%Y%m%d%H")
+    for k in [k for k in _plan_counts if k[1] != hour]:      # on oublie les heures passées
+        del _plan_counts[k]
+    key = (p["query_id"] if p["query_id"] is not None else hash(p["query"]), hour)
+    n = _plan_counts.get(key, 0)
+    if n >= PLAN_MAX_PER_QUERY_HOUR:
+        return False
+    _plan_counts[key] = n + 1
+    return True
 
 
 def parse_timestamp(ts_str):
@@ -199,8 +224,9 @@ SQL_DEADLOCK = """
 """
 
 SQL_PLAN = """
-    INSERT INTO asemon.event_plans (occurred_at, duration_ms, query, plan, session_key, query_id)
-    VALUES (%s, %s, %s, %s, %s, %s)
+    INSERT INTO asemon.event_plans
+    (occurred_at, duration_ms, query, plan, session_key, query_id, plan_text, plan_hash)
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
 """
 
 # Connexion : on n'écrase jamais une ligne existante.
@@ -239,7 +265,8 @@ def write_deadlock(repo_conn, d):
 def write_plan(repo_conn, p):
     with repo_conn.cursor() as cur:
         cur.execute(SQL_PLAN, (parse_timestamp(p["occurred_at"]), p["duration_ms"],
-                               p["query"], p["plan"], p["session_key"], p["query_id"]))
+                               p["query"], p["plan"], p["session_key"], p["query_id"],
+                               p["plan_text"], p["plan_hash"]))
     repo_conn.commit()
     log.info("Plan enregistré | duration=%.1fms", p["duration_ms"])
 
@@ -310,7 +337,7 @@ def main():
                 write_deadlock(repo_conn, parse_deadlock(entry))
             elif message.startswith("duration:") and "plan:" in message:
                 p = parse_plan(entry)
-                if p:
+                if p and plan_quota_ok(p):
                     write_plan(repo_conn, p)
             else:
                 s = parse_session_event(entry)

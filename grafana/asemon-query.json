@@ -21,6 +21,12 @@
       "id": "postgres",
       "name": "PostgreSQL",
       "version": "1.0.0"
+    },
+    {
+      "type": "panel",
+      "id": "marcusolsson-dynamictext-panel",
+      "name": "Business Text",
+      "version": "5.0.0"
     }
   ],
   "title": "ASEMON-PG — Détail d'une requête",
@@ -34,7 +40,7 @@
   ],
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 3,
+  "version": 5,
   "refresh": "30s",
   "time": {
     "from": "now-6h",
@@ -85,6 +91,18 @@
           "value": ""
         },
         "options": []
+      },
+      {
+        "name": "plan_id",
+        "label": "plan_id",
+        "type": "textbox",
+        "query": "",
+        "hide": 2,
+        "current": {
+          "text": "",
+          "value": ""
+        },
+        "options": []
       }
     ]
   },
@@ -103,9 +121,9 @@
     },
     {
       "id": 2,
-      "type": "table",
+      "type": "marcusolsson-dynamictext-panel",
       "title": "Texte SQL",
-      "description": "Texte normalisé de pg_stat_statements (paramètres remplacés par $1, $2...). Vide si la requête n'a jamais figuré dans le top relevé par le collecteur.",
+      "description": "Texte normalisé de pg_stat_statements (paramètres remplacés par $1, $2...), indenté. 6 lignes visibles, ascenseur au-delà. Vide si la requête n'a jamais figuré dans le top relevé par le collecteur.",
       "gridPos": {
         "h": 5,
         "w": 24,
@@ -116,34 +134,23 @@
         "type": "postgres",
         "uid": "${DS_MONITORING}"
       },
-      "fieldConfig": {
-        "defaults": {
-          "custom": {
-            "align": "auto"
-          }
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Requête"
-            },
-            "properties": [
-              {
-                "id": "custom.width",
-                "value": 3000
-              },
-              {
-                "id": "custom.inspect",
-                "value": true
-              }
-            ]
-          }
-        ]
-      },
       "options": {
-        "showHeader": true,
-        "cellHeight": "sm"
+        "renderMode": "data",
+        "everyRow": true,
+        "wrap": true,
+        "content": "<pre style=\"margin:0;padding:6px 8px;max-height:calc(8.4em + 14px);overflow:auto;line-height:1.4em;font-size:12px;white-space:pre;background:rgba(128,128,128,.12);border-radius:4px;\">{{sql}}</pre>",
+        "defaultContent": "<i>Aucune donnée pour cette requête.</i>",
+        "contentPartials": [],
+        "helpers": "",
+        "afterRender": "",
+        "styles": "",
+        "externalStyles": [],
+        "editor": {
+          "format": "auto",
+          "height": 200,
+          "language": "html"
+        },
+        "editors": []
       },
       "targets": [
         {
@@ -153,8 +160,8 @@
             "uid": "${DS_MONITORING}"
           },
           "format": "table",
-          "rawSql": "SELECT query AS \"Requête\" FROM asemon.snap_statements WHERE queryid = ${query_id:sqlstring}::bigint ORDER BY collected_at DESC LIMIT 1",
-          "rawQuery": true
+          "rawQuery": true,
+          "rawSql": "SELECT COALESCE((SELECT query_formatted FROM asemon.query_text WHERE queryid = ${query_id:sqlstring}::bigint), (SELECT query FROM asemon.snap_statements WHERE queryid = ${query_id:sqlstring}::bigint ORDER BY collected_at DESC LIMIT 1)) AS sql"
         }
       ]
     },
@@ -908,15 +915,61 @@
       }
     },
     {
-      "id": 14,
-      "type": "table",
-      "title": "Plans (auto_explain)",
-      "description": "Plans de cette requête, tous sessions confondues, liés par query_id. Les plans enregistrés avant la mise en place de la colonne query_id n'apparaissent pas.",
+      "id": 18,
+      "type": "marcusolsson-dynamictext-panel",
+      "title": "Plan d'exécution affiché",
+      "description": "Plan converti au format EXPLAIN (arbre indenté, coûts estimés, temps réels). 6 lignes visibles, ascenseur au-delà. Par défaut le plus récent ; cliquer sur un plan du tableau ci-dessous pour en afficher un autre.",
       "gridPos": {
-        "h": 10,
+        "h": 5,
         "w": 24,
         "x": 0,
         "y": 33
+      },
+      "datasource": {
+        "type": "postgres",
+        "uid": "${DS_MONITORING}"
+      },
+      "options": {
+        "renderMode": "data",
+        "everyRow": true,
+        "wrap": true,
+        "content": "<pre style=\"margin:0;padding:6px 8px;max-height:calc(8.4em + 14px);overflow:auto;line-height:1.4em;font-size:12px;white-space:pre;background:rgba(128,128,128,.12);border-radius:4px;\">{{plan}}</pre>",
+        "defaultContent": "<i>Aucune donnée pour cette requête.</i>",
+        "contentPartials": [],
+        "helpers": "",
+        "afterRender": "",
+        "styles": "",
+        "externalStyles": [],
+        "editor": {
+          "format": "auto",
+          "height": 200,
+          "language": "html"
+        },
+        "editors": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${DS_MONITORING}"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT 'Plan du ' || to_char(occurred_at AT TIME ZONE 'UTC','YYYY-MM-DD HH24:MI:SS') || ' UTC   (forme ' || COALESCE(plan_hash,'?') || ')' || E'\\n' || COALESCE(plan_text, '(plan non mis en forme : lancer backfill_plans.py)') AS plan FROM asemon.event_plans WHERE query_id = ${query_id:sqlstring}::bigint ORDER BY (id = NULLIF(${plan_id:sqlstring},'')::bigint) DESC NULLS LAST, occurred_at DESC LIMIT 1"
+        }
+      ]
+    },
+    {
+      "id": 14,
+      "type": "table",
+      "title": "Plans (auto_explain)",
+      "description": "Plans de cette requête, tous sessions confondues (les plus récents d'abord). Cliquer sur le N° ou la date affiche ce plan dans la boîte au-dessus. « Forme » : même valeur = même plan ; une valeur qui change indique un changement de plan.",
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 38
       },
       "datasource": {
         "type": "postgres",
@@ -977,16 +1030,34 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Plan"
+              "options": "N°"
             },
             "properties": [
               {
-                "id": "custom.width",
-                "value": 8000
-              },
+                "id": "links",
+                "value": [
+                  {
+                    "title": "Afficher ce plan",
+                    "url": "/d/asemon-query?var-query_id=${query_id}&var-plan_id=${__data.fields[\"N°\"]}&${__url_time_range}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Quand"
+            },
+            "properties": [
               {
-                "id": "custom.inspect",
-                "value": true
+                "id": "links",
+                "value": [
+                  {
+                    "title": "Afficher ce plan",
+                    "url": "/d/asemon-query?var-query_id=${query_id}&var-plan_id=${__data.fields[\"N°\"]}&${__url_time_range}"
+                  }
+                ]
               }
             ]
           }
@@ -1004,7 +1075,7 @@
             "uid": "${DS_MONITORING}"
           },
           "format": "table",
-          "rawSql": "SELECT occurred_at AS \"Quand\", duration_ms AS \"Durée\", session_key AS \"session_key\", plan AS \"Plan\" FROM asemon.event_plans WHERE query_id = ${query_id:sqlstring}::bigint ORDER BY occurred_at DESC LIMIT 50",
+          "rawSql": "SELECT id AS \"N°\", occurred_at AS \"Quand\", duration_ms AS \"Durée\", plan_hash AS \"Forme\", session_key AS \"session_key\" FROM asemon.event_plans WHERE query_id = ${query_id:sqlstring}::bigint ORDER BY occurred_at DESC LIMIT 50",
           "rawQuery": true
         }
       ]
