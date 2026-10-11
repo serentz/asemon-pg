@@ -40,7 +40,7 @@
   ],
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 4,
+  "version": 5,
   "refresh": "30s",
   "time": {
     "from": "now-6h",
@@ -138,7 +138,7 @@
         "renderMode": "data",
         "everyRow": true,
         "wrap": true,
-        "content": "<pre style=\"margin:0;padding:6px 8px;max-height:8.6em;overflow:auto;line-height:1.4em;font-size:12px;white-space:pre;background:rgba(128,128,128,.12);border-radius:4px;\">{{sql}}</pre>",
+        "content": "<pre style=\"margin:0;padding:6px 8px;max-height:calc(8.4em + 14px);overflow:auto;line-height:1.4em;font-size:12px;white-space:pre;background:rgba(128,128,128,.12);border-radius:4px;\">{{sql}}</pre>",
         "defaultContent": "<i>Aucune donnée pour cette requête.</i>",
         "contentPartials": [],
         "helpers": "",
@@ -920,7 +920,7 @@
       "title": "Plan d'exécution affiché",
       "description": "Plan converti au format EXPLAIN (arbre indenté, coûts estimés, temps réels). 6 lignes visibles, ascenseur au-delà. Par défaut le plus récent ; cliquer sur un plan du tableau ci-dessous pour en afficher un autre.",
       "gridPos": {
-        "h": 7,
+        "h": 5,
         "w": 24,
         "x": 0,
         "y": 33
@@ -933,7 +933,7 @@
         "renderMode": "data",
         "everyRow": true,
         "wrap": true,
-        "content": "<pre style=\"margin:0;padding:6px 8px;max-height:8.6em;overflow:auto;line-height:1.4em;font-size:12px;white-space:pre;background:rgba(128,128,128,.12);border-radius:4px;\">{{plan}}</pre>",
+        "content": "<pre style=\"margin:0;padding:6px 8px;max-height:calc(8.4em + 14px);overflow:auto;line-height:1.4em;font-size:12px;white-space:pre;background:rgba(128,128,128,.12);border-radius:4px;\">{{plan}}</pre>",
         "defaultContent": "<i>Aucune donnée pour cette requête.</i>",
         "contentPartials": [],
         "helpers": "",
@@ -969,7 +969,7 @@
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 40
+        "y": 38
       },
       "datasource": {
         "type": "postgres",
