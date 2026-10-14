@@ -54,10 +54,11 @@ Toutes les captures de la version 2 : [images/Release_2](images/Release_2/README
 | 2 | Échantillonnage des sessions actives toutes les 2 s ; rétention des données | Fait, validé |
 | 3 | CPU et disque réels par requête (`pg_stat_kcache`) | Fait, validé (I/O réseau non mesurable) |
 | 4 | Dashboards Grafana : macro, intermédiaire, micro, détails session et requête | Fait, validé |
+| Release 3 | Capacity planning : collecte des tailles (3a), dashboard et extrapolations (3b) | 3a validée ; 3b à valider |
 
 **En cours** : v2.1, plans d'exécution lisibles et mieux capturés (codée, à valider sur les VM : [docs/17-plans-v2.1.md](docs/17-plans-v2.1.md)).
 
-**Prochaines releases** : Release 3 (3a codée, collecte et rétention : [docs/18-capacity-planning.md](docs/18-capacity-planning.md) ; 3b, le dashboard, à faire) ; Release 4 (multi-instance, seuils) ; Release 5 (réplication). Voir [docs/16-roadmap-releases.md](docs/16-roadmap-releases.md).
+**Prochaines releases** : Release 3 (3a validée ; 3b, le dashboard, codée : [docs/18-capacity-planning.md](docs/18-capacity-planning.md)) ; Release 4 (multi-instance, seuils) ; Release 5 (réplication). Voir [docs/16-roadmap-releases.md](docs/16-roadmap-releases.md).
 
 Suites possibles : alertes Grafana, mesure du volume réel après plusieurs jours, ajustement des durées de rétention. Réflexion et historique des choix : [docs/06-roadmap-ihm.md](docs/06-roadmap-ihm.md).
 
@@ -68,7 +69,7 @@ Suites possibles : alertes Grafana, mesure du volume réel après plusieurs jour
 | `python/` | `collector.py` (snapshots toutes les 15 s, dont `pg_stat_kcache`), `sampler.py` (sessions actives toutes les 2 s), `log_parser.py` (connexions, deadlocks, plans), `plan_format.py` (SQL et plans lisibles), `backfill_plans.py`, `retention.py` (rétention, VM-Monitoring), `config.py.example` |
 | `sql/` | Schéma du dépôt, rôles et droits, fonctions (rollup, purge, partitions, répartition `kcache_attr`). Numérotés dans l'ordre d'application |
 | `systemd/` | Services (`collector`, `sampler`, `logparser`) et timers (`rollup`, `retention`, `samples-maintenance`) |
-| `grafana/` | 6 dashboards en JSON, importables |
+| `grafana/` | 7 dashboards en JSON, importables (dont `asemon-capacity`) |
 | `scripts/` | Installation scriptée (`install-monitoring.sh`, `install-target.sh`, `grafana-provision.sh`, `verify.sh`) ; `charge-lente.sh` (requêtes lentes pour tester les plans) |
 | `docs/` | Fiches d'installation et de fonctionnement, une par étape |
 | `images/` | Captures et références visuelles |
