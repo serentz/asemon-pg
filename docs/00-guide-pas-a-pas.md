@@ -179,7 +179,7 @@ cd ~/asemon-pg
 sudo bash ./scripts/install-monitoring.sh
 ```
 
-Compter 5 à 10 minutes. Le script installe PostgreSQL 17, crée la base `monitoring` et ses tables, les comptes, trois minuteurs (rollup, partitions, purge), Grafana et son plugin de panneaux texte, puis, si `GRAFANA_ADMIN_PASSWORD` est renseigné, crée la source de données et importe les 6 dashboards.
+Compter 5 à 10 minutes. Le script installe PostgreSQL 17, crée la base `monitoring` et ses tables, les comptes, trois minuteurs (rollup, partitions, rétention), Grafana et son plugin de panneaux texte, puis, si `GRAFANA_ADMIN_PASSWORD` est renseigné, crée la source de données et importe les 6 dashboards.
 
 Contrôle :
 

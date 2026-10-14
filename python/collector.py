@@ -20,9 +20,12 @@ schéma de base (sql/01-schema-asemon.sql).
 """
 
 import time
+from datetime import datetime, timezone
 import logging
 import psutil
 import psycopg
+from psycopg.conninfo import make_conninfo
+import config as _cfg
 from config import TARGET_DSN, REPO_DSN, INTERVAL
 from plan_format import format_sql
 
@@ -49,6 +52,14 @@ KCACHE_RETRY_S = 600
 _kcache_prev = {}          # (queryid, userid, dbid) -> (usename, datname, cpu_user_s, cpu_system_s, reads, writes)
 _kcache_prev_at = None     # now() de la cible au dernier relevé validé
 _kcache_disabled_until = 0.0
+
+# Capacity planning (Release 3) : un point par heure UTC pour la taille de chaque base et de
+# chaque table (asemon.snap_db_size, asemon.snap_table_size). Voir docs/18-capacity-planning.md.
+# CAPACITY_MIN_BYTES (config.py, optionnel) : les tables plus petites ne sont pas suivies.
+CAPACITY_MIN_BYTES = getattr(_cfg, "CAPACITY_MIN_BYTES", 65536)
+CAPACITY_RETRY_S = 600     # nouvel essai après un échec de la collecte horaire
+_capacity_last_hour = None  # heure UTC ('AAAAMMJJHH') du dernier point écrit ; None = à lire dans le repository
+_capacity_retry_at = 0.0
 
 
 def collect_os_metrics():
@@ -494,6 +505,111 @@ def write_query_texts(repo_conn, statements):
         log.exception("Écriture de asemon.query_text impossible (schéma sql/12 appliqué ?)")
 
 
+SQL_CAPACITY_DBS = """
+    SELECT datname, pg_database_size(oid)
+    FROM pg_database
+    WHERE datallowconn AND NOT datistemplate
+    ORDER BY datname
+"""
+
+SQL_CAPACITY_TABLES = """
+    SELECT s.schemaname, s.relname,
+           COALESCE(NULLIF(s.n_live_tup, 0), GREATEST(c.reltuples, 0))::bigint,
+           pg_relation_size(c.oid),
+           pg_indexes_size(c.oid),
+           CASE WHEN c.reltoastrelid <> 0 THEN pg_total_relation_size(c.reltoastrelid) ELSE 0 END,
+           pg_total_relation_size(c.oid),
+           (SELECT count(*) FROM pg_index i WHERE i.indrelid = c.oid)
+    FROM pg_stat_user_tables s
+    JOIN pg_class c ON c.oid = s.relid
+    WHERE pg_total_relation_size(c.oid) >= %s
+"""
+
+
+def hour_key(ts):
+    """Heure UTC d'un horodatage, sous la forme 'AAAAMMJJHH'."""
+    return ts.astimezone(timezone.utc).strftime("%Y%m%d%H")
+
+
+def collect_capacity(target_conn):
+    """Taille de chaque base et de chaque table suivie de l'instance surveillée.
+
+    Une connexion brève par base (hors modèles) : pg_stat_user_tables ne décrit que la
+    base courante. Une base inaccessible est ignorée (avertissement), les autres sont écrites.
+    Retourne (horodatage, lignes_bases, lignes_tables).
+    """
+    at = datetime.now(timezone.utc).replace(microsecond=0)
+    with target_conn.cursor() as cur:
+        cur.execute(SQL_CAPACITY_DBS)
+        dbs = cur.fetchall()
+    db_rows, table_rows = [], []
+    for datname, size in dbs:
+        db_rows.append((at, datname, size))      # la taille de la base vient de pg_database : toujours écrite
+        try:
+            dsn = make_conninfo(TARGET_DSN, dbname=datname, connect_timeout=5)
+            with psycopg.connect(dsn, autocommit=True, application_name=APP_NAME) as conn:
+                with conn.cursor() as cur:
+                    cur.execute(SQL_CAPACITY_TABLES, (CAPACITY_MIN_BYTES,))
+                    tables = cur.fetchall()
+        except Exception as exc:
+            log.warning("Capacity : tables de la base %s ignorées (%s)", datname, str(exc).splitlines()[0])
+            continue
+        table_rows += [(at, datname, t[0], t[1]) + tuple(int(v or 0) for v in t[2:]) for t in tables]
+    return at, db_rows, table_rows
+
+
+def write_capacity(repo_conn, db_rows, table_rows):
+    with repo_conn.cursor() as cur:
+        if db_rows:
+            cur.executemany("""
+                INSERT INTO asemon.snap_db_size (collected_at, datname, size_bytes)
+                VALUES (%s, %s, %s)
+            """, db_rows)
+        if table_rows:
+            cur.executemany("""
+                INSERT INTO asemon.snap_table_size
+                (collected_at, datname, schemaname, relname, row_estimate,
+                 table_bytes, index_bytes, toast_bytes, total_bytes, index_count)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, table_rows)
+    repo_conn.commit()
+
+
+def run_capacity(target_conn, repo_conn):
+    """Écrit un point de capacity planning au premier cycle de chaque heure UTC.
+
+    Toute erreur est journalisée sans interrompre la collecte ; nouvel essai après
+    CAPACITY_RETRY_S secondes. Au démarrage, la dernière heure écrite est relue dans le
+    repository (aucun doublon après un redémarrage).
+    """
+    global _capacity_last_hour, _capacity_retry_at
+    if time.monotonic() < _capacity_retry_at:
+        return
+    try:
+        if _capacity_last_hour is None:
+            with repo_conn.cursor() as cur:
+                cur.execute("SELECT max(collected_at) FROM asemon.snap_db_size")
+                last = cur.fetchone()[0]
+            repo_conn.rollback()
+            _capacity_last_hour = hour_key(last) if last else ""
+        current = hour_key(datetime.now(timezone.utc))
+        if current == _capacity_last_hour:
+            return
+        at, db_rows, table_rows = collect_capacity(target_conn)
+        write_capacity(repo_conn, db_rows, table_rows)
+        _capacity_last_hour = current
+        log.info("Capacity OK | %s UTC | bases=%d tables=%d", at.strftime("%Y-%m-%d %H:%M"),
+                 len(db_rows), len(table_rows))
+    except Exception:
+        try:
+            repo_conn.rollback()
+        except Exception:
+            pass
+        log.exception("Capacity planning : collecte horaire en échec (nouvel essai dans %ss ; "
+                      "schéma sql/13 appliqué ?)", CAPACITY_RETRY_S)
+        _capacity_retry_at = time.monotonic() + CAPACITY_RETRY_S
+
+
 def run_cycle(target_conn, repo_conn):
     os_metrics = collect_os_metrics()
     activity = collect_activity(target_conn)
@@ -511,6 +627,7 @@ def run_cycle(target_conn, repo_conn):
     write_snapshots(repo_conn, os_metrics, activity, locks, io, statements,
                      tables, indexes, checkpoints, wal, db_age, connections, kcache)
     write_query_texts(repo_conn, statements)
+    run_capacity(target_conn, repo_conn)
     commit_kcache(kcache_state)
 
     log.info(

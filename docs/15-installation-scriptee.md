@@ -62,7 +62,7 @@ Le script :
 2. écrit `conf.d/asemon.conf` (`listen_addresses = '*'`) et un bloc dans `pg_hba.conf` limité aux rôles `collector_writer` et `grafana_ro` depuis `SUBNET`, puis redémarre PostgreSQL si nécessaire ;
 3. crée la base `monitoring` et applique, dans l'ordre, `sql/01`, `02`, `04`, `05`, `06`, `08`, `09`, `10`, `11` (le `07` est un brouillon : jamais appliqué) ;
 4. fixe les mots de passe des rôles, repasse les droits ;
-5. installe et active les trois timers (rollup 5 min, partitions 1 h, purge quotidienne) ;
+5. crée un petit environnement Python (`/opt/asemon/venv`, psycopg) pour `retention.py`, installe et active les trois timers (rollup 5 min, partitions 1 h, rétention quotidienne) ; remplace un ancien `asemon-purge.timer` s'il existe ;
 6. installe Grafana ; **si `GRAFANA_ADMIN_PASSWORD` est renseigné**, définit le mot de passe admin, crée la datasource et importe les 6 dashboards (`scripts/grafana-provision.sh`, rejouable seul).
 
 Vérification :
@@ -124,7 +124,7 @@ Générer un peu de charge pour voir de l'activité : `sudo -u postgres createdb
 | # | Écart | Traitement |
 |---|---|---|
 | 1 | Deux procédures concurrentes pour créer la base et les rôles du repository : `01-VM-Monitoring.md` §4 (en ligne, avec ses mots de passe) et `01-VM-Monitoring-repository-grafana.md` (fichiers `sql/`). Suivre les deux de suite échoue (`role already exists`). | `sql/02` et `sql/03` rendus rejouables ; note ajoutée dans la fiche `01`. |
-| 2 | Aucun document ne donne **l'ordre complet des scripts SQL** (`01, 02, 04, 05, 06, 08, 09, 10, 11, 12` ; `07` à ne pas appliquer). | Ordre fixé dans `install-monitoring.sh` et dans ce document. |
+| 2 | Aucun document ne donne **l'ordre complet des scripts SQL** (`01, 02, 04, 05, 06, 08, 09, 10, 11, 12, 13` ; `07` à ne pas appliquer). | Ordre fixé dans `install-monitoring.sh` et dans ce document. |
 | 3 | `log_timezone` jamais cité comme prérequis alors que le parseur suppose l'UTC. | Ajouté à `conf.d/asemon.conf` ; note dans `02-VM-Cible.md` et `07-sessions-phase1.md`. |
 | 4 | Les réglages de VM-Cible sont répartis sur trois docs (02, 07, 14), dont deux par `ALTER SYSTEM`. | Regroupés dans `conf.d/asemon.conf`. |
 | 5 | `config.py` rendu lisible par tous (`chmod -R a+rX`), mots de passe compris. | Groupe `asemon`, mode `0640`. |
