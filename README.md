@@ -5,6 +5,8 @@ Preuve de concept de **supervision de PostgreSQL**, inspirée d'ASEMON (supervis
 - Une VM **surveillée** (`VM-Cible`, PostgreSQL 17) envoie ses mesures à une VM **de supervision** (`VM-Monitoring`) qui les stocke dans un dépôt PostgreSQL et les affiche dans **Grafana**.
 - Aucune solution externe : PostgreSQL, Python, systemd et Grafana.
 
+> **Pour démarrer : [docs/00-guide-pas-a-pas.md](docs/00-guide-pas-a-pas.md)**, un guide unique qui va de la création des machines virtuelles sous Hyper-V jusqu'au contrôle des dashboards.
+
 > Les adresses (`192.168.1.28`, `192.168.1.30`), l'utilisateur `admin01` et les chemins (`/opt/asemon`) sont ceux du POC : à adapter.
 
 ## Ce que le POC permet
