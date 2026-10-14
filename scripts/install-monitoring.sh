@@ -23,7 +23,7 @@ check_password GRAFANA_RO_PASSWORD
 
 # Ordre d'application. 07 est un brouillon et n'est jamais appliqué.
 SQL_FILES=(01-schema-asemon 02-roles-and-grants 04-schema-extension 05-schema-sessions
-           06-rollup-horaire 08-schema-samples 09-retention 10-plans-query-id 11-schema-kcache 12-plans-lisibles)
+           06-rollup-horaire 08-schema-samples 09-retention 10-plans-query-id 11-schema-kcache 12-plans-lisibles 13-capacity)
 
 apply_schema() {
     log "Schéma du repository"
@@ -75,12 +75,31 @@ fi
 # --- 3. Schéma ---------------------------------------------------------------------
 apply_schema
 
-# --- 4. Timers : rollup, maintenance des partitions, purge ------------------------------
+# --- 4. Timers : rollup, maintenance des partitions, rétention ---------------------------
+# retention.py (Release 3) est le point d'entrée unique de la rétention : il remplace
+# l'ancien asemon-purge.timer. Il a besoin de Python et de psycopg sur VM-Monitoring.
+log "Environnement Python de la rétention ($INSTALL_DIR)"
+apt_install python3 python3-venv python3-pip
+mkdir -p "$INSTALL_DIR/app"
+if [ ! -x "$INSTALL_DIR/venv/bin/python3" ]; then
+    python3 -m venv "$INSTALL_DIR/venv"
+fi
+"$INSTALL_DIR/venv/bin/pip" install -q "psycopg[binary]"
+install -m 0644 -o root -g root "$REPO_DIR/python/retention.py" "$INSTALL_DIR/app/retention.py"
+ok "retention.py installé"
+
 log "Timers systemd"
 install_units asemon-rollup.service asemon-rollup.timer \
-              asemon-samples-maintenance.service asemon-samples-maintenance.timer \
-              asemon-purge.service asemon-purge.timer
-systemctl enable --now asemon-rollup.timer asemon-samples-maintenance.timer asemon-purge.timer >/dev/null
+              asemon-samples-maintenance.service asemon-samples-maintenance.timer
+sed -e "s|/opt/asemon|$INSTALL_DIR|g" "$REPO_DIR/systemd/asemon-retention.service" > /etc/systemd/system/asemon-retention.service
+install_file "$REPO_DIR/systemd/asemon-retention.timer" /etc/systemd/system/asemon-retention.timer 0644
+if [ -f /etc/systemd/system/asemon-purge.timer ]; then
+    log "Remplacement de l'ancien asemon-purge.timer par asemon-retention.timer"
+    systemctl disable --now asemon-purge.timer >/dev/null 2>&1 || true
+    rm -f /etc/systemd/system/asemon-purge.timer /etc/systemd/system/asemon-purge.service
+fi
+systemctl daemon-reload
+systemctl enable --now asemon-rollup.timer asemon-samples-maintenance.timer asemon-retention.timer >/dev/null
 ok "timers actifs"
 
 # --- 5. Grafana --------------------------------------------------------------------

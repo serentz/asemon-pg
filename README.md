@@ -30,7 +30,7 @@ Preuve de concept de **supervision de PostgreSQL**, inspirée d'ASEMON (supervis
 │                                  │          │        ▲ lecture seule      │
 │ pg_stat_statements, auto_explain │          │        │                    │
 │ pg_stat_kcache                   │          │     Grafana :3000           │
-└──────────────────────────────────┘          │  timers : rollup, purge,    │
+└──────────────────────────────────┘          │  timers : rollup, retention,│
                                               │  maintenance des partitions │
                                               └─────────────────────────────┘
 ```
@@ -57,7 +57,7 @@ Toutes les captures de la version 2 : [images/Release_2](images/Release_2/README
 
 **En cours** : v2.1, plans d'exécution lisibles et mieux capturés (codée, à valider sur les VM : [docs/17-plans-v2.1.md](docs/17-plans-v2.1.md)).
 
-**Prochaines releases** (conception, rien de réalisé) : Release 3 (capacity planning) ; Release 4 (multi-instance, seuils) ; Release 5 (réplication). Voir [docs/16-roadmap-releases.md](docs/16-roadmap-releases.md).
+**Prochaines releases** : Release 3 (3a codée, collecte et rétention : [docs/18-capacity-planning.md](docs/18-capacity-planning.md) ; 3b, le dashboard, à faire) ; Release 4 (multi-instance, seuils) ; Release 5 (réplication). Voir [docs/16-roadmap-releases.md](docs/16-roadmap-releases.md).
 
 Suites possibles : alertes Grafana, mesure du volume réel après plusieurs jours, ajustement des durées de rétention. Réflexion et historique des choix : [docs/06-roadmap-ihm.md](docs/06-roadmap-ihm.md).
 
@@ -65,9 +65,9 @@ Suites possibles : alertes Grafana, mesure du volume réel après plusieurs jour
 
 | Dossier | Contenu |
 |---|---|
-| `python/` | `collector.py` (snapshots toutes les 15 s, dont `pg_stat_kcache`), `sampler.py` (sessions actives toutes les 2 s), `log_parser.py` (connexions, deadlocks, plans), `plan_format.py` (SQL et plans lisibles), `backfill_plans.py`, `config.py.example` |
+| `python/` | `collector.py` (snapshots toutes les 15 s, dont `pg_stat_kcache`), `sampler.py` (sessions actives toutes les 2 s), `log_parser.py` (connexions, deadlocks, plans), `plan_format.py` (SQL et plans lisibles), `backfill_plans.py`, `retention.py` (rétention, VM-Monitoring), `config.py.example` |
 | `sql/` | Schéma du dépôt, rôles et droits, fonctions (rollup, purge, partitions, répartition `kcache_attr`). Numérotés dans l'ordre d'application |
-| `systemd/` | Services (`collector`, `sampler`, `logparser`) et timers (`rollup`, `purge`, `samples-maintenance`) |
+| `systemd/` | Services (`collector`, `sampler`, `logparser`) et timers (`rollup`, `retention`, `samples-maintenance`) |
 | `grafana/` | 6 dashboards en JSON, importables |
 | `scripts/` | Installation scriptée (`install-monitoring.sh`, `install-target.sh`, `grafana-provision.sh`, `verify.sh`) ; `charge-lente.sh` (requêtes lentes pour tester les plans) |
 | `docs/` | Fiches d'installation et de fonctionnement, une par étape |
@@ -103,7 +103,7 @@ sudo ./scripts/install-target.sh          # ensuite, sur VM-Cible
 sudo ./scripts/verify.sh monitoring|target
 ```
 
-Ordre des scripts SQL (VM-Monitoring) : `01, 02, 04, 05, 06, 08, 09, 10, 11, 12` ; `03` sur VM-Cible ; `07` est un brouillon, **ne pas l'appliquer**. Les scripts sont rejouables. Toujours VM-Monitoring avant VM-Cible : le schéma doit exister avant que le collecteur écrive dedans.
+Ordre des scripts SQL (VM-Monitoring) : `01, 02, 04, 05, 06, 08, 09, 10, 11, 12, 13` ; `03` sur VM-Cible ; `07` est un brouillon, **ne pas l'appliquer**. Les scripts sont rejouables. Toujours VM-Monitoring avant VM-Cible : le schéma doit exister avant que le collecteur écrive dedans.
 
 ## Réglages courants
 
@@ -111,7 +111,8 @@ Ordre des scripts SQL (VM-Monitoring) : `01, 02, 04, 05, 06, 08, 09, 10, 11, 12`
 |---|---|---|
 | Changer l'intervalle de collecte (15 s) ou d'échantillonnage (2 s) | `/opt/asemon/app/config.py` (`INTERVAL`, `SAMPLE_INTERVAL`) puis `systemctl restart` | `09`, `14` |
 | Changer la durée de conservation | `asemon.settings` (VM-Monitoring) : `sample_retention_days` 14, `snapshot_retention_days` 30, `event_retention_days` 90, `session_retention_days` 90 | `10`, `09` |
-| Forcer une purge ou un rollup | `SELECT asemon.purge_old_data();` / `SELECT asemon.rollup_hourly();` | `10`, `08` |
+| Forcer la rétention ou un rollup | `sudo -u postgres /opt/asemon/venv/bin/python3 /opt/asemon/app/retention.py` (`--dry-run` pour simuler) / `SELECT asemon.rollup_hourly();` | `18`, `10`, `08` |
+| Changer la durée de l'historique de taille (capacity planning) | `asemon.settings` : `capacity_full_days` 7, `capacity_max_days` 1095 | `18` |
 | Voir la taille des échantillons | `SELECT * FROM asemon.v_samples_partitions;` | `09` |
 | Désactiver `pg_stat_kcache` | retirer l'extension de `shared_preload_libraries` (procédure et piège dans le doc) | `14` §2 |
 

@@ -23,9 +23,11 @@ monitoring)
     check "PostgreSQL écoute sur le réseau" bash -c "[ \"\$($PSQL_CMD -d postgres -At -c 'SHOW listen_addresses')\" = '*' ]"
     check "base monitoring : 18 tables ou plus dans le schéma asemon" bash -c "[ \"\$($PSQL_CMD -d monitoring -At -c \"SELECT count(*) FROM information_schema.tables WHERE table_schema='asemon' AND table_type='BASE TABLE'\")\" -ge 18 ]"
     check "fonctions asemon.* présentes" bash -c "[ \"\$($PSQL_CMD -d monitoring -At -c \"SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='asemon' AND proname IN ('rollup_hourly','maintain_samples','purge_old_data','kcache_attr','setting_int')\")\" -eq 5 ]"
-    for t in asemon-rollup asemon-samples-maintenance asemon-purge; do
+    for t in asemon-rollup asemon-samples-maintenance asemon-retention; do
         check "timer $t.timer actif" systemctl is-active --quiet "$t.timer"
     done
+    check "retention.py --dry-run s'exécute" runuser -u postgres -- "$INSTALL_DIR/venv/bin/python3" "$INSTALL_DIR/app/retention.py" --dry-run
+    check "grafana_ro lit asemon.snap_db_size (R3)" $PSQL_CMD -d monitoring -c "SET ROLE grafana_ro; SELECT 1 FROM asemon.snap_db_size LIMIT 1"
     check "grafana_ro lit asemon.snap_os" $PSQL_CMD -d monitoring -c "SET ROLE grafana_ro; SELECT 1 FROM asemon.snap_os LIMIT 1"
     check "Grafana répond" curl -fs http://localhost:3000/api/health
     log "Données reçues de VM-Cible (vides tant que install-target.sh n'a pas tourné depuis une minute) :"

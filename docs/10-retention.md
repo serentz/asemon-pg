@@ -3,6 +3,8 @@
 > Jusqu'ici, seules `snap_samples` (voir `09-echantillonnage-phase2.md`) et `snap_hourly_summary` (une ligne par heure) avaient une limite de croissance. Les autres tables grossissaient sans fin. Une fonction SQL, appelée une fois par jour, supprime maintenant les lignes plus anciennes que des durées réglables.
 >
 > **Statut : déployé sur VM-Monitoring (2026-10-09) et validé (premier passage à 0, timer actif, prochain passage 03:17 UTC).**
+>
+> **Release 3 (2026-10-14) : l'exécution quotidienne n'est plus faite par `asemon-purge.timer` mais par `retention.py` (`asemon-retention.timer`), qui appelle `purge_old_data()` puis réduit les points de capacity planning. Voir [18-capacity-planning.md](18-capacity-planning.md). Les commandes `asemon-purge` ci-dessous valent pour un POC non migré.**
 
 Fichiers concernés :
 - `sql/09-retention.sql` : paramètres dans `asemon.settings` et fonction `asemon.purge_old_data()` (VM-Monitoring)

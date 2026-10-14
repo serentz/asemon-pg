@@ -144,6 +144,8 @@ Un dashboard `asemon-capacity`, avec une variable **base** (une base, ou la somm
 
 ### B.5 Découpage proposé
 
+> **3a codée le 2026-10-14, à valider sur les VM : voir [18-capacity-planning.md](18-capacity-planning.md).** 3b (dashboard) : à faire.
+
 | Étape | Contenu |
 |---|---|
 | 3a | Tables `snap_db_size` et `snap_table_size`, collecte horaire, droits, `retention.py` et son timer, mise à jour de `install-*.sh` |
