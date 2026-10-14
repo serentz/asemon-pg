@@ -70,6 +70,14 @@
       "url": "/d/asemon-micro",
       "keepTime": true,
       "targetBlank": false
+    },
+    {
+      "title": "Capacity",
+      "type": "link",
+      "icon": "dashboard",
+      "url": "/d/asemon-capacity",
+      "keepTime": true,
+      "targetBlank": false
     }
   ],
   "templating": {

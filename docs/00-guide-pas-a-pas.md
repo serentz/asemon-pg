@@ -179,7 +179,7 @@ cd ~/asemon-pg
 sudo bash ./scripts/install-monitoring.sh
 ```
 
-Compter 5 à 10 minutes. Le script installe PostgreSQL 17, crée la base `monitoring` et ses tables, les comptes, trois minuteurs (rollup, partitions, rétention), Grafana et son plugin de panneaux texte, puis, si `GRAFANA_ADMIN_PASSWORD` est renseigné, crée la source de données et importe les 6 dashboards.
+Compter 5 à 10 minutes. Le script installe PostgreSQL 17, crée la base `monitoring` et ses tables, les comptes, trois minuteurs (rollup, partitions, rétention), Grafana et son plugin de panneaux texte, puis, si `GRAFANA_ADMIN_PASSWORD` est renseigné, crée la source de données et importe les 7 dashboards.
 
 Contrôle :
 
@@ -187,7 +187,7 @@ Contrôle :
 sudo bash ./scripts/verify.sh monitoring
 ```
 
-Toutes les lignes doivent être vertes. Ouvrir ensuite **`http://IP_MONITORING:3000`** dans le navigateur du PC (identifiant `admin`, mot de passe `GRAFANA_ADMIN_PASSWORD`) : le menu **Dashboards** liste les six dashboards ASEMON-PG, encore vides.
+Toutes les lignes doivent être vertes. Ouvrir ensuite **`http://IP_MONITORING:3000`** dans le navigateur du PC (identifiant `admin`, mot de passe `GRAFANA_ADMIN_PASSWORD`) : le menu **Dashboards** liste les sept dashboards ASEMON-PG, encore vides.
 
 ---
 
@@ -302,6 +302,18 @@ Ouvrir le Micro, trier les requêtes par durée, cliquer sur le `query_id` d'une
 - la boîte **Texte SQL** montre la requête indentée, 6 lignes visibles avec ascenseur ;
 - la boîte **Plan d'exécution affiché** montre l'arbre du plan (`Hash Join`, `Seq Scan`, coûts, temps réels) ;
 - le tableau **Plans (auto_explain)** liste les plans de la requête (au plus 5 par heure) ; cliquer sur un **N°** affiche ce plan dans la boîte.
+
+### 9.5 bis Capacity planning
+
+Ouvrir **Capacity** dans la barre de navigation (ou `/d/asemon-capacity`). La période par défaut est de 30 jours.
+
+À contrôler :
+- le graphe montre la taille de la base choisie dans la variable **Base** (ou `(toute l'instance)`) ;
+- la tuile **Taille actuelle** est renseignée dès la première collecte ;
+- **Dans 1 mois**, **Dans 6 mois** et **Dans 1 an** affichent « historique insuffisant » pendant les 48 premières heures, puis une valeur extrapolée ;
+- le tableau liste les 10 plus grosses tables (nombre d'index, lignes estimées, taille, taille dans 6 mois) avec un ascenseur.
+
+Détails : [18-capacity-planning.md](18-capacity-planning.md).
 
 ### 9.6 Contrôle direct dans la base (sur VM-Monitoring)
 

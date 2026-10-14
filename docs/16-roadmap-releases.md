@@ -144,7 +144,7 @@ Un dashboard `asemon-capacity`, avec une variable **base** (une base, ou la somm
 
 ### B.5 Découpage proposé
 
-> **3a codée le 2026-10-14, à valider sur les VM : voir [18-capacity-planning.md](18-capacity-planning.md).** 3b (dashboard) : à faire.
+> **3a validée sur les VM et fusionnée (2026-10-14). 3b (dashboard) codée le 2026-10-14, à valider sur Grafana : voir [18-capacity-planning.md](18-capacity-planning.md).**
 
 | Étape | Contenu |
 |---|---|

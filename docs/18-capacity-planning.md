@@ -1,6 +1,6 @@
 # Release 3 : capacity planning, collecte et rétention (étape 3a)
 
-> **Statut : codé et testé en local le 2026-10-14 (PostgreSQL 16, sans `psycopg` ni Grafana : un mini-remplaçant exécutait le SQL par `psql`). À valider sur les VM.** Cette étape couvre la **collecte** et la **rétention**. Le dashboard `asemon-capacity` (graphe de la taille, extrapolations, tableau des plus grosses tables) est l'étape 3b. Conception : `16-roadmap-releases.md`, §B.
+> **Statut : 3a (collecte, rétention) validée sur les VM et fusionnée dans `main` ; 3b (dashboard `asemon-capacity`) codée le 2026-10-14, SQL testé en local sur PostgreSQL 16 avec un historique synthétique, à valider sur Grafana.** Conception : `16-roadmap-releases.md`, §B.
 
 ## 1. Ce qui change
 
@@ -65,7 +65,7 @@ Résultat du test local : un historique synthétique de 1 200 jours (2 bases et 
 **VM-Monitoring**
 
 ```bash
-cd ~/asemon-pg && git fetch && git checkout r3a-capacity && git pull     # (main après la fusion)
+cd ~/asemon-pg && git fetch && git checkout main && git pull
 sudo -u postgres psql -d monitoring < sql/13-capacity.sql
 sudo apt install -y python3-venv
 sudo mkdir -p /opt/asemon/app && sudo python3 -m venv /opt/asemon/venv
@@ -87,11 +87,26 @@ sudo systemctl list-timers asemon-retention.timer --no-pager
 **VM-Cible**
 
 ```bash
-cd ~/asemon-pg && git fetch && git checkout r3a-capacity && git pull     # (main après la fusion)
+cd ~/asemon-pg && git fetch && git checkout main && git pull
 sudo cp python/collector.py /opt/asemon/app/ && sudo chmod a+rX /opt/asemon/app/collector.py
 sudo systemctl restart asemon-collector
 ```
 `config.py` n'a pas besoin de changer (`CAPACITY_MIN_BYTES` est optionnel).
+
+## 5 bis. Le dashboard `asemon-capacity` (3b)
+
+URL : `/d/asemon-capacity`, lien **Capacity** dans la barre de navigation de tous les dashboards.
+
+| Zone | Contenu |
+|---|---|
+| Variable **Base** | une base, ou `(toute l'instance)` (somme des bases) |
+| Graphe | taille de la base sur la période (30 jours par défaut), un point par heure |
+| 4 tuiles | **Taille actuelle**, **Dans 1 mois**, **Dans 6 mois**, **Dans 1 an** |
+| Tableau (10 lignes, défilant) | les plus grosses tables : base, table, nombre d'**index**, lignes (estimation), taille totale, **taille dans 6 mois** |
+
+**Extrapolation** : régression linéaire (`regr_slope`) sur les points de la période affichée ; taille future = taille actuelle + pente × durée (30, 182 ou 365 jours), jamais négative. Elle suppose un périmètre constant (pas de nouvelle table, pas de purge massive). Si les points de la période couvrent moins de **48 heures**, la tuile et la colonne affichent « historique insuffisant ». Pour que la projection ignore un événement ancien (gros chargement), raccourcir la période.
+
+**Mise à jour d'un POC existant** (une fois, sur la machine qui fait tourner Grafana) : `git pull` sur `main`, puis dans Grafana > Dashboards > New > **Import**, charger `grafana/asemon-capacity.json` (choisir la source *ASEMON Monitoring*), puis ré-importer les 5 autres fichiers `grafana/asemon-*.json` avec remplacement pour qu'ils reçoivent le lien Capacity. Avec le script : `sudo bash ./scripts/grafana-provision.sh` fait tout.
 
 ## 6. Vérifier
 
