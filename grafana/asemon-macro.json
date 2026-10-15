@@ -47,6 +47,22 @@
         "query": "postgres",
         "current": {},
         "label": "Datasource ASEMON"
+      },
+      {
+        "name": "instance",
+        "label": "Instance",
+        "type": "query",
+        "datasource": {
+          "type": "postgres",
+          "uid": "${DS_MONITORING}"
+        },
+        "query": "SELECT name AS __text, instance_id AS __value FROM asemon.instances WHERE enabled ORDER BY instance_id",
+        "definition": "SELECT name AS __text, instance_id AS __value FROM asemon.instances WHERE enabled ORDER BY instance_id",
+        "refresh": 1,
+        "sort": 0,
+        "includeAll": false,
+        "multi": false,
+        "current": {}
       }
     ]
   },
@@ -121,7 +137,7 @@
             "uid": "${DS_MONITORING}"
           },
           "format": "time_series",
-          "rawSql": "SELECT collected_at AS \"time\", active_connections AS \"Sessions actives\" FROM asemon.snap_connections WHERE $__timeFilter(collected_at) ORDER BY collected_at",
+          "rawSql": "SELECT collected_at AS \"time\", active_connections AS \"Sessions actives\" FROM asemon.snap_connections WHERE instance_id = $instance AND $__timeFilter(collected_at) ORDER BY collected_at",
           "rawQuery": true
         }
       ]
@@ -192,7 +208,7 @@
             "uid": "${DS_MONITORING}"
           },
           "format": "time_series",
-          "rawSql": "SELECT collected_at AS \"time\", 100.0 * total_connections / NULLIF(max_connections, 0) AS \"Connexions %\" FROM asemon.snap_connections WHERE $__timeFilter(collected_at) ORDER BY collected_at",
+          "rawSql": "SELECT collected_at AS \"time\", 100.0 * total_connections / NULLIF(max_connections, 0) AS \"Connexions %\" FROM asemon.snap_connections WHERE instance_id = $instance AND $__timeFilter(collected_at) ORDER BY collected_at",
           "rawQuery": true
         }
       ]
@@ -258,7 +274,7 @@
             "uid": "${DS_MONITORING}"
           },
           "format": "time_series",
-          "rawSql": "SELECT collected_at AS \"time\", cpu_percent AS \"CPU %\" FROM asemon.snap_os WHERE $__timeFilter(collected_at) ORDER BY collected_at",
+          "rawSql": "SELECT collected_at AS \"time\", cpu_percent AS \"CPU %\" FROM asemon.snap_os WHERE instance_id = $instance AND $__timeFilter(collected_at) ORDER BY collected_at",
           "rawQuery": true
         }
       ]
@@ -324,7 +340,7 @@
             "uid": "${DS_MONITORING}"
           },
           "format": "time_series",
-          "rawSql": "SELECT collected_at AS \"time\", mem_percent AS \"Mémoire %\" FROM asemon.snap_os WHERE $__timeFilter(collected_at) ORDER BY collected_at",
+          "rawSql": "SELECT collected_at AS \"time\", mem_percent AS \"Mémoire %\" FROM asemon.snap_os WHERE instance_id = $instance AND $__timeFilter(collected_at) ORDER BY collected_at",
           "rawQuery": true
         }
       ]
@@ -393,7 +409,7 @@
             "uid": "${DS_MONITORING}"
           },
           "format": "time_series",
-          "rawSql": "SELECT hour_bucket AS \"time\", cache_hit_ratio AS \"Cache hit ratio\" FROM asemon.snap_hourly_summary WHERE hour_bucket >= date_trunc('hour', $__timeFrom()::timestamptz) AND hour_bucket <= $__timeTo() ORDER BY hour_bucket",
+          "rawSql": "SELECT hour_bucket AS \"time\", cache_hit_ratio AS \"Cache hit ratio\" FROM asemon.snap_hourly_summary WHERE instance_id = $instance AND hour_bucket >= date_trunc('hour', $__timeFrom()::timestamptz) AND hour_bucket <= $__timeTo() ORDER BY hour_bucket",
           "rawQuery": true
         }
       ]
@@ -458,7 +474,7 @@
             "uid": "${DS_MONITORING}"
           },
           "format": "time_series",
-          "rawSql": "SELECT hour_bucket AS \"time\", total_deadlocks AS \"Deadlocks\" FROM asemon.snap_hourly_summary WHERE hour_bucket >= date_trunc('hour', $__timeFrom()::timestamptz) AND hour_bucket <= $__timeTo() ORDER BY hour_bucket",
+          "rawSql": "SELECT hour_bucket AS \"time\", total_deadlocks AS \"Deadlocks\" FROM asemon.snap_hourly_summary WHERE instance_id = $instance AND hour_bucket >= date_trunc('hour', $__timeFrom()::timestamptz) AND hour_bucket <= $__timeTo() ORDER BY hour_bucket",
           "rawQuery": true
         }
       ]
@@ -527,7 +543,7 @@
             "uid": "${DS_MONITORING}"
           },
           "format": "time_series",
-          "rawSql": "SELECT hour_bucket AS \"time\", total_slow_queries AS \"Requêtes lentes\" FROM asemon.snap_hourly_summary WHERE hour_bucket >= date_trunc('hour', $__timeFrom()::timestamptz) AND hour_bucket <= $__timeTo() ORDER BY hour_bucket",
+          "rawSql": "SELECT hour_bucket AS \"time\", total_slow_queries AS \"Requêtes lentes\" FROM asemon.snap_hourly_summary WHERE instance_id = $instance AND hour_bucket >= date_trunc('hour', $__timeFrom()::timestamptz) AND hour_bucket <= $__timeTo() ORDER BY hour_bucket",
           "rawQuery": true
         }
       ]
@@ -589,7 +605,7 @@
             "uid": "${DS_MONITORING}"
           },
           "format": "time_series",
-          "rawSql": "SELECT date_trunc('minute', sampled_at) AS \"time\", SUM(interval_ms) / 60000.0 AS \"Sessions actives moy.\" FROM asemon.snap_samples WHERE $__timeFilter(sampled_at) GROUP BY 1 ORDER BY 1",
+          "rawSql": "SELECT date_trunc('minute', sampled_at) AS \"time\", SUM(interval_ms) / 60000.0 AS \"Sessions actives moy.\" FROM asemon.snap_samples WHERE instance_id = $instance AND $__timeFilter(sampled_at) GROUP BY 1 ORDER BY 1",
           "rawQuery": true
         }
       ]
@@ -807,7 +823,7 @@
             "uid": "${DS_MONITORING}"
           },
           "format": "table",
-          "rawSql": "SELECT hour_bucket AS \"Heure\", avg_cpu_percent AS \"CPU %\", avg_mem_percent AS \"Mémoire %\", avg_active_sessions AS \"Sessions moy.\", max_active_sessions AS \"Sessions max\", total_deadlocks AS \"Deadlocks\", total_slow_queries AS \"Requêtes lentes\", cache_hit_ratio AS \"Cache hit %\" FROM asemon.snap_hourly_summary ORDER BY hour_bucket DESC LIMIT 6",
+          "rawSql": "SELECT hour_bucket AS \"Heure\", avg_cpu_percent AS \"CPU %\", avg_mem_percent AS \"Mémoire %\", avg_active_sessions AS \"Sessions moy.\", max_active_sessions AS \"Sessions max\", total_deadlocks AS \"Deadlocks\", total_slow_queries AS \"Requêtes lentes\", cache_hit_ratio AS \"Cache hit %\" FROM asemon.snap_hourly_summary WHERE instance_id = $instance ORDER BY hour_bucket DESC LIMIT 6",
           "rawQuery": true
         }
       ]
@@ -820,7 +836,8 @@
       "icon": "dashboard",
       "url": "/d/asemon-macro",
       "keepTime": true,
-      "targetBlank": false
+      "targetBlank": false,
+      "includeVars": true
     },
     {
       "title": "Intermédiaire",
@@ -828,7 +845,8 @@
       "icon": "dashboard",
       "url": "/d/asemon-intermediate",
       "keepTime": true,
-      "targetBlank": false
+      "targetBlank": false,
+      "includeVars": true
     },
     {
       "title": "Micro",
@@ -836,7 +854,8 @@
       "icon": "dashboard",
       "url": "/d/asemon-micro",
       "keepTime": true,
-      "targetBlank": false
+      "targetBlank": false,
+      "includeVars": true
     },
     {
       "title": "Capacity",
@@ -844,7 +863,8 @@
       "icon": "dashboard",
       "url": "/d/asemon-capacity",
       "keepTime": true,
-      "targetBlank": false
+      "targetBlank": false,
+      "includeVars": true
     }
   ]
 }

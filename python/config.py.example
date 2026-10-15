@@ -36,3 +36,8 @@ INSTANCE_NAME = "VM-Cible"
 
 # Adresse affichée pour cette instance (facultatif ; sinon l'hôte de TARGET_DSN)
 # INSTANCE_HOST = "192.168.1.30"
+
+# Release 4b : logins que l'échantillonneur ignore (bruit). Utile sur VM-Monitoring, qui se supervise
+# elle-même : ses agents (collector_writer) et Grafana (grafana_ro) ne doivent pas être échantillonnés.
+# Optionnel (liste vide par défaut). Après modification : sudo systemctl restart asemon-sampler
+# SAMPLE_EXCLUDE_USERS = ["collector_writer", "grafana_ro"]

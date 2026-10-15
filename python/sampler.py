@@ -58,6 +58,7 @@ SQL_SAMPLE = """
     WHERE state = 'active'
       AND backend_type = 'client backend'
       AND pid <> pg_backend_pid()
+      AND COALESCE(usename, '') <> ALL(%s)
 """
 
 SQL_INSERT = """
@@ -86,6 +87,18 @@ def read_interval():
         log.warning("SAMPLE_INTERVAL=%s hors de [%s, %s], ramené à %ss",
                     value, MIN_INTERVAL, MAX_INTERVAL, clamped)
     return clamped
+
+
+def read_exclude_users():
+    """Logins à ne pas échantillonner (SAMPLE_EXCLUDE_USERS dans config.py, liste de noms)."""
+    raw = getattr(config, "SAMPLE_EXCLUDE_USERS", [])
+    if isinstance(raw, str):
+        raw = [raw]
+    try:
+        return [str(u) for u in raw]
+    except TypeError:
+        log.warning("SAMPLE_EXCLUDE_USERS=%r invalide, ignoré", raw)
+        return []
 
 
 def connect_target():
@@ -167,6 +180,7 @@ def main():
             safe_close(repo_conn)
             repo_conn = None
 
+    exclude_users = read_exclude_users()
     try:
         while not _stop.is_set():
             # --- relevé sur l'instance surveillée ---
@@ -174,7 +188,7 @@ def main():
                 if target_conn is None or target_conn.closed:
                     target_conn = connect_target()
                 with target_conn.cursor() as cur:
-                    cur.execute(SQL_SAMPLE)
+                    cur.execute(SQL_SAMPLE, (exclude_users,))
                     rows = cur.fetchall()
                 ts = time.monotonic()
                 for r in rows:

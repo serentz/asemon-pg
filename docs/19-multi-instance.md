@@ -102,3 +102,7 @@ WHERE schemaname = 'asemon' ORDER BY idx_scan;
 | `null value in column "instance_id"` | `sql/15` appliqué alors qu'un agent est resté à l'ancienne version | mettre l'agent à jour (étape 2) et le redémarrer |
 | `duplicate key … snap_sessions_session_key_key` avec deux instances | `sql/15` pas encore appliqué | l'appliquer (étape 3) |
 | `index_invalides` > 0 | un `CREATE INDEX CONCURRENTLY` a été interrompu | rejouer `sql/14` : il supprime les index invalides puis les recrée |
+
+## 8. Release 4b : dashboards par instance et supervision de VM-Monitoring
+
+Les 6 dashboards (Macro, Intermédiaire, Micro, Requête, Session, Capacity) ont une liste **Instance** en tête ; chaque requête est filtrée par `instance_id`, et les liens entre pages conservent l'instance choisie. Pour VM-Cible, les résultats sont identiques à avant (62 requêtes comparées). Réimporter les dashboards avec **Overwrite**. La liste Base de Capacity propose « (toutes les bases) » de l'instance choisie. La supervision de VM-Monitoring est décrite dans `20-supervision-vm-monitoring.md`.

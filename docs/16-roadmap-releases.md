@@ -254,7 +254,7 @@ Les dashboards Grafana sont en lecture seule et un tableau Grafana n'est pas éd
 
 ### 3.7 Découpage proposé
 
-> **Numérotation** : les étapes ci-dessous (3a à 3d) sont celles de la **Release 4**. **4a** (schéma, index, agents) codée le 2026-10-15, à valider sur les VM : voir [19-multi-instance.md](19-multi-instance.md). La vérification des **index utilisés** (`idx_scan`) se fait après quelques jours d'usage.
+> **Numérotation** : les étapes ci-dessous (3a à 3d) sont celles de la **Release 4**. **4a** (schéma, index, agents) validée sur les VM le 2026-10-15 ; **4b** (dashboards par instance, supervision de VM-Monitoring) codée, à valider : voir [19-multi-instance.md](19-multi-instance.md). La vérification des **index utilisés** (`idx_scan`) se fait après quelques jours d'usage.
 
 | Étape | Contenu |
 |---|---|
