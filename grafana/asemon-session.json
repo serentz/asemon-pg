@@ -23,7 +23,7 @@
       "version": "1.0.0"
     }
   ],
-  "title": "ASEMON-PG — Détail d'une session",
+  "title": "monAp_pg — Détail d'une session",
   "uid": "asemon-session",
   "description": "Détail d'une session : identité, coûts, exécutions, plans et deadlocks. S'ouvre depuis la page Micro (variable session_key).",
   "tags": [

@@ -23,9 +23,9 @@
       "version": "1.0.0"
     }
   ],
-  "title": "ASEMON-PG — Micro",
+  "title": "monAp_pg — Micro",
   "uid": "asemon-micro",
-  "description": "Page 3 de l'IHM ASEMON-PG : top 10 des sessions et des requêtes, avec accès au détail.",
+  "description": "Page 3 de l'IHM monAp_pg : top 10 des sessions et des requêtes, avec accès au détail.",
   "tags": [
     "asemon",
     "postgresql",

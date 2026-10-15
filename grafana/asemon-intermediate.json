@@ -23,9 +23,9 @@
       "version": "1.0.0"
     }
   ],
-  "title": "ASEMON-PG — Intermédiaire",
+  "title": "monAp_pg — Intermédiaire",
   "uid": "asemon-intermediate",
-  "description": "Page 2 de l'IHM ASEMON-PG : répartition de la charge active par login et programme, graphiques système, connexions, checkpoints et WAL.",
+  "description": "Page 2 de l'IHM monAp_pg : répartition de la charge active par login et programme, graphiques système, connexions, checkpoints et WAL.",
   "tags": [
     "asemon",
     "postgresql",
@@ -101,7 +101,7 @@
       "id": 2,
       "type": "piechart",
       "title": "Temps actif par login",
-      "description": "Qui consomme du temps de base de données. Temps actif échantillonné (snap_samples, relevé toutes les 2 s), pas un coût CPU exact. Les sessions de ASEMON-PG (application_name asemon-*) sont exclues.",
+      "description": "Qui consomme du temps de base de données. Temps actif échantillonné (snap_samples, relevé toutes les 2 s), pas un coût CPU exact. Les sessions de monAp_pg (application_name asemon-*) sont exclues.",
       "gridPos": {
         "h": 9,
         "w": 8,
@@ -160,7 +160,7 @@
       "id": 3,
       "type": "piechart",
       "title": "Temps actif par programme",
-      "description": "Quelle application (application_name) consomme du temps. Temps actif échantillonné (snap_samples, relevé toutes les 2 s), pas un coût CPU exact. Les sessions de ASEMON-PG (application_name asemon-*) sont exclues.",
+      "description": "Quelle application (application_name) consomme du temps. Temps actif échantillonné (snap_samples, relevé toutes les 2 s), pas un coût CPU exact. Les sessions de monAp_pg (application_name asemon-*) sont exclues.",
       "gridPos": {
         "h": 9,
         "w": 8,
@@ -219,7 +219,7 @@
       "id": 4,
       "type": "piechart",
       "title": "CPU contre attentes",
-      "description": "CPU = session active sans attente ; sinon type d'attente (IO, Lock, LWLock, Client...). Approximation, la mesure réelle viendra de pg_stat_kcache. Temps actif échantillonné (snap_samples, relevé toutes les 2 s), pas un coût CPU exact. Les sessions de ASEMON-PG (application_name asemon-*) sont exclues.",
+      "description": "CPU = session active sans attente ; sinon type d'attente (IO, Lock, LWLock, Client...). Approximation, la mesure réelle viendra de pg_stat_kcache. Temps actif échantillonné (snap_samples, relevé toutes les 2 s), pas un coût CPU exact. Les sessions de monAp_pg (application_name asemon-*) sont exclues.",
       "gridPos": {
         "h": 9,
         "w": 8,
@@ -290,7 +290,7 @@
       "id": 18,
       "type": "piechart",
       "title": "CPU mesuré par login",
-      "description": "CPU réellement consommé (user + system, getrusage via pg_stat_kcache). Mesure exacte par login. Sessions de ASEMON-PG exclues.",
+      "description": "CPU réellement consommé (user + system, getrusage via pg_stat_kcache). Mesure exacte par login. Sessions de monAp_pg exclues.",
       "gridPos": {
         "h": 9,
         "w": 6,
@@ -526,7 +526,7 @@
       "id": 5,
       "type": "timeseries",
       "title": "Charge active par type d'attente (sessions actives moyennes par minute)",
-      "description": "Équivalent d'un graphique ASH : hauteur = nombre moyen de sessions actives, couleur = ce qu'elles font (CPU ou type d'attente). Temps actif échantillonné (snap_samples, relevé toutes les 2 s), pas un coût CPU exact. Les sessions de ASEMON-PG (application_name asemon-*) sont exclues.",
+      "description": "Équivalent d'un graphique ASH : hauteur = nombre moyen de sessions actives, couleur = ce qu'elles font (CPU ou type d'attente). Temps actif échantillonné (snap_samples, relevé toutes les 2 s), pas un coût CPU exact. Les sessions de monAp_pg (application_name asemon-*) sont exclues.",
       "gridPos": {
         "h": 9,
         "w": 24,

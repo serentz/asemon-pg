@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# ASEMON-PG : fonctions communes aux scripts d'installation. À inclure avec `source`.
+# monAp_pg : fonctions communes aux scripts d'installation. À inclure avec `source`.
 
 set -euo pipefail
 

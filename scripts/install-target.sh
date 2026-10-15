@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ============================================================
-# ASEMON-PG : installation de VM-Cible (instance surveillée + collecte)
+# monAp_pg : installation de VM-Cible (instance surveillée + collecte)
 #
 #   sudo ./scripts/install-target.sh
 #
@@ -26,7 +26,7 @@ install_postgres "postgresql-$PG_VERSION-pg-stat-kcache"
 apt_install python3 python3-venv python3-pip
 
 # --- 2. Configuration de l'instance ----------------------------------------------------
-# Un seul fichier, conf.d/asemon.conf, regroupe tout ce qu'ASEMON-PG exige. Il remplace les
+# Un seul fichier, conf.d/asemon.conf, regroupe tout ce qu'monAp_pg exige. Il remplace les
 # modifications à la main de postgresql.conf décrites dans docs/02, 07 et 14.
 ensure_conf_d
 check_auto_conf shared_preload_libraries lc_messages log_timezone log_connections log_disconnections
@@ -37,7 +37,7 @@ listen_line="# listen_addresses : valeur par défaut (local uniquement)"
 CHANGED=0
 tmp="$(mktemp)"
 cat > "$tmp" <<CONF
-# Géré par ASEMON-PG (scripts/install-target.sh) : ne pas modifier à la main.
+# Géré par monAp_pg (scripts/install-target.sh) : ne pas modifier à la main.
 $listen_line
 
 # Extensions : pg_stat_kcache dépend de pg_stat_statements (ordre sans importance, présence obligatoire)

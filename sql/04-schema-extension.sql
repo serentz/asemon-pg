@@ -1,5 +1,5 @@
 -- ============================================================
--- ASEMON-PG — Extension du schéma (maintenance, checkpoints, WAL, système)
+-- monAp_pg — Extension du schéma (maintenance, checkpoints, WAL, système)
 -- À exécuter sur VM-Monitoring, dans la base `monitoring`
 -- Usage : sudo -u postgres psql -d monitoring -f 04-schema-extension.sql
 -- ============================================================

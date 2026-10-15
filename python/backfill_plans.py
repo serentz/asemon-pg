@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-ASEMON-PG v2.1 — Rattrapage des plans déjà stockés
+monAp_pg v2.1 — Rattrapage des plans déjà stockés
 
 Remplit plan_text et plan_hash pour les lignes de asemon.event_plans écrites
 avant la v2.1. Rejouable : ne traite que les lignes où plan_text est vide.

@@ -1,5 +1,5 @@
 -- ============================================================
--- ASEMON-PG v2.1 — Plans d'exécution et requêtes lisibles
+-- monAp_pg v2.1 — Plans d'exécution et requêtes lisibles
 -- À appliquer sur VM-Monitoring (base monitoring), rejouable.
 --
 --   sudo -u postgres psql -d monitoring < sql/12-plans-lisibles.sql

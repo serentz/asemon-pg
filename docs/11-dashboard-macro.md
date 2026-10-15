@@ -1,6 +1,6 @@
-# Dashboard Grafana « ASEMON-PG — Macro » (page 1 de l'IHM)
+# Dashboard Grafana « monAp_pg — Macro » (page 1 de l'IHM)
 
-> Première page de l'IHM cible (`06-roadmap-ihm.md` §2) : huit tuiles d'indicateurs avec sparkline, et un résumé « une ligne par heure » sur les 6 dernières heures. C'est un **nouveau dashboard**, importé à côté de `ASEMON-PG` qui n'est pas modifié.
+> Première page de l'IHM cible (`06-roadmap-ihm.md` §2) : huit tuiles d'indicateurs avec sparkline, et un résumé « une ligne par heure » sur les 6 dernières heures. C'est un **nouveau dashboard**, importé à côté de `monAp_pg` qui n'est pas modifié.
 >
 > **Statut : importé dans Grafana et validé (2026-10-09) : 8 tuiles et tableau horaire corrects.**
 
@@ -52,7 +52,7 @@ Aucun changement de schéma, aucune VM à toucher : `grafana_ro` lit déjà tout
 
 - Les 8 tuiles affichent une valeur (sinon : message « No data » sur la tuile concernée, à me signaler avec son nom).
 - Le tableau (colonnes « Sessions moy. » et « Sessions max ») contient 6 lignes (ou moins si le collecteur n'a pas tourné 6 heures).
-- Comparaison avec le dashboard `ASEMON-PG` : mêmes valeurs de CPU, mémoire et connexions sur la même période.
+- Comparaison avec le dashboard `monAp_pg` : mêmes valeurs de CPU, mémoire et connexions sur la même période.
 - La tuile « Deadlocks » correspond à tes tests du jour (un deadlock provoqué sur la période = 1 ou plus).
 - Un `pg_sleep(60)` lancé sur la cible fait monter « Charge active moyenne » à environ 1 pendant la minute concernée.
 
@@ -71,5 +71,5 @@ Aucun changement de schéma, aucune VM à toucher : `grafana_ro` lit déjà tout
 - [x] Dashboard importé, datasource mappé, aucune erreur de panneau
 - [x] 8 tuiles avec valeur et sparkline
 - [x] Tableau horaire : 6 lignes cohérentes avec `snap_hourly_summary`
-- [x] Valeurs cohérentes avec le dashboard `ASEMON-PG`
-- [x] Dashboard `ASEMON-PG` existant inchangé
+- [x] Valeurs cohérentes avec le dashboard `monAp_pg`
+- [x] Dashboard `monAp_pg` existant inchangé

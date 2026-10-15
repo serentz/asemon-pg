@@ -1,5 +1,5 @@
 [Unit]
-Description=ASEMON-PG Rollup horaire (asemon.snap_hourly_summary)
+Description=monAp_pg Rollup horaire (asemon.snap_hourly_summary)
 After=postgresql.service
 Requires=postgresql.service
 

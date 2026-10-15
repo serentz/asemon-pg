@@ -23,7 +23,7 @@
       "version": "1.0.0"
     }
   ],
-  "title": "ASEMON-PG — Capacity planning",
+  "title": "monAp_pg — Capacity planning",
   "uid": "asemon-capacity",
   "description": "Capacity planning : évolution de la taille des bases, projections à 1 mois / 6 mois / 1 an et plus grosses tables.",
   "tags": [

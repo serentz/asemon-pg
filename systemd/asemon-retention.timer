@@ -1,5 +1,5 @@
 [Unit]
-Description=ASEMON-PG Retention, une fois par jour
+Description=monAp_pg Retention, une fois par jour
 
 [Timer]
 # 03:17 UTC (05:17 en heure d'été française), hors des pointes d'activité

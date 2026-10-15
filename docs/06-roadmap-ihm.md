@@ -1,4 +1,4 @@
-# ASEMON-PG — Réflexion IHM et roadmap (session / requête)
+# monAp_pg — Réflexion IHM et roadmap (session / requête)
 
 > Ce document est une **réflexion d'architecture et une feuille de route**, pas une fiche d'installation comme les précédentes. Il formalise la vision cible de l'interface (navigation du général vers la requête SQL, en passant par la session) et liste ce qui doit changer dans le collecteur et le schéma pour la rendre possible. Au départ, rien de ce qui est décrit ici n'était déployé. Les phases 1 à 4 sont maintenant réalisées (voir le tableau du §5) ; ce document est conservé comme **historique des choix**. Pour l'état actuel, voir `README.md` et `00-architecture.md`.
 

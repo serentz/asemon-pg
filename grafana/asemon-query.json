@@ -29,7 +29,7 @@
       "version": "5.0.0"
     }
   ],
-  "title": "ASEMON-PG — Détail d'une requête",
+  "title": "monAp_pg — Détail d'une requête",
   "uid": "asemon-query",
   "description": "Détail d'une requête : texte, coûts, sessions qui l'ont exécutée et plans. S'ouvre depuis la page Micro (variable query_id).",
   "tags": [

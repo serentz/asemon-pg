@@ -1,5 +1,5 @@
 [Unit]
-Description=ASEMON-PG Retention : purge des donnees anciennes et reduction des points de capacity planning
+Description=monAp_pg Retention : purge des donnees anciennes et reduction des points de capacity planning
 After=postgresql.service
 Requires=postgresql.service
 

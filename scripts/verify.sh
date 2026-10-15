@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# ASEMON-PG : contrôles après installation.
+# monAp_pg : contrôles après installation.
 #   sudo ./scripts/verify.sh monitoring     (sur VM-Monitoring)
 #   sudo ./scripts/verify.sh target         (sur VM-Cible)
 # Code de sortie : 0 si tout est bon, 1 sinon.

@@ -1,5 +1,5 @@
 -- ============================================================
--- ASEMON-PG — Rollup horaire (page macro de l'IHM)
+-- monAp_pg — Rollup horaire (page macro de l'IHM)
 -- (voir docs/08-rollup-horaire.md et docs/06-roadmap-ihm.md)
 --
 -- Une ligne par heure UTC dans asemon.snap_hourly_summary, calculée

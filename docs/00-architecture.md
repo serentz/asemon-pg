@@ -1,4 +1,4 @@
-# ASEMON-PG — Architecture
+# monAp_pg — Architecture
 
 > Vue d'ensemble de l'architecture à la fin des phases 1 à 4. Les diagrammes sont en Mermaid : GitHub les affiche directement.
 > Pour l'installation pas à pas, voir l'index des documents dans le `README.md` à la racine du dépôt.
@@ -44,7 +44,7 @@ Rôles PostgreSQL :
 - `collector_writer` (sur VM-Monitoring) : écrit dans le schéma `asemon` ;
 - `grafana_ro` (sur VM-Monitoring) : lit le schéma `asemon` et exécute `kcache_attr()`.
 
-Les sessions de ASEMON-PG lui-même (login `asemon_collect`, `application_name` `asemon-*`) sont exclues des dashboards.
+Les sessions de monAp_pg lui-même (login `asemon_collect`, `application_name` `asemon-*`) sont exclues des dashboards.
 
 ---
 

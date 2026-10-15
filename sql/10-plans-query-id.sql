@@ -1,5 +1,5 @@
 -- ============================================================
--- ASEMON-PG — Lien plans / requêtes et index pour la page micro de l'IHM
+-- monAp_pg — Lien plans / requêtes et index pour la page micro de l'IHM
 -- (voir docs/13-dashboard-micro.md)
 --
 --  * event_plans.query_id : query_id de la requête qui a produit le plan

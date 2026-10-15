@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-ASEMON-PG — Collecteur
+monAp_pg — Collecteur
 
 Tourne sur la VM surveillée (VM-Cible). À chaque cycle :
   1. Lit les métriques OS locales (CPU, iowait, mémoire, disque, réseau,
@@ -639,7 +639,7 @@ def run_cycle(target_conn, repo_conn):
 
 
 def main():
-    log.info("Démarrage du collecteur ASEMON-PG (intervalle=%ss)", INTERVAL)
+    log.info("Démarrage du collecteur monAp_pg (intervalle=%ss)", INTERVAL)
 
     target_conn = psycopg.connect(TARGET_DSN, autocommit=True, application_name=APP_NAME)
     repo_conn = psycopg.connect(REPO_DSN, application_name=APP_NAME)

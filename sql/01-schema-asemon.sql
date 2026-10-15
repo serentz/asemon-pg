@@ -1,5 +1,5 @@
 -- ============================================================
--- ASEMON-PG — Schéma du repository de monitoring
+-- monAp_pg — Schéma du repository de monitoring
 -- À exécuter sur VM-Monitoring, dans la base `monitoring`
 -- Usage : sudo -u postgres psql -d monitoring -f 01-schema-asemon.sql
 -- ============================================================

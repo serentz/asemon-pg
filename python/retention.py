@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-ASEMON-PG Release 3 — Point d'entrée unique de la rétention (VM-Monitoring)
+monAp_pg Release 3 — Point d'entrée unique de la rétention (VM-Monitoring)
 
 Lancé chaque jour par asemon-retention.timer (sous l'utilisateur postgres, connexion
 locale), à la place de l'ancien asemon-purge.timer. Il enchaîne :
@@ -99,7 +99,7 @@ def reduce_to_daily(conn, table, keys, full_days, max_days, dry_run):
 
 
 def main():
-    ap = argparse.ArgumentParser(description="Rétention ASEMON-PG (point d'entrée unique)")
+    ap = argparse.ArgumentParser(description="Rétention monAp_pg (point d'entrée unique)")
     ap.add_argument("--dry-run", action="store_true", help="affiche sans rien modifier")
     ap.add_argument("--dsn", default="dbname=monitoring", help="connexion au repository (défaut : socket local)")
     args = ap.parse_args()

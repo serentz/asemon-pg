@@ -1,6 +1,6 @@
 # Guide pas à pas : des machines virtuelles aux dashboards
 
-> **À lire en premier.** Ce guide suit une seule ligne droite : créer deux machines virtuelles sous Hyper-V, installer ASEMON-PG, générer de l'activité, puis contrôler les résultats dans Grafana. Compter **1 h 30 environ**, dont une bonne part d'attente (installations).
+> **À lire en premier.** Ce guide suit une seule ligne droite : créer deux machines virtuelles sous Hyper-V, installer monAp_pg, générer de l'activité, puis contrôler les résultats dans Grafana. Compter **1 h 30 environ**, dont une bonne part d'attente (installations).
 >
 > **Statut (2026-10-14).** Les étapes 1 à 3 et 8 à 9 reprennent ce qui a été fait et validé sur le POC. Les étapes 4 à 7 utilisent les **scripts d'installation, qui n'ont pas encore été essayés sur des machines neuves** (`docs/15-installation-scriptee.md`). Si un script échoue, copier la sortie du terminal et passer au dépannage (§10) ; la procédure manuelle, validée, est dans les fiches `docs/01` à `docs/14`.
 >
@@ -187,7 +187,7 @@ Contrôle :
 sudo bash ./scripts/verify.sh monitoring
 ```
 
-Toutes les lignes doivent être vertes. Ouvrir ensuite **`http://IP_MONITORING:3000`** dans le navigateur du PC (identifiant `admin`, mot de passe `GRAFANA_ADMIN_PASSWORD`) : le menu **Dashboards** liste les sept dashboards ASEMON-PG, encore vides.
+Toutes les lignes doivent être vertes. Ouvrir ensuite **`http://IP_MONITORING:3000`** dans le navigateur du PC (identifiant `admin`, mot de passe `GRAFANA_ADMIN_PASSWORD`) : le menu **Dashboards** liste les sept dashboards monAp_pg, encore vides.
 
 ---
 
@@ -260,7 +260,7 @@ Ouvrir `http://IP_MONITORING:3000` > **Dashboards**. Régler la période en haut
 
 Les captures de référence sont dans [images/Release_2](../images/Release_2/README.md) ; vos valeurs seront différentes, la forme doit ressembler.
 
-### 9.1 ASEMON-PG — Macro
+### 9.1 monAp_pg — Macro
 
 ![Macro](../images/Release_2/01-macro.png)
 
@@ -269,7 +269,7 @@ Les captures de référence sont dans [images/Release_2](../images/Release_2/REA
 - **Deadlocks** vaut au moins 1 si l'étape 8.3 a été faite (tuile rouge) ;
 - le tableau « une ligne par heure » a une ligne pour l'heure en cours (la première ligne apparaît après environ 5 minutes).
 
-### 9.2 ASEMON-PG — Intermédiaire
+### 9.2 monAp_pg — Intermédiaire
 
 ![Intermédiaire](../images/Release_2/02-intermediaire-repartition.png)
 
@@ -278,7 +278,7 @@ Les captures de référence sont dans [images/Release_2](../images/Release_2/REA
 - les **coûts mesurés** (CPU et disque par login et par programme) ont des valeurs non nulles après le `pgbench` ; une part « (non attribué) » est normale (requêtes plus courtes que 2 secondes) ;
 - les courbes système (CPU, mémoire, réseau, disque, WAL) sont tracées.
 
-### 9.3 ASEMON-PG — Micro
+### 9.3 monAp_pg — Micro
 
 ![Micro](../images/Release_2/05-micro-top10.png)
 

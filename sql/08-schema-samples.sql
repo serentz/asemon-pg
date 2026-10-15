@@ -1,5 +1,5 @@
 -- ============================================================
--- ASEMON-PG — Phase 2 : échantillonnage des sessions actives
+-- monAp_pg — Phase 2 : échantillonnage des sessions actives
 -- (voir docs/09-echantillonnage-phase2.md et docs/06-roadmap-ihm.md)
 --
 -- Un échantillonneur (python/sampler.py, sur VM-Cible) relève toutes les
