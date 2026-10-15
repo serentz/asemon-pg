@@ -38,7 +38,7 @@ Précisions :
 Copier les trois fichiers sur la VM (depuis PowerShell, dans ton clone) :
 
 ```powershell
-cd I:\POC_ASEMON\asemon-pg
+cd I:\POC_ASEMON\monAp_pg
 git pull
 scp sql\06-rollup-horaire.sql systemd\asemon-rollup.service systemd\asemon-rollup.timer admin01@192.168.1.28:~/
 ```

@@ -7,7 +7,7 @@ Preuve de concept de **supervision de PostgreSQL**, inspirée d'ASEMON (supervis
 
 > **Pour démarrer : [docs/00-guide-pas-a-pas.md](docs/00-guide-pas-a-pas.md)**, un guide unique qui va de la création des machines virtuelles sous Hyper-V jusqu'au contrôle des dashboards.
 
-> **Nom du projet** : anciennement « ASEMON-PG », renommé **monAp_pg** le 2026-10-15. Seuls les noms affichés ont changé. Les identifiants techniques gardent le préfixe `asemon` (schéma `asemon`, services `asemon-*`, dossier `/opt/asemon`, `uid` des dashboards `asemon-*`, source de données « ASEMON Monitoring ») pour ne rien casser sur les VM déjà installées.
+> **Nom du projet** : anciennement « ASEMON-PG », renommé **monAp_pg** le 2026-10-15. Seuls les noms affichés ont changé. Les identifiants techniques gardent le préfixe `asemon` (schéma `asemon`, services `asemon-*`, dossier `/opt/asemon`, `uid` des dashboards `asemon-*`, source de données « ASEMON Monitoring ») pour ne rien casser sur les VM déjà installées. Le dépôt GitHub s'appelle `serentz/monAp_pg` ; un clone existant sous le dossier `asemon-pg` continue de fonctionner (`git remote set-url origin https://github.com/serentz/monAp_pg.git`).
 
 > Les adresses (`192.168.1.28`, `192.168.1.30`), l'utilisateur `admin01` et les chemins (`/opt/asemon`) sont ceux du POC : à adapter.
 
@@ -43,9 +43,9 @@ Schémas détaillés (flux, tables, clés, navigation des dashboards) : **[docs/
 
 | Macro | Intermédiaire | Micro |
 |---|---|---|
-| ![Macro](images/Release_2/01-macro.png) | ![Intermédiaire](images/Release_2/02-intermediaire-repartition.png) | ![Micro](images/Release_2/05-micro-top10.png) |
+| ![Macro](images/Release_3/01-macro.png) | ![Intermédiaire](images/Release_3/02-intermediaire-repartition.png) | ![Micro](images/Release_3/05-micro-top10.png) |
 
-Toutes les captures de la version 2 : [images/Release_2](images/Release_2/README.md).
+Toutes les captures (version 3, dont Capacity planning) : [images/Release_3](images/Release_3/README.md).
 
 ## État d'avancement
 

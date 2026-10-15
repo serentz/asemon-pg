@@ -84,7 +84,7 @@ Désactiver complètement la purge : `sudo systemctl disable --now asemon-purge.
 Depuis PowerShell, dans ton clone :
 
 ```powershell
-cd I:\POC_ASEMON\asemon-pg
+cd I:\POC_ASEMON\monAp_pg
 git fetch origin
 git switch retention-snapshots
 scp sql\09-retention.sql systemd\asemon-purge.service systemd\asemon-purge.timer admin01@192.168.1.28:~/

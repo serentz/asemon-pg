@@ -26,7 +26,7 @@ install_postgres "postgresql-$PG_VERSION-pg-stat-kcache"
 apt_install python3 python3-venv python3-pip
 
 # --- 2. Configuration de l'instance ----------------------------------------------------
-# Un seul fichier, conf.d/asemon.conf, regroupe tout ce qu'monAp_pg exige. Il remplace les
+# Un seul fichier, conf.d/asemon.conf, regroupe tout ce que monAp_pg exige. Il remplace les
 # modifications à la main de postgresql.conf décrites dans docs/02, 07 et 14.
 ensure_conf_d
 check_auto_conf shared_preload_libraries lc_messages log_timezone log_connections log_disconnections
