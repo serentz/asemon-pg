@@ -2,7 +2,7 @@
 
 > **À lire en premier.** Ce guide suit une seule ligne droite : créer deux machines virtuelles sous Hyper-V, installer monAp_pg, générer de l'activité, puis contrôler les résultats dans Grafana. Compter **1 h 30 environ**, dont une bonne part d'attente (installations).
 >
-> **Statut (2026-10-14).** Les étapes 1 à 3 et 8 à 9 reprennent ce qui a été fait et validé sur le POC. Les étapes 4 à 7 utilisent les **scripts d'installation, qui n'ont pas encore été essayés sur des machines neuves** (`docs/15-installation-scriptee.md`). Si un script échoue, copier la sortie du terminal et passer au dépannage (§10) ; la procédure manuelle, validée, est dans les fiches `docs/01` à `docs/14`.
+> **Statut (2026-10-15).** Le guide couvre la **Release 4** (plusieurs instances, seuils d'alarme, pages Parc et Instance). Les étapes 1 à 3 et 8 à 9 reprennent ce qui a été fait et validé sur le POC. Les étapes 4 à 7 utilisent les **scripts d'installation, qui n'ont pas encore été essayés sur des machines neuves** (`docs/15-installation-scriptee.md`). Si un script échoue, copier la sortie du terminal et passer au dépannage (§10) ; la procédure manuelle, validée, est dans les fiches `docs/01` à `docs/14`.
 >
 > Les adresses (`192.168.1.28`, `192.168.1.30`), l'utilisateur `admin01` et le dossier `/opt/asemon` sont ceux du POC : à adapter.
 
@@ -14,6 +14,8 @@ Deux machines virtuelles Ubuntu sur le même réseau :
 
 - **VM-Monitoring** : le *repository* (base PostgreSQL `monitoring`, qui garde l'historique) et **Grafana** (les écrans).
 - **VM-Cible** : l'instance PostgreSQL **surveillée**, et les trois programmes Python qui la mesurent (collecteur, échantillonneur, lecteur de journaux).
+
+Chaque machine surveillée est une **instance** dans le repository (« VM-Cible », « VM-Monitoring »…). Le guide n'en installe qu'une ; pour en ajouter d'autres, y compris VM-Monitoring elle-même, voir [19-multi-instance.md](19-multi-instance.md) et [20-supervision-vm-monitoring.md](20-supervision-vm-monitoring.md).
 
 La VM-Cible envoie ses mesures à la VM-Monitoring. Grafana les affiche. Schémas détaillés : [00-architecture.md](00-architecture.md).
 
@@ -161,6 +163,7 @@ nano scripts/asemon.env
 | `COLLECTOR_PASSWORD` | un mot de passe, au choix |
 | `GRAFANA_RO_PASSWORD` | un autre mot de passe |
 | `ASEMON_COLLECT_PASSWORD` | un troisième mot de passe |
+| `GRAFANA_THRESHOLDS_PASSWORD` | un quatrième mot de passe : compte qui modifie les seuils depuis Grafana (vide = page des seuils en lecture seule) |
 | `GRAFANA_ADMIN_PASSWORD` | le mot de passe voulu pour Grafana (vide = rien n'est configuré) |
 | `SERVICE_USER` | `admin01` |
 | `MONITORING_IP` | `IP_MONITORING` |
@@ -179,7 +182,7 @@ cd ~/monAp_pg
 sudo bash ./scripts/install-monitoring.sh
 ```
 
-Compter 5 à 10 minutes. Le script installe PostgreSQL 17, crée la base `monitoring` et ses tables, les comptes, trois minuteurs (rollup, partitions, rétention), Grafana et son plugin de panneaux texte, puis, si `GRAFANA_ADMIN_PASSWORD` est renseigné, crée la source de données et importe les 7 dashboards.
+Compter 5 à 10 minutes. Le script installe PostgreSQL 17, crée la base `monitoring` et ses tables, les comptes, trois minuteurs (rollup et calcul des indicateurs toutes les 5 minutes, partitions, rétention), Grafana et ses deux plugins (panneaux texte et formulaire), puis, si `GRAFANA_ADMIN_PASSWORD` est renseigné, crée les sources de données (dont « ASEMON Seuils » si `GRAFANA_THRESHOLDS_PASSWORD` est renseigné) et importe les 10 dashboards.
 
 Contrôle :
 
@@ -187,7 +190,7 @@ Contrôle :
 sudo bash ./scripts/verify.sh monitoring
 ```
 
-Toutes les lignes doivent être vertes. Ouvrir ensuite **`http://IP_MONITORING:3000`** dans le navigateur du PC (identifiant `admin`, mot de passe `GRAFANA_ADMIN_PASSWORD`) : le menu **Dashboards** liste les sept dashboards monAp_pg, encore vides.
+Toutes les lignes doivent être vertes. Ouvrir ensuite **`http://IP_MONITORING:3000`** dans le navigateur du PC (identifiant `admin`, mot de passe `GRAFANA_ADMIN_PASSWORD`) : le menu **Dashboards** liste les dix dashboards monAp_pg, encore vides.
 
 ---
 
@@ -258,7 +261,25 @@ Un message « deadlock detected » doit apparaître : c'est le résultat attendu
 
 Ouvrir `http://IP_MONITORING:3000` > **Dashboards**. Régler la période en haut à droite sur **Last 30 minutes** (ou *Last 1 hour*) : sur une installation neuve, la période par défaut de 6 heures est presque vide. Les heures affichées sont celles du navigateur ; la base stocke l'UTC.
 
-Les captures de référence sont dans [images/Release_3](../images/Release_3/README.md) ; vos valeurs seront différentes, la forme doit ressembler.
+Les captures de référence sont dans [images/Release_3](../images/Release_3/README.md) et [images/Release_4](../images/Release_4/README.md) ; vos valeurs seront différentes, la forme doit ressembler.
+
+### 9.0 monAp_pg — Parc et Instance (Release 4)
+
+Les deux premiers boutons de la barre de navigation. Les mesures des indicateurs sont calculées toutes les 5 minutes : attendre ce délai après l'installation.
+
+![Parc](../images/Release_4/01-parc.png)
+
+**Parc** (`/d/asemon-fleet`) : une ligne par instance surveillée, avec son indicateur le plus problématique, sa valeur, ses seuils et son état (OK, avertissement, alarme, sans mesure récente). Trois tuiles en haut comptent les instances par état. Cliquer le nom d'une instance propose sa page **Instance** ou sa **Macro**.
+
+À contrôler :
+- une ligne pour VM-Cible, état **OK** (vert), indicateur et valeur renseignés ;
+- le graphe de gravité (100 % = seuil d'alarme) ne commence qu'à l'installation : quelques points au début, c'est normal.
+
+![Instance](../images/Release_4/02-instance.png)
+
+**Instance** (`/d/asemon-instance`) : choisir l'instance dans la variable **Instance**. Le haut montre l'état actuel des 6 indicateurs ; le bas donne une ligne par heure sur les 3 dernières heures (pic de CPU et son heure, attente de verrou maximale, deadlocks, transactions ouvertes, disque libre minimal, transaction la plus longue). Après l'étape 8.3, la ligne de l'heure en cours montre le deadlock.
+
+La variable **Instance** est conservée quand on passe d'une page à l'autre avec la barre de navigation. Détails : [22-parc-et-instance.md](22-parc-et-instance.md).
 
 ### 9.1 monAp_pg — Macro
 
@@ -317,6 +338,21 @@ Ouvrir **Capacity** dans la barre de navigation (ou `/d/asemon-capacity`). La p�
 
 Détails : [18-capacity-planning.md](18-capacity-planning.md).
 
+### 9.5 ter Seuils
+
+Ouvrir **Seuils** dans la barre de navigation. Les deux tableaux donnent l'état actuel de chaque indicateur et les seuils en vigueur (défauts : CPU 80 % / 95 %, disque libre 20 % / 10 %, attente de verrou 30 s / 120 s, transaction la plus longue 5 min / 30 min, deadlocks 1 / 5 par heure).
+
+![Seuils](../images/Release_4/07-seuils.png)
+
+Pour modifier un seuil, utiliser le formulaire **Modifier un seuil** en bas de la page (instance `0` = défaut de toutes les instances), ou en SQL :
+
+```sql
+SELECT asemon.set_threshold(NULL, 'cpu_pct', 80, 95);   -- défaut de toutes les instances
+SELECT asemon.reset_threshold(1, 'cpu_pct');            -- retour au défaut pour l'instance 1
+```
+
+Le nouvel état apparaît au prochain calcul (5 minutes au plus). Détails et pièges : [21-seuils.md](21-seuils.md).
+
 ### 9.6 Contrôle direct dans la base (sur VM-Monitoring)
 
 ```bash
@@ -328,6 +364,7 @@ SELECT count(*) FROM asemon.snap_samples;      -- échantillons toutes les 2 s :
 SELECT count(*) FROM asemon.snap_kcache;       -- coûts mesurés
 SELECT count(*) FROM asemon.event_plans;       -- plans, après charge-lente.sh
 SELECT count(*) FROM asemon.event_deadlocks;   -- 1 ou plus après l'étape 8.3
+SELECT * FROM asemon.v_instance_status;        -- état de chaque instance (Release 4)
 ```
 
 Quitter avec `\q`.
@@ -346,6 +383,8 @@ Quitter avec `\q`.
 | Grafana : HTTP 401 pendant l'installation | mot de passe admin différent | `sudo grafana cli admin reset-admin-password <mdp>` |
 | Dashboards vides | données pas encore arrivées, ou source de données en échec | attendre 1 à 2 minutes ; Grafana > Connections > Data sources > *ASEMON Monitoring* > **Save & test** |
 | Boîtes SQL / plan vides (« plugin not found ») | plugin non installé | `sudo grafana cli plugins install marcusolsson-dynamictext-panel` puis `sudo systemctl restart grafana-server` |
+| Parc : « sans mesure récente » ou état vide | indicateurs calculés toutes les 5 min ; `asemon-rollup.timer` arrêté | attendre 5 min ; `systemctl status asemon-rollup.timer` sur VM-Monitoring |
+| Seuils : le formulaire ne change rien | `GRAFANA_THRESHOLDS_PASSWORD` vide à l'installation, source « ASEMON Seuils » absente | [21-seuils.md](21-seuils.md) §7 |
 | Peu ou pas de plans | peu de requêtes de plus de 100 ms | étape 8.2 |
 | Coûts CPU à zéro | `pg_stat_kcache` inactif | `sudo bash ./scripts/verify.sh target` |
 
@@ -361,7 +400,9 @@ D'autres pièges déjà rencontrés : [README.md](../README.md), section « Piè
 - [ ] `verify.sh monitoring` : tout vert
 - [ ] `verify.sh target` : tout vert
 - [ ] `pgbench` lancé, `charge-lente.sh` lancé
+- [ ] Parc : VM-Cible en état OK ; Instance : 3 lignes horaires
 - [ ] Macro, Intermédiaire, Micro : valeurs affichées
+- [ ] Capacity et Seuils : tableaux remplis
 - [ ] Détail requête : SQL indenté, plan en arbre, clic sur un plan
 - [ ] Interblocage visible (optionnel)
 
@@ -371,6 +412,8 @@ D'autres pièges déjà rencontrés : [README.md](../README.md), section « Piè
 - Réglages (intervalles, rétention) : section « Réglages courants » du [README](../README.md)
 - Installation à la main, étape par étape : fiches `01` à `14` (index dans le README)
 - Plans lisibles : [17-plans-v2.1.md](17-plans-v2.1.md)
+- Plusieurs instances : [19-multi-instance.md](19-multi-instance.md) ; supervision de VM-Monitoring : [20-supervision-vm-monitoring.md](20-supervision-vm-monitoring.md)
+- Seuils : [21-seuils.md](21-seuils.md) ; Parc et Instance : [22-parc-et-instance.md](22-parc-et-instance.md)
 - Prochaines releases : [16-roadmap-releases.md](16-roadmap-releases.md)
 
 ## 13. Tout supprimer
