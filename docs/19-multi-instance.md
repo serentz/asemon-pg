@@ -50,7 +50,7 @@ sudo -u postgres psql -d monitoring -c "SELECT * FROM asemon.instances;"
 sudo -u postgres psql -d monitoring -c "SELECT count(*) AS tables_avec_instance_id FROM information_schema.columns WHERE table_schema='asemon' AND column_name='instance_id' AND table_name NOT LIKE 'snap_samples\_%';"
 sudo -u postgres psql -d monitoring -c "SELECT count(*) AS index_invalides FROM pg_index WHERE NOT indisvalid;"
 ```
-Attendu : une ligne `1 | VM-Cible`, 20 tables avec `instance_id` et 0 index invalide. Les dashboards continuent de fonctionner pendant et après cette étape.
+Attendu : une ligne `1 | VM-Cible`, 21 tables avec `instance_id` (les 20 tables de données et `instances`) et 0 index invalide. Les dashboards continuent de fonctionner pendant et après cette étape.
 
 **2. VM-Cible : agents**
 
