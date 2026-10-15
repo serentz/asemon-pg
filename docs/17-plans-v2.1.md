@@ -11,7 +11,7 @@
 | Plan | JSON brut sur une ligne | JSON conservé **et** texte arborescent type `EXPLAIN` (`event_plans.plan_text`) |
 | Forme du plan | — | `event_plans.plan_hash` : même valeur = même plan ; une valeur qui change = changement de plan |
 | Texte SQL | une ligne dans un tableau | table `asemon.query_text` : texte indenté, mots-clés en majuscules |
-| Page « Détail requête » | tableau étroit | **deux boîtes de 6 lignes avec ascenseur** (SQL, plan) ; un clic sur un plan du tableau l'affiche |
+| Page « Détail requête » | tableau étroit | **deux boîtes avec ascenseur** (SQL : 10 lignes ; plan : 15 lignes depuis le 2026-10-15) ; un clic sur un plan du tableau l'affiche |
 
 ### Pourquoi si peu de plans (diagnostic du 2026-10-11)
 

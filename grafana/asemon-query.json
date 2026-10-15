@@ -133,7 +133,7 @@
       "title": "Texte SQL",
       "description": "Texte normalisé de pg_stat_statements (paramètres remplacés par $1, $2...), indenté. 6 lignes visibles, ascenseur au-delà. Vide si la requête n'a jamais figuré dans le top relevé par le collecteur.",
       "gridPos": {
-        "h": 5,
+        "h": 7,
         "w": 24,
         "x": 0,
         "y": 1
@@ -146,7 +146,7 @@
         "renderMode": "data",
         "everyRow": true,
         "wrap": true,
-        "content": "<pre style=\"margin:0;padding:6px 8px;max-height:calc(8.4em + 14px);overflow:auto;line-height:1.4em;font-size:12px;white-space:pre;background:rgba(128,128,128,.12);border-radius:4px;\">{{sql}}</pre>",
+        "content": "<pre style=\"margin:0;padding:6px 8px;max-height:calc(14em + 14px);overflow:auto;line-height:1.4em;font-size:12px;white-space:pre;background:rgba(128,128,128,.12);border-radius:4px;\">{{sql}}</pre>",
         "defaultContent": "<i>Aucune donnée pour cette requête.</i>",
         "contentPartials": [],
         "helpers": "",
@@ -181,7 +181,7 @@
         "h": 4,
         "w": 4,
         "x": 0,
-        "y": 6
+        "y": 8
       },
       "datasource": {
         "type": "postgres",
@@ -240,7 +240,7 @@
         "h": 4,
         "w": 4,
         "x": 4,
-        "y": 6
+        "y": 8
       },
       "datasource": {
         "type": "postgres",
@@ -299,7 +299,7 @@
         "h": 4,
         "w": 4,
         "x": 8,
-        "y": 6
+        "y": 8
       },
       "datasource": {
         "type": "postgres",
@@ -358,7 +358,7 @@
         "h": 4,
         "w": 4,
         "x": 12,
-        "y": 6
+        "y": 8
       },
       "datasource": {
         "type": "postgres",
@@ -417,7 +417,7 @@
         "h": 4,
         "w": 4,
         "x": 16,
-        "y": 6
+        "y": 8
       },
       "datasource": {
         "type": "postgres",
@@ -476,7 +476,7 @@
         "h": 4,
         "w": 4,
         "x": 20,
-        "y": 6
+        "y": 8
       },
       "datasource": {
         "type": "postgres",
@@ -535,7 +535,7 @@
         "h": 4,
         "w": 8,
         "x": 0,
-        "y": 10
+        "y": 12
       },
       "datasource": {
         "type": "postgres",
@@ -595,7 +595,7 @@
         "h": 4,
         "w": 8,
         "x": 8,
-        "y": 10
+        "y": 12
       },
       "datasource": {
         "type": "postgres",
@@ -655,7 +655,7 @@
         "h": 4,
         "w": 8,
         "x": 16,
-        "y": 10
+        "y": 12
       },
       "datasource": {
         "type": "postgres",
@@ -716,7 +716,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 14
+        "y": 16
       },
       "datasource": {
         "type": "postgres",
@@ -775,7 +775,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 14
+        "y": 16
       },
       "datasource": {
         "type": "postgres",
@@ -809,7 +809,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 22
+        "y": 24
       }
     },
     {
@@ -821,7 +821,7 @@
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 23
+        "y": 25
       },
       "datasource": {
         "type": "postgres",
@@ -919,7 +919,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 32
+        "y": 34
       }
     },
     {
@@ -928,10 +928,10 @@
       "title": "Plan d'exécution affiché",
       "description": "Plan converti au format EXPLAIN (arbre indenté, coûts estimés, temps réels). 6 lignes visibles, ascenseur au-delà. Par défaut le plus récent ; cliquer sur un plan du tableau ci-dessous pour en afficher un autre.",
       "gridPos": {
-        "h": 5,
+        "h": 9,
         "w": 24,
         "x": 0,
-        "y": 33
+        "y": 35
       },
       "datasource": {
         "type": "postgres",
@@ -941,7 +941,7 @@
         "renderMode": "data",
         "everyRow": true,
         "wrap": true,
-        "content": "<pre style=\"margin:0;padding:6px 8px;max-height:calc(8.4em + 14px);overflow:auto;line-height:1.4em;font-size:12px;white-space:pre;background:rgba(128,128,128,.12);border-radius:4px;\">{{plan}}</pre>",
+        "content": "<pre style=\"margin:0;padding:6px 8px;max-height:calc(21em + 14px);overflow:auto;line-height:1.4em;font-size:12px;white-space:pre;background:rgba(128,128,128,.12);border-radius:4px;\">{{plan}}</pre>",
         "defaultContent": "<i>Aucune donnée pour cette requête.</i>",
         "contentPartials": [],
         "helpers": "",
@@ -977,7 +977,7 @@
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 38
+        "y": 44
       },
       "datasource": {
         "type": "postgres",
