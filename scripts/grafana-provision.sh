@@ -79,6 +79,35 @@ rm -f "$dsfile"
 http GET "/api/datasources/uid/$DS_UID/health"
 [ "$HTTP_CODE" = "200" ] && ok "datasource : connexion à la base OK" || warn "test de connexion de la datasource : HTTP $HTTP_CODE (vérifier GRAFANA_RO_PASSWORD)"
 
+# Seconde datasource, « ASEMON Seuils » (Release 4c) : rôle grafana_thresholds, qui ne peut qu'appeler
+# set_threshold() et reset_threshold(). Elle sert au formulaire de la page Seuils, pas aux dashboards.
+if [ -n "${GRAFANA_THRESHOLDS_PASSWORD:-}" ]; then
+    DS2_NAME="ASEMON Seuils"
+    dsfile="$(mktemp)"
+    python3 - "$dsfile" "$DS2_NAME" "$GRAFANA_THRESHOLDS_PASSWORD" <<'PY'
+import json, sys
+path, name, pw = sys.argv[1:4]
+json.dump({
+    "name": name, "uid": "asemon-seuils", "type": "postgres", "access": "proxy",
+    "url": "localhost:5432", "user": "grafana_thresholds", "database": "monitoring", "isDefault": False,
+    "jsonData": {"sslmode": "disable", "postgresVersion": 1700, "timescaledb": False},
+    "secureJsonData": {"password": pw},
+}, open(path, "w"))
+PY
+    http GET "/api/datasources/name/${DS2_NAME// /%20}"
+    if [ "$HTTP_CODE" = "200" ]; then
+        DS2_UID="$(printf '%s' "$HTTP_BODY" | json_get "['uid']")"
+        http PUT "/api/datasources/uid/$DS2_UID" "$dsfile"
+        [ "$HTTP_CODE" = "200" ] && ok "datasource « $DS2_NAME » mise à jour" || warn "mise à jour de « $DS2_NAME » refusée (HTTP $HTTP_CODE)"
+    else
+        http POST /api/datasources "$dsfile"
+        [ "$HTTP_CODE" = "200" ] && ok "datasource « $DS2_NAME » créée" || warn "création de « $DS2_NAME » refusée (HTTP $HTTP_CODE) : $HTTP_BODY"
+    fi
+    rm -f "$dsfile"
+else
+    warn "GRAFANA_THRESHOLDS_PASSWORD vide : datasource « ASEMON Seuils » non créée (page des seuils en lecture seule)"
+fi
+
 # Dashboards : import avec remplacement (même uid = mise à jour).
 for f in "$REPO_DIR"/grafana/asemon-*.json; do
     pf="$(mktemp)"

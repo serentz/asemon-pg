@@ -75,6 +75,15 @@
       "keepTime": true,
       "targetBlank": false,
       "includeVars": true
+    },
+    {
+      "title": "Seuils",
+      "type": "link",
+      "icon": "dashboard",
+      "url": "/d/asemon-thresholds",
+      "keepTime": true,
+      "targetBlank": false,
+      "includeVars": true
     }
   ],
   "templating": {

@@ -1,0 +1,530 @@
+{
+  "__inputs": [
+    {
+      "name": "DS_MONITORING",
+      "label": "ASEMON Monitoring",
+      "description": "",
+      "type": "datasource",
+      "pluginId": "postgres",
+      "pluginName": "PostgreSQL"
+    }
+  ],
+  "__requires": [
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "10.0.0"
+    },
+    {
+      "type": "datasource",
+      "id": "postgres",
+      "name": "PostgreSQL",
+      "version": "1.0.0"
+    },
+    {
+      "type": "panel",
+      "id": "volkovlabs-form-panel",
+      "name": "Business Forms",
+      "version": "6.3.5"
+    }
+  ],
+  "title": "monAp_pg — Seuils",
+  "uid": "asemon-thresholds",
+  "description": "Release 4c : état de chaque indicateur par instance, seuils d'avertissement et d'alarme, et leur modification.",
+  "tags": [
+    "asemon",
+    "seuils"
+  ],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "1m",
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "DS_MONITORING",
+        "type": "datasource",
+        "query": "postgres",
+        "current": {},
+        "label": "Datasource ASEMON"
+      }
+    ]
+  },
+  "links": [
+    {
+      "title": "Macro",
+      "type": "link",
+      "icon": "dashboard",
+      "url": "/d/asemon-macro",
+      "keepTime": true,
+      "targetBlank": false,
+      "includeVars": true
+    },
+    {
+      "title": "Intermédiaire",
+      "type": "link",
+      "icon": "dashboard",
+      "url": "/d/asemon-intermediate",
+      "keepTime": true,
+      "targetBlank": false,
+      "includeVars": true
+    },
+    {
+      "title": "Micro",
+      "type": "link",
+      "icon": "dashboard",
+      "url": "/d/asemon-micro",
+      "keepTime": true,
+      "targetBlank": false,
+      "includeVars": true
+    },
+    {
+      "title": "Capacity",
+      "type": "link",
+      "icon": "dashboard",
+      "url": "/d/asemon-capacity",
+      "keepTime": true,
+      "targetBlank": false,
+      "includeVars": true
+    },
+    {
+      "title": "Seuils",
+      "type": "link",
+      "icon": "dashboard",
+      "url": "/d/asemon-thresholds",
+      "keepTime": true,
+      "targetBlank": false,
+      "includeVars": true
+    }
+  ],
+  "panels": [
+    {
+      "id": 1,
+      "type": "table",
+      "title": "État actuel des indicateurs",
+      "description": "Dernière valeur de chaque indicateur (moins de 15 minutes), comparée aux seuils en vigueur. « Pas de mesure » : aucune donnée récente (instance arrêtée, ou aucune activité : verrous, transactions). Un indicateur désactivé n'apparaît pas.",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${DS_MONITORING}"
+      },
+      "gridPos": {
+        "h": 15,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${DS_MONITORING}"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code",
+          "rawSql": "SELECT instance_name AS \"Instance\", label AS \"Indicateur\", unit AS \"Unité\",\n       round(value::numeric, 1) AS \"Valeur\", warn_value AS \"Avertissement\", crit_value AS \"Alarme\",\n       state AS \"État\", value_ts AS \"Mesuré à\"\nFROM asemon.v_kpi_status\nORDER BY instance_name, sort_order"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto"
+          },
+          "noValue": "-"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "État"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "ok": {
+                        "text": "OK",
+                        "color": "green",
+                        "index": 0
+                      },
+                      "warning": {
+                        "text": "Avertissement",
+                        "color": "orange",
+                        "index": 1
+                      },
+                      "critical": {
+                        "text": "Alarme",
+                        "color": "red",
+                        "index": 2
+                      },
+                      "unknown": {
+                        "text": "Pas de mesure",
+                        "color": "text",
+                        "index": 3
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Indicateur"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 300
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      }
+    },
+    {
+      "id": 2,
+      "type": "table",
+      "title": "Seuils en vigueur",
+      "description": "Seuils effectivement appliqués à chaque instance : ceux qui lui sont propres, sinon le défaut.",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${DS_MONITORING}"
+      },
+      "gridPos": {
+        "h": 17,
+        "w": 24,
+        "x": 0,
+        "y": 15
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${DS_MONITORING}"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code",
+          "rawSql": "SELECT i.name AS \"Instance\", c.label AS \"Indicateur\", c.unit AS \"Unité\",\n       COALESCE(o.warn_value, d.warn_value) AS \"Avertissement\",\n       COALESCE(o.crit_value, d.crit_value) AS \"Alarme\",\n       CASE WHEN o.threshold_id IS NOT NULL THEN 'propre à l''instance' ELSE 'défaut' END AS \"Origine\",\n       COALESCE(o.enabled, d.enabled) AS \"Actif\",\n       COALESCE(o.updated_at, d.updated_at) AS \"Modifié le\",\n       COALESCE(o.updated_by, d.updated_by) AS \"Par\"\nFROM asemon.instances i\nCROSS JOIN asemon.kpi_catalog c\nJOIN asemon.kpi_thresholds d ON d.kpi = c.kpi AND d.instance_id IS NULL\nLEFT JOIN asemon.kpi_thresholds o ON o.kpi = c.kpi AND o.instance_id = i.instance_id\nWHERE i.enabled\nORDER BY i.name, c.sort_order"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Indicateur"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 300
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      }
+    },
+    {
+      "id": 4,
+      "type": "volkovlabs-form-panel",
+      "title": "Modifier un seuil",
+      "description": "Modifie un seuil par l'appel de asemon.set_threshold() avec le rôle grafana_thresholds. Instance 0 = défaut de toutes les instances. Voir docs/21-seuils.md.",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${DS_MONITORING}"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 32
+      },
+      "pluginVersion": "6.3.5",
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${DS_MONITORING}"
+          },
+          "format": "table",
+          "rawQuery": false,
+          "editorMode": "builder",
+          "dataset": "monitoring",
+          "rawSql": ""
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "options": {
+        "buttonGroup": {
+          "orientation": "center",
+          "size": "md"
+        },
+        "confirmModal": {
+          "body": "Please confirm to update changed values",
+          "cancel": "Cancel",
+          "columns": {
+            "include": [
+              "name",
+              "oldValue",
+              "newValue"
+            ],
+            "name": "Label",
+            "newValue": "New Value",
+            "oldValue": "Old Value"
+          },
+          "confirm": "Confirm",
+          "elementDisplayMode": "modified",
+          "title": "Confirm update request"
+        },
+        "elementValueChanged": "",
+        "elements": [
+          {
+            "id": "instance",
+            "labelWidth": 10,
+            "section": "",
+            "title": "Instance (0 = défaut de toutes)",
+            "tooltip": "",
+            "type": "number",
+            "uid": "685d6ccd-35fc-4c9a-938e-9f2faed830c4",
+            "unit": "",
+            "value": 0
+          },
+          {
+            "allowCustomValue": false,
+            "id": "kpi",
+            "labelWidth": 10,
+            "options": [
+              {
+                "id": "cpu_pct",
+                "label": "CPU",
+                "type": "string",
+                "value": "cpu_pct"
+              },
+              {
+                "id": "disk_free_pct",
+                "label": "Disque libre",
+                "type": "string",
+                "value": "disk_free_pct"
+              },
+              {
+                "id": "lock_wait_s",
+                "label": "Verrou",
+                "type": "string",
+                "value": "lock_wait_s"
+              },
+              {
+                "id": "longest_xact_s",
+                "label": "Transaction longue",
+                "type": "string",
+                "value": "longest_xact_s"
+              },
+              {
+                "id": "deadlocks",
+                "label": "Deadlocks",
+                "type": "string",
+                "value": "deadlocks"
+              },
+              {
+                "id": "active_xacts",
+                "label": "Transactions ouvertes",
+                "type": "string",
+                "value": "active_xacts"
+              }
+            ],
+            "optionsSource": "Custom",
+            "section": "",
+            "title": "Indicateur",
+            "tooltip": "",
+            "type": "select",
+            "uid": "d7677337-65f7-465d-9f24-5f34ba9c661a",
+            "unit": "",
+            "value": ""
+          },
+          {
+            "id": "warn",
+            "labelWidth": 10,
+            "section": "",
+            "title": "Avertissement",
+            "tooltip": "",
+            "type": "number",
+            "uid": "6dfb45e0-5ced-473f-bf17-311611388b8b",
+            "unit": "",
+            "value": 0
+          },
+          {
+            "id": "crit",
+            "labelWidth": 10,
+            "section": "",
+            "title": "Alarme",
+            "tooltip": "",
+            "type": "number",
+            "uid": "3605c635-7cc9-4341-8bd7-d0c7e9e77c5c",
+            "unit": "",
+            "value": 0
+          },
+          {
+            "allowCustomValue": false,
+            "id": "enabled",
+            "labelWidth": 10,
+            "options": [
+              {
+                "id": "true",
+                "label": "Oui",
+                "type": "string",
+                "value": "true"
+              },
+              {
+                "id": "false",
+                "label": "Non",
+                "type": "string",
+                "value": "false"
+              }
+            ],
+            "optionsSource": "Custom",
+            "section": "",
+            "title": "Actif",
+            "tooltip": "",
+            "type": "select",
+            "uid": "f83b6d24-9d6f-47ca-b914-43d987f1e38c",
+            "unit": "",
+            "value": ""
+          }
+        ],
+        "initial": {
+          "code": "console.log(context.panel.data, context.panel.response, context.panel.initial, context.panel.elements);\n\nreturn;\n\n/**\n * Data Source\n * Requires form elements to be defined\n */\nconst dataQuery = context.utils.toDataQueryResponse(context.panel.response);\nconsole.log(dataQuery);",
+          "contentType": "application/json",
+          "getPayload": "return {}",
+          "highlight": false,
+          "highlightColor": "red",
+          "method": "-",
+          "payload": {}
+        },
+        "layout": {
+          "orientation": "horizontal",
+          "padding": 10,
+          "sectionVariant": "default",
+          "variant": "single"
+        },
+        "reset": {
+          "backgroundColor": "purple",
+          "foregroundColor": "yellow",
+          "icon": "process",
+          "text": "Reset",
+          "variant": "hidden"
+        },
+        "resetAction": {
+          "code": "if (context.panel.response) {\n  context.grafana.notifySuccess(['Update', 'Values updated successfully.']);\n  context.grafana.refresh();\n} else {\n  context.grafana.notifyError(['Update', 'An error occurred updating values.']);\n}",
+          "confirm": false,
+          "getPayload": "return {}",
+          "mode": "initial",
+          "payload": {}
+        },
+        "saveDefault": {
+          "icon": "save",
+          "text": "Save Default",
+          "variant": "hidden"
+        },
+        "submit": {
+          "backgroundColor": "purple",
+          "foregroundColor": "yellow",
+          "icon": "cloud-upload",
+          "text": "Submit",
+          "variant": "primary"
+        },
+        "sync": true,
+        "update": {
+          "code": "if (context.panel.response) {\n  context.grafana.notifySuccess(['Update', 'Values updated successfully.']);\n  context.grafana.refresh();\n} else {\n  context.grafana.notifyError(['Update', 'An error occurred updating values.']);\n}",
+          "confirm": true,
+          "contentType": "application/json",
+          "datasource": "asemon-seuils",
+          "getPayload": "const payload = {};\ncontext.panel.elements.forEach((element) => {\n  payload[element.id] = element.value;\n});\nreturn payload;",
+          "method": "datasource",
+          "payload": {
+            "dataset": "monitoring",
+            "editorMode": "code",
+            "format": "table",
+            "rawQuery": true,
+            "rawSql": "SELECT asemon.set_threshold(NULLIF(${payload.instance}::int, 0), '${payload.kpi}', ${payload.warn}::float8, ${payload.crit}::float8, '${payload.enabled}'::boolean)",
+            "refId": "A",
+            "sql": {
+              "columns": [
+                {
+                  "parameters": [],
+                  "type": "function"
+                }
+              ],
+              "groupBy": [
+                {
+                  "property": {
+                    "type": "string"
+                  },
+                  "type": "groupBy"
+                }
+              ],
+              "limit": 50
+            }
+          },
+          "payloadMode": "custom"
+        },
+        "updateEnabled": "auto"
+      }
+    },
+    {
+      "id": 3,
+      "type": "text",
+      "title": "Comment ça marche, et comment modifier un seuil",
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 41
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "**Comprendre.** Chaque indicateur est comparé à deux seuils : **avertissement** (orange) puis **alarme** (rouge). Pour l'espace disque, c'est l'inverse : plus c'est bas, plus c'est grave. Le *défaut* s'applique à toutes les instances ; un seuil *propre à l'instance* le remplace pour elle seule. Les valeurs sont calculées toutes les 5 minutes.\n\n**Modifier.** Avec le formulaire « Modifier un seuil » (instance `0` = le défaut de toutes les instances, sinon le numéro de l'instance : 1 = VM-Cible, 2 = VM-Monitoring), ou en SQL sur VM-Monitoring (`docs/21-seuils.md`). Le formulaire demande une confirmation, et ne peut pas supprimer une surcharge d'instance : pour cela, `reset_threshold` ci-dessous.\n\n```\n-- défaut de toutes les instances (instance NULL), puis seuil propre à l'instance 2\nSELECT asemon.set_threshold(NULL, 'cpu_pct', 80, 95);\nSELECT asemon.set_threshold(2, 'cpu_pct', 70, 90);\n-- retour au défaut pour l'instance 2\nSELECT asemon.reset_threshold(2, 'cpu_pct');\n```\nLes clés d'indicateur : `cpu_pct`, `disk_free_pct`, `lock_wait_s`, `longest_xact_s`, `deadlocks`, `active_xacts` (ce dernier est désactivé tant qu'on n'a pas choisi ses seuils)."
+      }
+    }
+  ]
+}

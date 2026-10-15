@@ -39,3 +39,13 @@ GRANT SELECT ON ALL TABLES IN SCHEMA asemon TO grafana_ro;
 
 -- ...et sur les futures tables
 ALTER DEFAULT PRIVILEGES IN SCHEMA asemon GRANT SELECT ON TABLES TO grafana_ro;
+
+-- Release 4c : les agents n'écrivent jamais dans les seuils (la deuxième passe de ce script
+-- leur donne INSERT sur toutes les tables, on le retire ici pour ces trois-là).
+DO $$
+BEGIN
+    IF to_regclass('asemon.kpi_thresholds') IS NOT NULL THEN
+        REVOKE INSERT ON asemon.kpi_catalog, asemon.kpi_thresholds, asemon.kpi_values FROM collector_writer;
+    END IF;
+END
+$$;

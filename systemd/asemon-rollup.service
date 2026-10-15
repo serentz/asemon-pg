@@ -9,8 +9,8 @@ Requires=postgresql.service
 # peer sur la socket locale, aucun mot de passe à stocker).
 Type=oneshot
 User=postgres
-# -At : sortie réduite au nombre de lignes écrites (une ligne dans le journal)
-ExecStart=/usr/bin/psql -X -q -At -v ON_ERROR_STOP=1 -d monitoring -c "SELECT asemon.rollup_hourly();"
+# -At : sortie réduite au nombre de lignes écrites (deux lignes dans le journal : résumé horaire, valeurs des seuils)
+ExecStart=/usr/bin/psql -X -q -At -v ON_ERROR_STOP=1 -d monitoring -c "SELECT asemon.rollup_hourly();" -c "SELECT asemon.compute_kpi_values();"
 StandardOutput=journal
 StandardError=journal
 SyslogIdentifier=asemon-rollup

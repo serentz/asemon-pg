@@ -57,7 +57,7 @@ Toutes les captures (version 3, dont Capacity planning) : [images/Release_3](ima
 | 3 | CPU et disque réels par requête (`pg_stat_kcache`) | Fait, validé (I/O réseau non mesurable) |
 | 4 | Dashboards Grafana : macro, intermédiaire, micro, détails session et requête | Fait, validé |
 | Release 3 | Capacity planning : collecte des tailles (3a), dashboard et extrapolations (3b) | Fait, validé |
-| Release 4 | Multi-instance : schéma et agents (4a), dashboards par instance (4b), seuils (4c), niveau zéro et page instance (4d) | 4a validée ; 4b en cours ([docs/19](docs/19-multi-instance.md), [docs/20](docs/20-supervision-vm-monitoring.md)) |
+| Release 4 | Multi-instance : schéma et agents (4a), dashboards par instance (4b), seuils (4c), niveau zéro et page instance (4d) | 4a, 4b et 4c validées ([docs/19](docs/19-multi-instance.md), [docs/20](docs/20-supervision-vm-monitoring.md), [docs/21](docs/21-seuils.md)) |
 
 **En cours** : v2.1, plans d'exécution lisibles et mieux capturés (codée, à valider sur les VM : [docs/17-plans-v2.1.md](docs/17-plans-v2.1.md)).
 
