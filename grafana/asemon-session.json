@@ -47,7 +47,8 @@
       "icon": "dashboard",
       "url": "/d/asemon-macro",
       "keepTime": true,
-      "targetBlank": false
+      "targetBlank": false,
+      "includeVars": true
     },
     {
       "title": "Intermédiaire",
@@ -55,7 +56,8 @@
       "icon": "dashboard",
       "url": "/d/asemon-intermediate",
       "keepTime": true,
-      "targetBlank": false
+      "targetBlank": false,
+      "includeVars": true
     },
     {
       "title": "Micro",
@@ -63,7 +65,8 @@
       "icon": "dashboard",
       "url": "/d/asemon-micro",
       "keepTime": true,
-      "targetBlank": false
+      "targetBlank": false,
+      "includeVars": true
     },
     {
       "title": "Capacity",
@@ -71,7 +74,8 @@
       "icon": "dashboard",
       "url": "/d/asemon-capacity",
       "keepTime": true,
-      "targetBlank": false
+      "targetBlank": false,
+      "includeVars": true
     }
   ],
   "templating": {
@@ -82,6 +86,22 @@
         "query": "postgres",
         "current": {},
         "label": "Datasource ASEMON"
+      },
+      {
+        "name": "instance",
+        "label": "Instance",
+        "type": "query",
+        "datasource": {
+          "type": "postgres",
+          "uid": "${DS_MONITORING}"
+        },
+        "query": "SELECT name AS __text, instance_id AS __value FROM asemon.instances WHERE enabled ORDER BY instance_id",
+        "definition": "SELECT name AS __text, instance_id AS __value FROM asemon.instances WHERE enabled ORDER BY instance_id",
+        "refresh": 1,
+        "sort": 0,
+        "includeAll": false,
+        "multi": false,
+        "current": {}
       },
       {
         "name": "session_key",
@@ -169,7 +189,7 @@
             "uid": "${DS_MONITORING}"
           },
           "format": "table",
-          "rawSql": "SELECT session_key, pid, usename AS \"Login\", application_name AS \"Programme\", datname AS \"Base\", client_addr AS \"Adresse\", connected_at AS \"Connexion\", disconnected_at AS \"Déconnexion\" FROM asemon.snap_sessions WHERE session_key = ${session_key:sqlstring}",
+          "rawSql": "SELECT session_key, pid, usename AS \"Login\", application_name AS \"Programme\", datname AS \"Base\", client_addr AS \"Adresse\", connected_at AS \"Connexion\", disconnected_at AS \"Déconnexion\" FROM asemon.snap_sessions WHERE instance_id = $instance AND session_key = ${session_key:sqlstring}",
           "rawQuery": true
         }
       ]
@@ -228,7 +248,7 @@
             "uid": "${DS_MONITORING}"
           },
           "format": "table",
-          "rawSql": "SELECT sum(sm.interval_ms) / 1000.0 AS \"Temps actif\" FROM asemon.snap_samples sm WHERE sm.session_key = ${session_key:sqlstring}",
+          "rawSql": "SELECT sum(sm.interval_ms) / 1000.0 AS \"Temps actif\" FROM asemon.snap_samples sm WHERE sm.instance_id = $instance AND sm.session_key = ${session_key:sqlstring}",
           "rawQuery": true
         }
       ]
@@ -287,7 +307,7 @@
             "uid": "${DS_MONITORING}"
           },
           "format": "table",
-          "rawSql": "SELECT COALESCE(sum(sm.interval_ms) FILTER (WHERE sm.wait_event IS NULL), 0) / 1000.0 AS \"CPU\" FROM asemon.snap_samples sm WHERE sm.session_key = ${session_key:sqlstring}",
+          "rawSql": "SELECT COALESCE(sum(sm.interval_ms) FILTER (WHERE sm.wait_event IS NULL), 0) / 1000.0 AS \"CPU\" FROM asemon.snap_samples sm WHERE sm.instance_id = $instance AND sm.session_key = ${session_key:sqlstring}",
           "rawQuery": true
         }
       ]
@@ -346,7 +366,7 @@
             "uid": "${DS_MONITORING}"
           },
           "format": "table",
-          "rawSql": "SELECT COALESCE(sum(sm.interval_ms) FILTER (WHERE sm.wait_event_type = 'IO'), 0) / 1000.0 AS \"I/O\" FROM asemon.snap_samples sm WHERE sm.session_key = ${session_key:sqlstring}",
+          "rawSql": "SELECT COALESCE(sum(sm.interval_ms) FILTER (WHERE sm.wait_event_type = 'IO'), 0) / 1000.0 AS \"I/O\" FROM asemon.snap_samples sm WHERE sm.instance_id = $instance AND sm.session_key = ${session_key:sqlstring}",
           "rawQuery": true
         }
       ]
@@ -405,7 +425,7 @@
             "uid": "${DS_MONITORING}"
           },
           "format": "table",
-          "rawSql": "SELECT COALESCE(sum(sm.interval_ms) FILTER (WHERE sm.wait_event_type IN ('Lock', 'LWLock')), 0) / 1000.0 AS \"Verrous\" FROM asemon.snap_samples sm WHERE sm.session_key = ${session_key:sqlstring}",
+          "rawSql": "SELECT COALESCE(sum(sm.interval_ms) FILTER (WHERE sm.wait_event_type IN ('Lock', 'LWLock')), 0) / 1000.0 AS \"Verrous\" FROM asemon.snap_samples sm WHERE sm.instance_id = $instance AND sm.session_key = ${session_key:sqlstring}",
           "rawQuery": true
         }
       ]
@@ -464,7 +484,7 @@
             "uid": "${DS_MONITORING}"
           },
           "format": "table",
-          "rawSql": "SELECT count(DISTINCT (sm.query_id, sm.query_start)) AS \"Exécutions\" FROM asemon.snap_samples sm WHERE sm.session_key = ${session_key:sqlstring}",
+          "rawSql": "SELECT count(DISTINCT (sm.query_id, sm.query_start)) AS \"Exécutions\" FROM asemon.snap_samples sm WHERE sm.instance_id = $instance AND sm.session_key = ${session_key:sqlstring}",
           "rawQuery": true
         }
       ]
@@ -523,7 +543,7 @@
             "uid": "${DS_MONITORING}"
           },
           "format": "table",
-          "rawSql": "SELECT count(DISTINCT sm.query_id) AS \"Requêtes\" FROM asemon.snap_samples sm WHERE sm.session_key = ${session_key:sqlstring}",
+          "rawSql": "SELECT count(DISTINCT sm.query_id) AS \"Requêtes\" FROM asemon.snap_samples sm WHERE sm.instance_id = $instance AND sm.session_key = ${session_key:sqlstring}",
           "rawQuery": true
         }
       ]
@@ -582,7 +602,7 @@
             "uid": "${DS_MONITORING}"
           },
           "format": "table",
-          "rawSql": "SELECT COALESCE(SUM(cpu_ms), 0) / 1000.0 AS \"CPU mesuré\" FROM asemon.kcache_attr($__timeFrom(), $__timeTo()) WHERE session_key = ${session_key:sqlstring}",
+          "rawSql": "SELECT COALESCE(SUM(cpu_ms), 0) / 1000.0 AS \"CPU mesuré\" FROM asemon.kcache_attr($__timeFrom(), $__timeTo(), $instance) WHERE session_key = ${session_key:sqlstring}",
           "rawQuery": true
         }
       ],
@@ -642,7 +662,7 @@
             "uid": "${DS_MONITORING}"
           },
           "format": "table",
-          "rawSql": "SELECT COALESCE(SUM(reads_bytes), 0)::float8 AS \"Lu\" FROM asemon.kcache_attr($__timeFrom(), $__timeTo()) WHERE session_key = ${session_key:sqlstring}",
+          "rawSql": "SELECT COALESCE(SUM(reads_bytes), 0)::float8 AS \"Lu\" FROM asemon.kcache_attr($__timeFrom(), $__timeTo(), $instance) WHERE session_key = ${session_key:sqlstring}",
           "rawQuery": true
         }
       ],
@@ -702,7 +722,7 @@
             "uid": "${DS_MONITORING}"
           },
           "format": "table",
-          "rawSql": "SELECT COALESCE(SUM(writes_bytes), 0)::float8 AS \"Écrit\" FROM asemon.kcache_attr($__timeFrom(), $__timeTo()) WHERE session_key = ${session_key:sqlstring}",
+          "rawSql": "SELECT COALESCE(SUM(writes_bytes), 0)::float8 AS \"Écrit\" FROM asemon.kcache_attr($__timeFrom(), $__timeTo(), $instance) WHERE session_key = ${session_key:sqlstring}",
           "rawQuery": true
         }
       ],
@@ -762,7 +782,7 @@
             "uid": "${DS_MONITORING}"
           },
           "format": "time_series",
-          "rawSql": "SELECT date_trunc('minute', sm.sampled_at) AS \"time\", CASE WHEN sm.wait_event IS NULL THEN 'CPU' ELSE sm.wait_event_type END AS \"metric\", SUM(sm.interval_ms) / 60000.0 AS \"Sessions actives\" FROM asemon.snap_samples sm WHERE $__timeFilter(sm.sampled_at) AND sm.session_key = ${session_key:sqlstring} GROUP BY 1, 2 ORDER BY 1",
+          "rawSql": "SELECT date_trunc('minute', sm.sampled_at) AS \"time\", CASE WHEN sm.wait_event IS NULL THEN 'CPU' ELSE sm.wait_event_type END AS \"metric\", SUM(sm.interval_ms) / 60000.0 AS \"Sessions actives\" FROM asemon.snap_samples sm WHERE sm.instance_id = $instance AND $__timeFilter(sm.sampled_at) AND sm.session_key = ${session_key:sqlstring} GROUP BY 1, 2 ORDER BY 1",
           "rawQuery": true
         }
       ]
@@ -860,7 +880,7 @@
                 "value": [
                   {
                     "title": "Détail de la requête",
-                    "url": "/d/asemon-query?var-query_id=${__value.raw}&${__url_time_range}"
+                    "url": "/d/asemon-query?var-query_id=${__value.raw}&var-instance=${instance}&${__url_time_range}"
                   }
                 ]
               },
@@ -924,7 +944,7 @@
             "uid": "${DS_MONITORING}"
           },
           "format": "table",
-          "rawSql": "SELECT sm.query_start AS \"Début\", max(sm.sampled_at) + max(sm.interval_ms) * interval '1 millisecond' AS \"Fin (approx.)\", round(sum(sm.interval_ms) / 1000.0, 1) AS \"Temps actif\", round(COALESCE(sum(sm.interval_ms) FILTER (WHERE sm.wait_event IS NULL), 0) / 1000.0, 1) AS \"dont CPU\", round(COALESCE(sum(sm.interval_ms) FILTER (WHERE sm.wait_event_type = 'IO'), 0) / 1000.0, 1) AS \"dont I/O\", round(COALESCE(sum(sm.interval_ms) FILTER (WHERE sm.wait_event_type IN ('Lock', 'LWLock')), 0) / 1000.0, 1) AS \"dont verrous\", sm.query_id::text AS \"query_id\", COALESCE((SELECT st.query FROM asemon.snap_statements st WHERE st.queryid = sm.query_id ORDER BY st.collected_at DESC LIMIT 1), '(texte non capturé)') AS \"Requête\" FROM asemon.snap_samples sm WHERE sm.session_key = ${session_key:sqlstring} GROUP BY sm.query_id, sm.query_start ORDER BY sm.query_start DESC NULLS LAST LIMIT 200",
+          "rawSql": "SELECT sm.query_start AS \"Début\", max(sm.sampled_at) + max(sm.interval_ms) * interval '1 millisecond' AS \"Fin (approx.)\", round(sum(sm.interval_ms) / 1000.0, 1) AS \"Temps actif\", round(COALESCE(sum(sm.interval_ms) FILTER (WHERE sm.wait_event IS NULL), 0) / 1000.0, 1) AS \"dont CPU\", round(COALESCE(sum(sm.interval_ms) FILTER (WHERE sm.wait_event_type = 'IO'), 0) / 1000.0, 1) AS \"dont I/O\", round(COALESCE(sum(sm.interval_ms) FILTER (WHERE sm.wait_event_type IN ('Lock', 'LWLock')), 0) / 1000.0, 1) AS \"dont verrous\", sm.query_id::text AS \"query_id\", COALESCE((SELECT st.query FROM asemon.snap_statements st WHERE st.instance_id = $instance AND st.queryid = sm.query_id ORDER BY st.collected_at DESC LIMIT 1), '(texte non capturé)') AS \"Requête\" FROM asemon.snap_samples sm WHERE sm.instance_id = $instance AND sm.session_key = ${session_key:sqlstring} GROUP BY sm.query_id, sm.query_start ORDER BY sm.query_start DESC NULLS LAST LIMIT 200",
           "rawQuery": true
         }
       ]
@@ -998,7 +1018,7 @@
                 "value": [
                   {
                     "title": "Détail de la requête",
-                    "url": "/d/asemon-query?var-query_id=${__value.raw}&${__url_time_range}"
+                    "url": "/d/asemon-query?var-query_id=${__value.raw}&var-instance=${instance}&${__url_time_range}"
                   }
                 ]
               },
@@ -1054,7 +1074,7 @@
             "uid": "${DS_MONITORING}"
           },
           "format": "table",
-          "rawSql": "SELECT occurred_at AS \"Quand\", duration_ms AS \"Durée\", query_id::text AS \"query_id\", query AS \"Requête\", plan AS \"Plan\" FROM asemon.event_plans WHERE session_key = ${session_key:sqlstring} ORDER BY occurred_at DESC LIMIT 50",
+          "rawSql": "SELECT occurred_at AS \"Quand\", duration_ms AS \"Durée\", query_id::text AS \"query_id\", query AS \"Requête\", plan AS \"Plan\" FROM asemon.event_plans WHERE instance_id = $instance AND session_key = ${session_key:sqlstring} ORDER BY occurred_at DESC LIMIT 50",
           "rawQuery": true
         }
       ]
@@ -1155,7 +1175,7 @@
             "uid": "${DS_MONITORING}"
           },
           "format": "table",
-          "rawSql": "SELECT occurred_at AS \"Quand\", involved_tables AS \"Tables\", involved_users AS \"Utilisateurs\", queries AS \"Requêtes\" FROM asemon.event_deadlocks WHERE session_key = ${session_key:sqlstring} ORDER BY occurred_at DESC LIMIT 50",
+          "rawSql": "SELECT occurred_at AS \"Quand\", involved_tables AS \"Tables\", involved_users AS \"Utilisateurs\", queries AS \"Requêtes\" FROM asemon.event_deadlocks WHERE instance_id = $instance AND session_key = ${session_key:sqlstring} ORDER BY occurred_at DESC LIMIT 50",
           "rawQuery": true
         }
       ]

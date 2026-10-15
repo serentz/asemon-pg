@@ -48,6 +48,22 @@
         "label": "Datasource ASEMON"
       },
       {
+        "name": "instance",
+        "label": "Instance",
+        "type": "query",
+        "datasource": {
+          "type": "postgres",
+          "uid": "${DS_MONITORING}"
+        },
+        "query": "SELECT name AS __text, instance_id AS __value FROM asemon.instances WHERE enabled ORDER BY instance_id",
+        "definition": "SELECT name AS __text, instance_id AS __value FROM asemon.instances WHERE enabled ORDER BY instance_id",
+        "refresh": 1,
+        "sort": 0,
+        "includeAll": false,
+        "multi": false,
+        "current": {}
+      },
+      {
         "name": "db",
         "type": "query",
         "label": "Base",
@@ -55,8 +71,8 @@
           "type": "postgres",
           "uid": "${DS_MONITORING}"
         },
-        "query": "SELECT label AS __text, val AS __value FROM (SELECT '(toute l''instance)' AS label, '__instance__' AS val, 0 AS ord UNION ALL SELECT DISTINCT datname, datname, 1 FROM asemon.snap_db_size) t ORDER BY ord, label",
-        "definition": "SELECT label AS __text, val AS __value FROM (SELECT '(toute l''instance)' AS label, '__instance__' AS val, 0 AS ord UNION ALL SELECT DISTINCT datname, datname, 1 FROM asemon.snap_db_size) t ORDER BY ord, label",
+        "query": "SELECT label AS __text, val AS __value FROM (SELECT '(toutes les bases)' AS label, '__all__' AS val, 0 AS ord UNION ALL SELECT DISTINCT datname, datname, 1 FROM asemon.snap_db_size WHERE instance_id = $instance) t ORDER BY ord, label",
+        "definition": "SELECT label AS __text, val AS __value FROM (SELECT '(toutes les bases)' AS label, '__all__' AS val, 0 AS ord UNION ALL SELECT DISTINCT datname, datname, 1 FROM asemon.snap_db_size WHERE instance_id = $instance) t ORDER BY ord, label",
         "refresh": 2,
         "sort": 0,
         "includeAll": false,
@@ -72,7 +88,8 @@
       "icon": "dashboard",
       "url": "/d/asemon-macro",
       "keepTime": true,
-      "targetBlank": false
+      "targetBlank": false,
+      "includeVars": true
     },
     {
       "title": "Intermédiaire",
@@ -80,7 +97,8 @@
       "icon": "dashboard",
       "url": "/d/asemon-intermediate",
       "keepTime": true,
-      "targetBlank": false
+      "targetBlank": false,
+      "includeVars": true
     },
     {
       "title": "Micro",
@@ -88,7 +106,8 @@
       "icon": "dashboard",
       "url": "/d/asemon-micro",
       "keepTime": true,
-      "targetBlank": false
+      "targetBlank": false,
+      "includeVars": true
     },
     {
       "title": "Capacity",
@@ -96,7 +115,8 @@
       "icon": "dashboard",
       "url": "/d/asemon-capacity",
       "keepTime": true,
-      "targetBlank": false
+      "targetBlank": false,
+      "includeVars": true
     }
   ],
   "panels": [
@@ -137,7 +157,7 @@
           "format": "time_series",
           "rawQuery": true,
           "editorMode": "code",
-          "rawSql": "SELECT collected_at AS time, sum(size_bytes) AS \"Taille\"\nFROM asemon.snap_db_size\nWHERE $__timeFilter(collected_at) AND ('${db}' = '__instance__' OR datname = '${db}')\nGROUP BY collected_at ORDER BY 1"
+          "rawSql": "SELECT collected_at AS time, sum(size_bytes) AS \"Taille\"\nFROM asemon.snap_db_size WHERE instance_id = $instance AND $__timeFilter(collected_at) AND ('${db}' = '__all__' OR datname = '${db}')\nGROUP BY collected_at ORDER BY 1"
         }
       ],
       "fieldConfig": {
@@ -187,7 +207,7 @@
           "format": "table",
           "rawQuery": true,
           "editorMode": "code",
-          "rawSql": "SELECT s AS \"Taille actuelle\" FROM (\n  SELECT collected_at, sum(size_bytes) AS s FROM asemon.snap_db_size\n  WHERE collected_at <= $__timeTo() AND ('${db}' = '__instance__' OR datname = '${db}')\n  GROUP BY collected_at ORDER BY collected_at DESC LIMIT 1) x"
+          "rawSql": "SELECT s AS \"Taille actuelle\" FROM (\n  SELECT collected_at, sum(size_bytes) AS s FROM asemon.snap_db_size WHERE instance_id = $instance AND collected_at <= $__timeTo() AND ('${db}' = '__all__' OR datname = '${db}')\n  GROUP BY collected_at ORDER BY collected_at DESC LIMIT 1) x"
         }
       ],
       "fieldConfig": {
@@ -250,7 +270,7 @@
           "format": "table",
           "rawQuery": true,
           "editorMode": "code",
-          "rawSql": "WITH p AS (\n  SELECT collected_at, sum(size_bytes)::float8 AS s\n  FROM asemon.snap_db_size\n  WHERE $__timeFilter(collected_at) AND ('${db}' = '__instance__' OR datname = '${db}')\n  GROUP BY collected_at\n)\nSELECT CASE WHEN count(*) >= 2 AND max(collected_at) - min(collected_at) >= interval '48 hours'\n  THEN GREATEST(0, (array_agg(s ORDER BY collected_at DESC))[1]\n       + regr_slope(s, extract(epoch FROM collected_at)) * 30 * 86400) END AS \"Dans 1 mois\"\nFROM p"
+          "rawSql": "WITH p AS (\n  SELECT collected_at, sum(size_bytes)::float8 AS s\n  FROM asemon.snap_db_size WHERE instance_id = $instance AND $__timeFilter(collected_at) AND ('${db}' = '__all__' OR datname = '${db}')\n  GROUP BY collected_at\n)\nSELECT CASE WHEN count(*) >= 2 AND max(collected_at) - min(collected_at) >= interval '48 hours'\n  THEN GREATEST(0, (array_agg(s ORDER BY collected_at DESC))[1]\n       + regr_slope(s, extract(epoch FROM collected_at)) * 30 * 86400) END AS \"Dans 1 mois\"\nFROM p"
         }
       ],
       "fieldConfig": {
@@ -313,7 +333,7 @@
           "format": "table",
           "rawQuery": true,
           "editorMode": "code",
-          "rawSql": "WITH p AS (\n  SELECT collected_at, sum(size_bytes)::float8 AS s\n  FROM asemon.snap_db_size\n  WHERE $__timeFilter(collected_at) AND ('${db}' = '__instance__' OR datname = '${db}')\n  GROUP BY collected_at\n)\nSELECT CASE WHEN count(*) >= 2 AND max(collected_at) - min(collected_at) >= interval '48 hours'\n  THEN GREATEST(0, (array_agg(s ORDER BY collected_at DESC))[1]\n       + regr_slope(s, extract(epoch FROM collected_at)) * 182 * 86400) END AS \"Dans 6 mois\"\nFROM p"
+          "rawSql": "WITH p AS (\n  SELECT collected_at, sum(size_bytes)::float8 AS s\n  FROM asemon.snap_db_size WHERE instance_id = $instance AND $__timeFilter(collected_at) AND ('${db}' = '__all__' OR datname = '${db}')\n  GROUP BY collected_at\n)\nSELECT CASE WHEN count(*) >= 2 AND max(collected_at) - min(collected_at) >= interval '48 hours'\n  THEN GREATEST(0, (array_agg(s ORDER BY collected_at DESC))[1]\n       + regr_slope(s, extract(epoch FROM collected_at)) * 182 * 86400) END AS \"Dans 6 mois\"\nFROM p"
         }
       ],
       "fieldConfig": {
@@ -376,7 +396,7 @@
           "format": "table",
           "rawQuery": true,
           "editorMode": "code",
-          "rawSql": "WITH p AS (\n  SELECT collected_at, sum(size_bytes)::float8 AS s\n  FROM asemon.snap_db_size\n  WHERE $__timeFilter(collected_at) AND ('${db}' = '__instance__' OR datname = '${db}')\n  GROUP BY collected_at\n)\nSELECT CASE WHEN count(*) >= 2 AND max(collected_at) - min(collected_at) >= interval '48 hours'\n  THEN GREATEST(0, (array_agg(s ORDER BY collected_at DESC))[1]\n       + regr_slope(s, extract(epoch FROM collected_at)) * 365 * 86400) END AS \"Dans 1 an\"\nFROM p"
+          "rawSql": "WITH p AS (\n  SELECT collected_at, sum(size_bytes)::float8 AS s\n  FROM asemon.snap_db_size WHERE instance_id = $instance AND $__timeFilter(collected_at) AND ('${db}' = '__all__' OR datname = '${db}')\n  GROUP BY collected_at\n)\nSELECT CASE WHEN count(*) >= 2 AND max(collected_at) - min(collected_at) >= interval '48 hours'\n  THEN GREATEST(0, (array_agg(s ORDER BY collected_at DESC))[1]\n       + regr_slope(s, extract(epoch FROM collected_at)) * 365 * 86400) END AS \"Dans 1 an\"\nFROM p"
         }
       ],
       "fieldConfig": {
@@ -451,7 +471,7 @@
           "format": "table",
           "rawQuery": true,
           "editorMode": "code",
-          "rawSql": "WITH latest AS (\n  SELECT max(collected_at) AS t FROM asemon.snap_table_size WHERE collected_at <= $__timeTo()\n), cur AS (\n  SELECT s.* FROM asemon.snap_table_size s, latest l\n  WHERE s.collected_at = l.t AND ('${db}' = '__instance__' OR s.datname = '${db}')\n), reg AS (\n  SELECT datname, schemaname, relname,\n         count(*) AS n,\n         max(collected_at) - min(collected_at) AS span,\n         regr_slope(total_bytes::float8, extract(epoch FROM collected_at)) AS slope\n  FROM asemon.snap_table_size\n  WHERE $__timeFilter(collected_at) AND ('${db}' = '__instance__' OR datname = '${db}')\n  GROUP BY 1,2,3\n)\nSELECT c.datname AS \"Base\",\n       c.schemaname || '.' || c.relname AS \"Table\",\n       c.index_count AS \"Index\",\n       c.row_estimate AS \"Lignes\",\n       c.total_bytes AS \"Taille\",\n       CASE WHEN r.n >= 2 AND r.span >= interval '48 hours'\n            THEN GREATEST(0, c.total_bytes + r.slope * 182 * 86400) END AS \"Taille dans 6 mois\"\nFROM cur c\nLEFT JOIN reg r USING (datname, schemaname, relname)\nORDER BY c.total_bytes DESC\nLIMIT 10"
+          "rawSql": "WITH latest AS (\n  SELECT max(collected_at) AS t FROM asemon.snap_table_size WHERE instance_id = $instance AND collected_at <= $__timeTo()\n), cur AS (\n  SELECT s.* FROM asemon.snap_table_size s, latest l\n  WHERE s.collected_at = l.t AND ('${db}' = '__all__' OR s.datname = '${db}')\n), reg AS (\n  SELECT datname, schemaname, relname,\n         count(*) AS n,\n         max(collected_at) - min(collected_at) AS span,\n         regr_slope(total_bytes::float8, extract(epoch FROM collected_at)) AS slope\n  FROM asemon.snap_table_size WHERE instance_id = $instance AND $__timeFilter(collected_at) AND ('${db}' = '__all__' OR datname = '${db}')\n  GROUP BY 1,2,3\n)\nSELECT c.datname AS \"Base\",\n       c.schemaname || '.' || c.relname AS \"Table\",\n       c.index_count AS \"Index\",\n       c.row_estimate AS \"Lignes\",\n       c.total_bytes AS \"Taille\",\n       CASE WHEN r.n >= 2 AND r.span >= interval '48 hours'\n            THEN GREATEST(0, c.total_bytes + r.slope * 182 * 86400) END AS \"Taille dans 6 mois\"\nFROM cur c\nLEFT JOIN reg r USING (datname, schemaname, relname)\nORDER BY c.total_bytes DESC\nLIMIT 10"
         }
       ],
       "fieldConfig": {

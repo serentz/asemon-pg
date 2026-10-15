@@ -46,7 +46,8 @@
       "icon": "dashboard",
       "url": "/d/asemon-macro",
       "keepTime": true,
-      "targetBlank": false
+      "targetBlank": false,
+      "includeVars": true
     },
     {
       "title": "Intermédiaire",
@@ -54,7 +55,8 @@
       "icon": "dashboard",
       "url": "/d/asemon-intermediate",
       "keepTime": true,
-      "targetBlank": false
+      "targetBlank": false,
+      "includeVars": true
     },
     {
       "title": "Micro",
@@ -62,7 +64,8 @@
       "icon": "dashboard",
       "url": "/d/asemon-micro",
       "keepTime": true,
-      "targetBlank": false
+      "targetBlank": false,
+      "includeVars": true
     },
     {
       "title": "Capacity",
@@ -70,7 +73,8 @@
       "icon": "dashboard",
       "url": "/d/asemon-capacity",
       "keepTime": true,
-      "targetBlank": false
+      "targetBlank": false,
+      "includeVars": true
     }
   ],
   "templating": {
@@ -81,6 +85,22 @@
         "query": "postgres",
         "current": {},
         "label": "Datasource ASEMON"
+      },
+      {
+        "name": "instance",
+        "label": "Instance",
+        "type": "query",
+        "datasource": {
+          "type": "postgres",
+          "uid": "${DS_MONITORING}"
+        },
+        "query": "SELECT name AS __text, instance_id AS __value FROM asemon.instances WHERE enabled ORDER BY instance_id",
+        "definition": "SELECT name AS __text, instance_id AS __value FROM asemon.instances WHERE enabled ORDER BY instance_id",
+        "refresh": 1,
+        "sort": 0,
+        "includeAll": false,
+        "multi": false,
+        "current": {}
       }
     ]
   },
@@ -151,7 +171,7 @@
             "uid": "${DS_MONITORING}"
           },
           "format": "table",
-          "rawSql": "SELECT COALESCE(NULLIF(usename, ''), '(inconnu)') AS \"Login\", SUM(interval_ms) / 1000.0 AS \"Secondes actives\" FROM asemon.snap_samples WHERE $__timeFilter(sampled_at) AND application_name NOT LIKE 'asemon-%' GROUP BY 1 ORDER BY 2 DESC",
+          "rawSql": "SELECT COALESCE(NULLIF(usename, ''), '(inconnu)') AS \"Login\", SUM(interval_ms) / 1000.0 AS \"Secondes actives\" FROM asemon.snap_samples WHERE instance_id = $instance AND $__timeFilter(sampled_at) AND application_name NOT LIKE 'asemon-%' GROUP BY 1 ORDER BY 2 DESC",
           "rawQuery": true
         }
       ]
@@ -210,7 +230,7 @@
             "uid": "${DS_MONITORING}"
           },
           "format": "table",
-          "rawSql": "SELECT COALESCE(NULLIF(application_name, ''), '(sans nom)') AS \"Programme\", SUM(interval_ms) / 1000.0 AS \"Secondes actives\" FROM asemon.snap_samples WHERE $__timeFilter(sampled_at) AND application_name NOT LIKE 'asemon-%' GROUP BY 1 ORDER BY 2 DESC",
+          "rawSql": "SELECT COALESCE(NULLIF(application_name, ''), '(sans nom)') AS \"Programme\", SUM(interval_ms) / 1000.0 AS \"Secondes actives\" FROM asemon.snap_samples WHERE instance_id = $instance AND $__timeFilter(sampled_at) AND application_name NOT LIKE 'asemon-%' GROUP BY 1 ORDER BY 2 DESC",
           "rawQuery": true
         }
       ]
@@ -269,7 +289,7 @@
             "uid": "${DS_MONITORING}"
           },
           "format": "table",
-          "rawSql": "SELECT CASE WHEN wait_event IS NULL THEN 'CPU' ELSE wait_event_type END AS \"Type\", SUM(interval_ms) / 1000.0 AS \"Secondes actives\" FROM asemon.snap_samples WHERE $__timeFilter(sampled_at) AND application_name NOT LIKE 'asemon-%' GROUP BY 1 ORDER BY 2 DESC",
+          "rawSql": "SELECT CASE WHEN wait_event IS NULL THEN 'CPU' ELSE wait_event_type END AS \"Type\", SUM(interval_ms) / 1000.0 AS \"Secondes actives\" FROM asemon.snap_samples WHERE instance_id = $instance AND $__timeFilter(sampled_at) AND application_name NOT LIKE 'asemon-%' GROUP BY 1 ORDER BY 2 DESC",
           "rawQuery": true
         }
       ]
@@ -340,7 +360,7 @@
             "uid": "${DS_MONITORING}"
           },
           "format": "table",
-          "rawSql": "SELECT COALESCE(NULLIF(usename, ''), '(inconnu)') AS \"Login\", SUM(cpu_user_ms + cpu_system_ms) / 1000.0 AS \"CPU\" FROM asemon.snap_kcache WHERE $__timeFilter(sampled_at) AND usename <> 'asemon_collect' GROUP BY 1 HAVING SUM(cpu_user_ms + cpu_system_ms) > 0 ORDER BY 2 DESC",
+          "rawSql": "SELECT COALESCE(NULLIF(usename, ''), '(inconnu)') AS \"Login\", SUM(cpu_user_ms + cpu_system_ms) / 1000.0 AS \"CPU\" FROM asemon.snap_kcache WHERE instance_id = $instance AND $__timeFilter(sampled_at) AND usename <> 'asemon_collect' GROUP BY 1 HAVING SUM(cpu_user_ms + cpu_system_ms) > 0 ORDER BY 2 DESC",
           "rawQuery": true
         }
       ]
@@ -399,7 +419,7 @@
             "uid": "${DS_MONITORING}"
           },
           "format": "table",
-          "rawSql": "SELECT COALESCE(NULLIF(application_name, ''), CASE WHEN session_key IS NULL THEN '(non attribué)' ELSE '(sans nom)' END) AS \"Programme\", SUM(cpu_ms) / 1000.0 AS \"CPU\" FROM asemon.kcache_attr($__timeFrom(), $__timeTo()) WHERE NOT is_internal GROUP BY 1 HAVING SUM(cpu_ms) > 0 ORDER BY 2 DESC",
+          "rawSql": "SELECT COALESCE(NULLIF(application_name, ''), CASE WHEN session_key IS NULL THEN '(non attribué)' ELSE '(sans nom)' END) AS \"Programme\", SUM(cpu_ms) / 1000.0 AS \"CPU\" FROM asemon.kcache_attr($__timeFrom(), $__timeTo(), $instance) WHERE NOT is_internal GROUP BY 1 HAVING SUM(cpu_ms) > 0 ORDER BY 2 DESC",
           "rawQuery": true
         }
       ]
@@ -458,7 +478,7 @@
             "uid": "${DS_MONITORING}"
           },
           "format": "table",
-          "rawSql": "SELECT COALESCE(NULLIF(usename, ''), '(inconnu)') AS \"Login\", SUM(reads_bytes + writes_bytes)::float8 AS \"Octets\" FROM asemon.snap_kcache WHERE $__timeFilter(sampled_at) AND usename <> 'asemon_collect' GROUP BY 1 HAVING SUM(reads_bytes + writes_bytes) > 0 ORDER BY 2 DESC",
+          "rawSql": "SELECT COALESCE(NULLIF(usename, ''), '(inconnu)') AS \"Login\", SUM(reads_bytes + writes_bytes)::float8 AS \"Octets\" FROM asemon.snap_kcache WHERE instance_id = $instance AND $__timeFilter(sampled_at) AND usename <> 'asemon_collect' GROUP BY 1 HAVING SUM(reads_bytes + writes_bytes) > 0 ORDER BY 2 DESC",
           "rawQuery": true
         }
       ]
@@ -517,7 +537,7 @@
             "uid": "${DS_MONITORING}"
           },
           "format": "table",
-          "rawSql": "SELECT COALESCE(NULLIF(application_name, ''), CASE WHEN session_key IS NULL THEN '(non attribué)' ELSE '(sans nom)' END) AS \"Programme\", SUM(reads_bytes + writes_bytes)::float8 AS \"Octets\" FROM asemon.kcache_attr($__timeFrom(), $__timeTo()) WHERE NOT is_internal GROUP BY 1 HAVING SUM(reads_bytes + writes_bytes) > 0 ORDER BY 2 DESC",
+          "rawSql": "SELECT COALESCE(NULLIF(application_name, ''), CASE WHEN session_key IS NULL THEN '(non attribué)' ELSE '(sans nom)' END) AS \"Programme\", SUM(reads_bytes + writes_bytes)::float8 AS \"Octets\" FROM asemon.kcache_attr($__timeFrom(), $__timeTo(), $instance) WHERE NOT is_internal GROUP BY 1 HAVING SUM(reads_bytes + writes_bytes) > 0 ORDER BY 2 DESC",
           "rawQuery": true
         }
       ]
@@ -576,7 +596,7 @@
             "uid": "${DS_MONITORING}"
           },
           "format": "time_series",
-          "rawSql": "SELECT date_trunc('minute', sampled_at) AS \"time\", CASE WHEN wait_event IS NULL THEN 'CPU' ELSE wait_event_type END AS \"metric\", SUM(interval_ms) / 60000.0 AS \"Sessions actives\" FROM asemon.snap_samples WHERE $__timeFilter(sampled_at) AND application_name NOT LIKE 'asemon-%' GROUP BY 1, 2 ORDER BY 1",
+          "rawSql": "SELECT date_trunc('minute', sampled_at) AS \"time\", CASE WHEN wait_event IS NULL THEN 'CPU' ELSE wait_event_type END AS \"metric\", SUM(interval_ms) / 60000.0 AS \"Sessions actives\" FROM asemon.snap_samples WHERE instance_id = $instance AND $__timeFilter(sampled_at) AND application_name NOT LIKE 'asemon-%' GROUP BY 1, 2 ORDER BY 1",
           "rawQuery": true
         }
       ]
@@ -623,7 +643,7 @@
             "uid": "${DS_MONITORING}"
           },
           "format": "time_series",
-          "rawSql": "SELECT collected_at AS \"time\", cpu_percent AS \"CPU %\", mem_percent AS \"Mémoire %\", cpu_iowait_percent AS \"iowait %\" FROM asemon.snap_os WHERE $__timeFilter(collected_at) ORDER BY collected_at",
+          "rawSql": "SELECT collected_at AS \"time\", cpu_percent AS \"CPU %\", mem_percent AS \"Mémoire %\", cpu_iowait_percent AS \"iowait %\" FROM asemon.snap_os WHERE instance_id = $instance AND $__timeFilter(collected_at) ORDER BY collected_at",
           "rawQuery": true
         }
       ]
@@ -656,7 +676,7 @@
             "uid": "${DS_MONITORING}"
           },
           "format": "time_series",
-          "rawSql": "SELECT collected_at AS \"time\", net_sent_bytes AS \"Envoyé\", net_recv_bytes AS \"Reçu\" FROM asemon.snap_os WHERE $__timeFilter(collected_at) ORDER BY collected_at",
+          "rawSql": "SELECT collected_at AS \"time\", net_sent_bytes AS \"Envoyé\", net_recv_bytes AS \"Reçu\" FROM asemon.snap_os WHERE instance_id = $instance AND $__timeFilter(collected_at) ORDER BY collected_at",
           "rawQuery": true
         }
       ]
@@ -689,7 +709,7 @@
             "uid": "${DS_MONITORING}"
           },
           "format": "table",
-          "rawSql": "SELECT disk_free_bytes AS \"Libre\", disk_total_bytes AS \"Total\" FROM asemon.snap_os ORDER BY collected_at DESC LIMIT 1",
+          "rawSql": "SELECT disk_free_bytes AS \"Libre\", disk_total_bytes AS \"Total\" FROM asemon.snap_os WHERE instance_id = $instance ORDER BY collected_at DESC LIMIT 1",
           "rawQuery": true
         }
       ]
@@ -741,7 +761,7 @@
             "uid": "${DS_MONITORING}"
           },
           "format": "time_series",
-          "rawSql": "SELECT collected_at AS \"time\", (SUM(blks_hit)::float / NULLIF(SUM(blks_hit) + SUM(blks_read), 0)) * 100 AS \"Cache hit ratio\" FROM asemon.snap_io WHERE $__timeFilter(collected_at) GROUP BY collected_at ORDER BY collected_at",
+          "rawSql": "SELECT collected_at AS \"time\", (SUM(blks_hit)::float / NULLIF(SUM(blks_hit) + SUM(blks_read), 0)) * 100 AS \"Cache hit ratio\" FROM asemon.snap_io WHERE instance_id = $instance AND $__timeFilter(collected_at) GROUP BY collected_at ORDER BY collected_at",
           "rawQuery": true
         }
       ]
@@ -774,7 +794,7 @@
             "uid": "${DS_MONITORING}"
           },
           "format": "time_series",
-          "rawSql": "SELECT collected_at AS \"time\", SUM(temp_files) AS \"Fichiers temp.\", SUM(temp_bytes) AS \"Octets temp.\" FROM asemon.snap_io WHERE $__timeFilter(collected_at) GROUP BY collected_at ORDER BY collected_at",
+          "rawSql": "SELECT collected_at AS \"time\", SUM(temp_files) AS \"Fichiers temp.\", SUM(temp_bytes) AS \"Octets temp.\" FROM asemon.snap_io WHERE instance_id = $instance AND $__timeFilter(collected_at) GROUP BY collected_at ORDER BY collected_at",
           "rawQuery": true
         }
       ]
@@ -819,7 +839,7 @@
             "uid": "${DS_MONITORING}"
           },
           "format": "time_series",
-          "rawSql": "SELECT collected_at AS \"time\", active_connections AS \"Actives\", idle_connections AS \"Idle\", idle_in_transaction_connections AS \"Idle in transaction\", max_connections AS \"max_connections\" FROM asemon.snap_connections WHERE $__timeFilter(collected_at) ORDER BY collected_at",
+          "rawSql": "SELECT collected_at AS \"time\", active_connections AS \"Actives\", idle_connections AS \"Idle\", idle_in_transaction_connections AS \"Idle in transaction\", max_connections AS \"max_connections\" FROM asemon.snap_connections WHERE instance_id = $instance AND $__timeFilter(collected_at) ORDER BY collected_at",
           "rawQuery": true
         }
       ]
@@ -864,7 +884,7 @@
             "uid": "${DS_MONITORING}"
           },
           "format": "time_series",
-          "rawSql": "SELECT collected_at AS \"time\", num_timed AS \"Planifiés\", num_requested AS \"Demandés\" FROM asemon.snap_checkpoints WHERE $__timeFilter(collected_at) ORDER BY collected_at",
+          "rawSql": "SELECT collected_at AS \"time\", num_timed AS \"Planifiés\", num_requested AS \"Demandés\" FROM asemon.snap_checkpoints WHERE instance_id = $instance AND $__timeFilter(collected_at) ORDER BY collected_at",
           "rawQuery": true
         }
       ]
@@ -897,7 +917,7 @@
             "uid": "${DS_MONITORING}"
           },
           "format": "time_series",
-          "rawSql": "SELECT collected_at AS \"time\", wal_bytes::numeric AS \"WAL (octets cumulés)\" FROM asemon.snap_wal WHERE $__timeFilter(collected_at) ORDER BY collected_at",
+          "rawSql": "SELECT collected_at AS \"time\", wal_bytes::numeric AS \"WAL (octets cumulés)\" FROM asemon.snap_wal WHERE instance_id = $instance AND $__timeFilter(collected_at) ORDER BY collected_at",
           "rawQuery": true
         }
       ]
