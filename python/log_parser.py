@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-ASEMON-PG — Parseur de logs
+monAp_pg — Parseur de logs
 
 Suit en continu le fichier de log JSON de l'instance PostgreSQL locale
 et alimente le repository distant avec :

@@ -1,5 +1,5 @@
 -- ============================================================
--- ASEMON-PG — Utilisateur de collecte sur l'instance surveillée
+-- monAp_pg — Utilisateur de collecte sur l'instance surveillée
 -- À exécuter sur VM-Cible, base postgres (ou toute base par défaut)
 -- Usage : sudo -u postgres psql -f 03-target-user.sql
 --

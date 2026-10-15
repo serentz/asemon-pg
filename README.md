@@ -1,4 +1,4 @@
-# ASEMON-PG
+# monAp_pg
 
 Preuve de concept de **supervision de PostgreSQL**, inspirée d'ASEMON (supervision Sybase ASE) : une vue qui descend de l'instance entière jusqu'à la session, puis jusqu'à la requête SQL, avec ses coûts réels (CPU, disque) et son plan d'exécution.
 
@@ -6,6 +6,8 @@ Preuve de concept de **supervision de PostgreSQL**, inspirée d'ASEMON (supervis
 - Aucune solution externe : PostgreSQL, Python, systemd et Grafana.
 
 > **Pour démarrer : [docs/00-guide-pas-a-pas.md](docs/00-guide-pas-a-pas.md)**, un guide unique qui va de la création des machines virtuelles sous Hyper-V jusqu'au contrôle des dashboards.
+
+> **Nom du projet** : anciennement « ASEMON-PG », renommé **monAp_pg** le 2026-10-15. Seuls les noms affichés ont changé. Les identifiants techniques gardent le préfixe `asemon` (schéma `asemon`, services `asemon-*`, dossier `/opt/asemon`, `uid` des dashboards `asemon-*`, source de données « ASEMON Monitoring ») pour ne rien casser sur les VM déjà installées.
 
 > Les adresses (`192.168.1.28`, `192.168.1.30`), l'utilisateur `admin01` et les chemins (`/opt/asemon`) sont ceux du POC : à adapter.
 

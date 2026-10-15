@@ -1,5 +1,5 @@
 [Unit]
-Description=ASEMON-PG Echantillonneur de sessions actives (snap_samples)
+Description=monAp_pg Echantillonneur de sessions actives (snap_samples)
 After=network-online.target postgresql.service
 Wants=network-online.target
 

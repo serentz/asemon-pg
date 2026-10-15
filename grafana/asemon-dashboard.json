@@ -13,7 +13,7 @@
     { "type": "grafana", "id": "grafana", "name": "Grafana", "version": "10.0.0" },
     { "type": "datasource", "id": "postgres", "name": "PostgreSQL", "version": "1.0.0" }
   ],
-  "title": "ASEMON-PG",
+  "title": "monAp_pg",
   "description": "Vue de monitoring PostgreSQL inspirée d'ASEMON : CPU/IO/réseau, cache, connexions, verrous, deadlocks, top SQL, maintenance, checkpoints et WAL.",
   "tags": ["asemon", "postgresql"],
   "timezone": "browser",

@@ -23,9 +23,9 @@
       "version": "1.0.0"
     }
   ],
-  "title": "ASEMON-PG — Macro",
+  "title": "monAp_pg — Macro",
   "uid": "asemon-macro",
-  "description": "Page 1 de l'IHM ASEMON-PG : indicateurs instantanés et résumé par heure sur les 6 dernières heures.",
+  "description": "Page 1 de l'IHM monAp_pg : indicateurs instantanés et résumé par heure sur les 6 dernières heures.",
   "tags": [
     "asemon",
     "postgresql",

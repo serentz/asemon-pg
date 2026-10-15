@@ -1,6 +1,6 @@
 # VM-Monitoring — Dashboard Grafana
 
-> Fait suite à `04-metriques-etendues.md` (collecteur étendu avec toutes les catégories de métriques). Ce document couvre l'import du dashboard Grafana `ASEMON-PG`, qui visualise l'ensemble des données collectées dans le schéma `asemon`.
+> Fait suite à `04-metriques-etendues.md` (collecteur étendu avec toutes les catégories de métriques). Ce document couvre l'import du dashboard Grafana `monAp_pg`, qui visualise l'ensemble des données collectées dans le schéma `asemon`.
 
 ## Prérequis
 
@@ -14,7 +14,7 @@ Fichier correspondant dans le dépôt : `grafana/asemon-dashboard.json`
 
 ## 1. Contenu du dashboard
 
-Le dashboard `ASEMON-PG` est organisé en 5 sections (lignes pliables) :
+Le dashboard `monAp_pg` est organisé en 5 sections (lignes pliables) :
 
 | Section | Panneaux |
 |---|---|
@@ -83,7 +83,7 @@ Après correction des droits, deux panneaux restaient vides en "Last 6 hours" :
 
 ## 5. Checklist de validation
 
-- [ ] Dashboard `ASEMON-PG` importé, datasource correctement mappé
+- [ ] Dashboard `monAp_pg` importé, datasource correctement mappé
 - [ ] Droits `grafana_ro` corrigés (`GRANT USAGE ON SCHEMA` + `GRANT SELECT ON ALL TABLES`)
 - [ ] Tous les panneaux "graphique temporel" affichent des données sur la période par défaut
 - [ ] Tous les panneaux "tableau d'état courant" (verrous, seq scans, âge transactions) affichent le dernier snapshot

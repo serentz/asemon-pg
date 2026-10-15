@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-ASEMON-PG — Échantillonneur de sessions actives (Phase 2)
+monAp_pg — Échantillonneur de sessions actives (Phase 2)
 
 Tourne sur la VM surveillée (VM-Cible), à côté du collecteur. Toutes les
 SAMPLE_INTERVAL secondes (défaut 2), relève les sessions ACTIVES de
@@ -121,7 +121,7 @@ class Throttle:
 def main():
     interval = read_interval()
     interval_ms = int(round(interval * 1000))
-    log.info("Démarrage de l'échantillonneur ASEMON-PG (intervalle=%ss)", interval)
+    log.info("Démarrage de l'échantillonneur monAp_pg (intervalle=%ss)", interval)
 
     def on_signal(signum, _frame):
         log.info("Signal %s reçu, arrêt demandé.", signum)

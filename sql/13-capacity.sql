@@ -1,5 +1,5 @@
 -- ============================================================
--- ASEMON-PG Release 3 — Capacity planning : tables de taille
+-- monAp_pg Release 3 — Capacity planning : tables de taille
 -- À appliquer sur VM-Monitoring (base monitoring), rejouable :
 --
 --   sudo -u postgres psql -d monitoring < sql/13-capacity.sql

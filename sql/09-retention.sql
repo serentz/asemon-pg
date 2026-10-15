@@ -1,5 +1,5 @@
 -- ============================================================
--- ASEMON-PG — Rétention des tables de snapshots, d'événements et de sessions
+-- monAp_pg — Rétention des tables de snapshots, d'événements et de sessions
 -- (voir docs/10-retention.md)
 --
 -- asemon.purge_old_data() supprime les lignes plus anciennes que la durée

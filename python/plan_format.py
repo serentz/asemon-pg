@@ -1,5 +1,5 @@
 """
-ASEMON-PG — Mise en forme lisible du SQL et des plans d'exécution (v2.1)
+monAp_pg — Mise en forme lisible du SQL et des plans d'exécution (v2.1)
 
 Utilisé par :
   - log_parser.py   : plan_text / plan_hash à l'écriture de event_plans

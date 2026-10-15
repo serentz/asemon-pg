@@ -1,5 +1,5 @@
 -- ============================================================
--- ASEMON-PG — Rôles et droits du repository
+-- monAp_pg — Rôles et droits du repository
 -- À exécuter sur VM-Monitoring, dans la base `monitoring`
 -- Usage : sudo -u postgres psql -d monitoring -f 02-roles-and-grants.sql
 --

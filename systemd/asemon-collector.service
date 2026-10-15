@@ -1,5 +1,5 @@
 [Unit]
-Description=ASEMON-PG Collector
+Description=monAp_pg Collector
 After=network-online.target postgresql.service
 Wants=network-online.target
 

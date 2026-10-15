@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# ASEMON-PG v2.1 — Charge de test avec des requêtes lentes (VM-Cible)
+# monAp_pg v2.1 — Charge de test avec des requêtes lentes (VM-Cible)
 #
 # Produit des requêtes d'environ 0,3 à 1 s (tri, jointure, filtre sur 1 million de lignes avec -s 10) pour alimenter auto_explain
 # (seuil 100 ms), donc la table event_plans et la page « Détail requête ».

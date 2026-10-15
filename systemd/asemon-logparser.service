@@ -1,5 +1,5 @@
 [Unit]
-Description=ASEMON-PG Log Parser (deadlocks + plans auto_explain)
+Description=monAp_pg Log Parser (deadlocks + plans auto_explain)
 After=network-online.target postgresql.service
 Wants=network-online.target
 

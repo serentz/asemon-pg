@@ -1,5 +1,5 @@
 -- ============================================================
--- ASEMON-PG — Phase 1 : cycle de vie des sessions
+-- monAp_pg — Phase 1 : cycle de vie des sessions
 -- (voir docs/06-roadmap-ihm.md et docs/07-sessions-phase1.md)
 --
 -- STATUT : déployé sur VM-Monitoring (2026-10-09) et validé.

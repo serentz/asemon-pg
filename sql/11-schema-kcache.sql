@@ -1,5 +1,5 @@
 -- ============================================================
--- ASEMON-PG — Phase 3 : CPU et I/O disque réels par requête (pg_stat_kcache)
+-- monAp_pg — Phase 3 : CPU et I/O disque réels par requête (pg_stat_kcache)
 -- (voir docs/14-kcache-phase3.md)
 --
 -- Le collecteur lit pg_stat_kcache() à chaque cycle, calcule l'écart avec le
@@ -42,7 +42,7 @@ CREATE INDEX IF NOT EXISTS idx_snap_kcache_queryid ON asemon.snap_kcache (queryi
 --
 --  * Par requête et par login : mesure exacte.
 --  * Par session et par programme : répartition approchée.
---  * is_internal : coûts de ASEMON-PG lui-même (login asemon_collect, programmes
+--  * is_internal : coûts de monAp_pg lui-même (login asemon_collect, programmes
 --    asemon-*), à exclure des tableaux de bord.
 --
 -- Les bornes sont des paramètres (et non une vue filtrée après coup) pour que

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ============================================================
-# ASEMON-PG : installation de VM-Monitoring (repository + Grafana)
+# monAp_pg : installation de VM-Monitoring (repository + Grafana)
 #
 #   sudo ./scripts/install-monitoring.sh              installation complète
 #   sudo ./scripts/install-monitoring.sh --sql-only   applique seulement les scripts SQL
@@ -58,7 +58,7 @@ check_auto_conf listen_addresses
 CHANGED=0
 tmp="$(mktemp)"
 cat > "$tmp" <<CONF
-# Géré par ASEMON-PG (scripts/install-monitoring.sh) : ne pas modifier à la main.
+# Géré par monAp_pg (scripts/install-monitoring.sh) : ne pas modifier à la main.
 listen_addresses = '*'
 CONF
 write_pg_conf "$tmp"; rm -f "$tmp"

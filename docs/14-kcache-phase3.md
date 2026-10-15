@@ -189,7 +189,7 @@ Aucune modification de la base : il suffit de **réimporter les 4 JSON** (même 
 | Page 3, « Trier par » | Nouvelles valeurs : CPU mesuré, Lectures disque, Écritures disque |
 | Détail session / requête | Tuiles « CPU mesuré », « Lu sur disque », « Écrit sur disque » (sur la période du dashboard) |
 
-Rappels : les lectures disque restent à 0 tant que les données tiennent dans le cache de l'OS ; ASEMON-PG lui-même est exclu (login `asemon_collect`, programmes `asemon-*`).
+Rappels : les lectures disque restent à 0 tant que les données tiennent dans le cache de l'OS ; monAp_pg lui-même est exclu (login `asemon_collect`, programmes `asemon-*`).
 
 ---
 

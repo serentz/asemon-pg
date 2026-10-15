@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# ASEMON-PG : configure Grafana par son API (mot de passe admin, datasource, import des dashboards).
+# monAp_pg : configure Grafana par son API (mot de passe admin, datasource, import des dashboards).
 # Appelé par install-monitoring.sh ; peut aussi être relancé seul (rejouable) :
 #   sudo ./scripts/grafana-provision.sh
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"

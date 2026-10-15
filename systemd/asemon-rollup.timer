@@ -1,5 +1,5 @@
 [Unit]
-Description=ASEMON-PG Rollup horaire, toutes les 5 minutes
+Description=monAp_pg Rollup horaire, toutes les 5 minutes
 
 [Timer]
 OnCalendar=*:0/5

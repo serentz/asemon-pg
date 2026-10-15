@@ -1,5 +1,5 @@
 # ============================================================
-# ASEMON-PG — Configuration du collecteur
+# monAp_pg — Configuration du collecteur
 # Copier ce fichier en config.py et adapter les valeurs.
 # config.py ne doit PAS être versionné dans Git (contient des mots de passe) :
 # ajouter "config.py" au .gitignore du dépôt.

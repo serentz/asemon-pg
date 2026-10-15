@@ -1,5 +1,5 @@
 -- ============================================================
--- ASEMON-PG — Tables de la Phase 2 (BROUILLON)
+-- monAp_pg — Tables de la Phase 2 (BROUILLON)
 -- (voir docs/06-roadmap-ihm.md)
 --
 -- STATUT : NON DÉPLOYÉ, à relire et adapter avant toute exécution.
