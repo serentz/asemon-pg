@@ -107,7 +107,7 @@
         "uid": "${DS_MONITORING}"
       },
       "gridPos": {
-        "h": 11,
+        "h": 15,
         "w": 24,
         "x": 0,
         "y": 0
@@ -176,6 +176,18 @@
                 }
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Indicateur"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 300
+              }
+            ]
           }
         ]
       },
@@ -197,10 +209,10 @@
         "uid": "${DS_MONITORING}"
       },
       "gridPos": {
-        "h": 11,
+        "h": 17,
         "w": 24,
         "x": 0,
-        "y": 11
+        "y": 15
       },
       "targets": [
         {
@@ -221,7 +233,20 @@
             "align": "auto"
           }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Indicateur"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 300
+              }
+            ]
+          }
+        ]
       },
       "options": {
         "showHeader": true,
@@ -239,7 +264,7 @@
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 22
+        "y": 32
       },
       "options": {
         "mode": "markdown",
