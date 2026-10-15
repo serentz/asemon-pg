@@ -300,7 +300,7 @@ Ouvrir le Micro, trier les requêtes par durée, cliquer sur le `query_id` d'une
 
 À contrôler :
 - la boîte **Texte SQL** montre la requête indentée, 6 lignes visibles avec ascenseur ;
-- la boîte **Plan d'exécution affiché** montre l'arbre du plan (`Hash Join`, `Seq Scan`, coûts, temps réels) ;
+- la boîte **Plan d'exécution affiché** montre l'arbre du plan, 15 lignes visibles avec ascenseur (`Hash Join`, `Seq Scan`, coûts, temps réels) ;
 - le tableau **Plans (auto_explain)** liste les plans de la requête (au plus 5 par heure) ; cliquer sur un **N°** affiche ce plan dans la boîte.
 
 ### 9.5 bis Capacity planning
