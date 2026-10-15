@@ -1,0 +1,250 @@
+{
+  "__inputs": [
+    {
+      "name": "DS_MONITORING",
+      "label": "ASEMON Monitoring",
+      "description": "",
+      "type": "datasource",
+      "pluginId": "postgres",
+      "pluginName": "PostgreSQL"
+    }
+  ],
+  "__requires": [
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "10.0.0"
+    },
+    {
+      "type": "datasource",
+      "id": "postgres",
+      "name": "PostgreSQL",
+      "version": "1.0.0"
+    }
+  ],
+  "title": "monAp_pg — Seuils",
+  "uid": "asemon-thresholds",
+  "description": "Release 4c : état de chaque indicateur par instance, seuils d'avertissement et d'alarme, et leur modification.",
+  "tags": [
+    "asemon",
+    "capacity"
+  ],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "1m",
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "DS_MONITORING",
+        "type": "datasource",
+        "query": "postgres",
+        "current": {},
+        "label": "Datasource ASEMON"
+      }
+    ]
+  },
+  "links": [
+    {
+      "title": "Macro",
+      "type": "link",
+      "icon": "dashboard",
+      "url": "/d/asemon-macro",
+      "keepTime": true,
+      "targetBlank": false,
+      "includeVars": true
+    },
+    {
+      "title": "Intermédiaire",
+      "type": "link",
+      "icon": "dashboard",
+      "url": "/d/asemon-intermediate",
+      "keepTime": true,
+      "targetBlank": false,
+      "includeVars": true
+    },
+    {
+      "title": "Micro",
+      "type": "link",
+      "icon": "dashboard",
+      "url": "/d/asemon-micro",
+      "keepTime": true,
+      "targetBlank": false,
+      "includeVars": true
+    },
+    {
+      "title": "Capacity",
+      "type": "link",
+      "icon": "dashboard",
+      "url": "/d/asemon-capacity",
+      "keepTime": true,
+      "targetBlank": false,
+      "includeVars": true
+    },
+    {
+      "title": "Seuils",
+      "type": "link",
+      "icon": "dashboard",
+      "url": "/d/asemon-thresholds",
+      "keepTime": true,
+      "targetBlank": false,
+      "includeVars": true
+    }
+  ],
+  "panels": [
+    {
+      "id": 1,
+      "type": "table",
+      "title": "État actuel des indicateurs",
+      "description": "Dernière valeur de chaque indicateur (moins de 15 minutes), comparée aux seuils en vigueur. « Pas de mesure » : aucune donnée récente (instance arrêtée, ou aucune activité : verrous, transactions). Un indicateur désactivé n'apparaît pas.",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${DS_MONITORING}"
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${DS_MONITORING}"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code",
+          "rawSql": "SELECT instance_name AS \"Instance\", label AS \"Indicateur\", unit AS \"Unité\",\n       round(value::numeric, 1) AS \"Valeur\", warn_value AS \"Avertissement\", crit_value AS \"Alarme\",\n       state AS \"État\", value_ts AS \"Mesuré à\"\nFROM asemon.v_kpi_status\nORDER BY instance_name, sort_order"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto"
+          },
+          "noValue": "-"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "État"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "ok": {
+                        "text": "OK",
+                        "color": "green",
+                        "index": 0
+                      },
+                      "warning": {
+                        "text": "Avertissement",
+                        "color": "orange",
+                        "index": 1
+                      },
+                      "critical": {
+                        "text": "Alarme",
+                        "color": "red",
+                        "index": 2
+                      },
+                      "unknown": {
+                        "text": "Pas de mesure",
+                        "color": "text",
+                        "index": 3
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      }
+    },
+    {
+      "id": 2,
+      "type": "table",
+      "title": "Seuils en vigueur",
+      "description": "Seuils effectivement appliqués à chaque instance : ceux qui lui sont propres, sinon le défaut.",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${DS_MONITORING}"
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 24,
+        "x": 0,
+        "y": 11
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${DS_MONITORING}"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code",
+          "rawSql": "SELECT i.name AS \"Instance\", c.label AS \"Indicateur\", c.unit AS \"Unité\",\n       COALESCE(o.warn_value, d.warn_value) AS \"Avertissement\",\n       COALESCE(o.crit_value, d.crit_value) AS \"Alarme\",\n       CASE WHEN o.threshold_id IS NOT NULL THEN 'propre à l''instance' ELSE 'défaut' END AS \"Origine\",\n       COALESCE(o.enabled, d.enabled) AS \"Actif\",\n       COALESCE(o.updated_at, d.updated_at) AS \"Modifié le\",\n       COALESCE(o.updated_by, d.updated_by) AS \"Par\"\nFROM asemon.instances i\nCROSS JOIN asemon.kpi_catalog c\nJOIN asemon.kpi_thresholds d ON d.kpi = c.kpi AND d.instance_id IS NULL\nLEFT JOIN asemon.kpi_thresholds o ON o.kpi = c.kpi AND o.instance_id = i.instance_id\nWHERE i.enabled\nORDER BY i.name, c.sort_order"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      }
+    },
+    {
+      "id": 3,
+      "type": "text",
+      "title": "Comment ça marche, et comment modifier un seuil",
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 22
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "**Comprendre.** Chaque indicateur est comparé à deux seuils : **avertissement** (orange) puis **alarme** (rouge). Pour l'espace disque, c'est l'inverse : plus c'est bas, plus c'est grave. Le *défaut* s'applique à toutes les instances ; un seuil *propre à l'instance* le remplace pour elle seule. Les valeurs sont calculées toutes les 5 minutes.\n\n**Modifier.** Avec le formulaire de cette page (voir `docs/21-seuils.md`), ou en SQL sur VM-Monitoring :\n\n```\n-- défaut de toutes les instances (instance NULL), puis seuil propre à l'instance 2\nSELECT asemon.set_threshold(NULL, 'cpu_pct', 80, 95);\nSELECT asemon.set_threshold(2, 'cpu_pct', 70, 90);\n-- retour au défaut pour l'instance 2\nSELECT asemon.reset_threshold(2, 'cpu_pct');\n```\nLes clés d'indicateur : `cpu_pct`, `disk_free_pct`, `lock_wait_s`, `longest_xact_s`, `deadlocks`, `active_xacts` (ce dernier est désactivé tant qu'on n'a pas choisi ses seuils)."
+      }
+    }
+  ]
+}

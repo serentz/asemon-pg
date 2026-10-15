@@ -66,6 +66,12 @@ set_role_password() {
     printf "ALTER USER %s WITH PASSWORD :'pw';\n" "$role" | $PSQL_CMD -d postgres -v "pw=$pw"
 }
 
+# open_role_login ROLE VARIABLE : donne un mot de passe ET ouvre la connexion (rôle créé en NOLOGIN).
+open_role_login() {
+    local role="$1" pw="${!2}"
+    printf "ALTER USER %s LOGIN PASSWORD :'pw';\n" "$role" | $PSQL_CMD -d postgres -v "pw=$pw"
+}
+
 # install_file SOURCE CIBLE [MODE] : copie si le contenu diffère ; positionne CHANGED=1 dans ce cas.
 CHANGED=0
 install_file() {

@@ -20,11 +20,12 @@ load_env
 require_vars COLLECTOR_PASSWORD GRAFANA_RO_PASSWORD
 check_password COLLECTOR_PASSWORD
 check_password GRAFANA_RO_PASSWORD
+[ -n "${GRAFANA_THRESHOLDS_PASSWORD:-}" ] && check_password GRAFANA_THRESHOLDS_PASSWORD
 
 # Ordre d'application. 07 est un brouillon et n'est jamais appliqué.
 SQL_FILES=(01-schema-asemon 02-roles-and-grants 04-schema-extension 05-schema-sessions
            06-rollup-horaire 08-schema-samples 09-retention 10-plans-query-id 11-schema-kcache 12-plans-lisibles 13-capacity
-           14-multi-instance 15-instance-id-cutover 16-internal-users)
+           14-multi-instance 15-instance-id-cutover 16-internal-users 17-thresholds)
 
 apply_schema() {
     log "Schéma du repository"
@@ -39,6 +40,11 @@ apply_schema() {
     # Les mots de passe sont fixés ici (les scripts SQL ne gardent que des valeurs d'exemple).
     set_role_password collector_writer COLLECTOR_PASSWORD
     set_role_password grafana_ro GRAFANA_RO_PASSWORD
+    if [ -n "${GRAFANA_THRESHOLDS_PASSWORD:-}" ]; then
+        open_role_login grafana_thresholds GRAFANA_THRESHOLDS_PASSWORD
+    else
+        warn "GRAFANA_THRESHOLDS_PASSWORD vide : le rôle grafana_thresholds reste sans connexion (seuils en lecture seule dans Grafana)"
+    fi
     # Deuxième passe des droits : couvre les tables créées par les scripts suivants.
     psql_file monitoring "$REPO_DIR/sql/02-roles-and-grants.sql"
     psql_value monitoring "SELECT asemon.maintain_samples()" >/dev/null
@@ -122,6 +128,17 @@ if [ ! -d /var/lib/grafana/plugins/marcusolsson-dynamictext-panel ]; then
         ok "plugin installé"
     else
         warn "Plugin non installé (accès à grafana.com ?). Les boîtes SQL et plan resteront vides : grafana cli plugins install marcusolsson-dynamictext-panel puis redémarrer Grafana."
+    fi
+fi
+# Panneau « Business Forms » (Release 4c) : formulaire de modification des seuils
+if [ ! -d /var/lib/grafana/plugins/volkovlabs-form-panel ]; then
+    log "Installation du plugin Grafana volkovlabs-form-panel"
+    if grafana cli plugins install volkovlabs-form-panel >/dev/null 2>&1; then
+        chown -R grafana:grafana /var/lib/grafana/plugins 2>/dev/null || true
+        systemctl restart grafana-server
+        ok "plugin installé"
+    else
+        warn "Plugin non installé (accès à grafana.com ?). Les seuils restent modifiables en SQL (docs/21) : grafana cli plugins install volkovlabs-form-panel puis redémarrer Grafana."
     fi
 fi
 systemctl enable --now grafana-server >/dev/null 2>&1
