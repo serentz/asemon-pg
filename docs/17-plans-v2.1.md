@@ -33,7 +33,7 @@ Dans l'ordre, après avoir fait `git pull` sur chaque VM (branche `v2.1-plans` p
 
 **VM-Monitoring**
 ```bash
-cd ~/asemon-pg && git pull
+cd ~/monAp_pg && git pull
 sudo -u postgres psql -d monitoring < sql/12-plans-lisibles.sql
 sudo grafana cli plugins install marcusolsson-dynamictext-panel
 sudo systemctl restart grafana-server
@@ -42,7 +42,7 @@ Puis réimporter `grafana/asemon-query.json` (Dashboards > New > Import, même u
 
 **VM-Cible**
 ```bash
-cd ~/asemon-pg && git pull
+cd ~/monAp_pg && git pull
 sudo ./scripts/install-target.sh            # copie le code, installe sqlparse, passe auto_explain à 100 ms, redémarre
 ```
 `install-target.sh` redémarre PostgreSQL (quelques secondes) parce qu'il réécrit `conf.d/asemon.conf`. Pour n'appliquer que le seuil sans redémarrage :

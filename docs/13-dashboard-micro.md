@@ -51,7 +51,7 @@ Dans l'ordre : base de données, parseur, puis Grafana.
 ### 3.1 PowerShell, depuis ton clone
 
 ```powershell
-cd I:\POC_ASEMON\asemon-pg
+cd I:\POC_ASEMON\monAp_pg
 git fetch origin
 git switch grafana-micro
 scp sql\10-plans-query-id.sql admin01@192.168.1.28:~/

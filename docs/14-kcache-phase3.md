@@ -88,7 +88,7 @@ Le collecteur détecte l'absence de `pg_stat_kcache()` : il écrit un avertissem
 PowerShell, dans ton clone :
 
 ```powershell
-cd I:\POC_ASEMON\asemon-pg
+cd I:\POC_ASEMON\monAp_pg
 git fetch origin
 git switch phase3-kcache
 scp sql\09-retention.sql sql\11-schema-kcache.sql admin01@192.168.1.28:~/

@@ -65,7 +65,7 @@ Résultat du test local : un historique synthétique de 1 200 jours (2 bases et 
 **VM-Monitoring**
 
 ```bash
-cd ~/asemon-pg && git fetch && git checkout main && git pull
+cd ~/monAp_pg && git fetch && git checkout main && git pull
 sudo -u postgres psql -d monitoring < sql/13-capacity.sql
 sudo apt install -y python3-venv
 sudo mkdir -p /opt/asemon/app && sudo python3 -m venv /opt/asemon/venv
@@ -87,7 +87,7 @@ sudo systemctl list-timers asemon-retention.timer --no-pager
 **VM-Cible**
 
 ```bash
-cd ~/asemon-pg && git fetch && git checkout main && git pull
+cd ~/monAp_pg && git fetch && git checkout main && git pull
 sudo cp python/collector.py /opt/asemon/app/ && sudo chmod a+rX /opt/asemon/app/collector.py
 sudo systemctl restart asemon-collector
 ```

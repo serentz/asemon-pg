@@ -22,20 +22,20 @@ Sur chaque VM, une fois Ubuntu installé :
 Au choix, sur chaque VM :
 
 ```bash
-sudo apt install -y git && git clone https://github.com/serentz/asemon-pg.git     # si le dépôt est accessible
+sudo apt install -y git && git clone https://github.com/serentz/monAp_pg.git     # si le dépôt est accessible
 ```
 
 ou depuis PowerShell, en copiant le dossier :
 
 ```powershell
-scp -r I:\POC_ASEMON\asemon-pg admin01@192.168.1.28:~/
-scp -r I:\POC_ASEMON\asemon-pg admin01@192.168.1.30:~/
+scp -r I:\POC_ASEMON\monAp_pg admin01@192.168.1.28:~/
+scp -r I:\POC_ASEMON\monAp_pg admin01@192.168.1.30:~/
 ```
 
 ### Le fichier de paramètres
 
 ```bash
-cd ~/asemon-pg
+cd ~/monAp_pg
 cp scripts/asemon.env.example scripts/asemon.env
 nano scripts/asemon.env
 ```
@@ -53,7 +53,7 @@ Mots de passe : 8 caractères minimum, lettres, chiffres et `. _ @ % + = -` seul
 ### 2.1 VM-Monitoring
 
 ```bash
-cd ~/asemon-pg
+cd ~/monAp_pg
 sudo ./scripts/install-monitoring.sh
 ```
 
@@ -74,7 +74,7 @@ sudo ./scripts/verify.sh monitoring
 ### 2.2 VM-Cible
 
 ```bash
-cd ~/asemon-pg
+cd ~/monAp_pg
 sudo ./scripts/install-target.sh
 ```
 

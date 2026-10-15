@@ -158,7 +158,7 @@ La rétention est assurée en supprimant des partitions entières : pas de `DELE
 Depuis PowerShell, dans ton clone :
 
 ```powershell
-cd I:\POC_ASEMON\asemon-pg
+cd I:\POC_ASEMON\monAp_pg
 git fetch origin
 git switch phase2-echantillonnage
 scp sql\08-schema-samples.sql systemd\asemon-samples-maintenance.service systemd\asemon-samples-maintenance.timer admin01@192.168.1.28:~/

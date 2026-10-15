@@ -123,21 +123,21 @@ Les trois réponses doivent arriver. Sinon : même commutateur ? même réseau ?
 **Option A : cloner le dépôt** (si GitHub est accessible depuis la VM) :
 
 ```bash
-git clone https://github.com/serentz/asemon-pg.git
-cd asemon-pg
+git clone https://github.com/serentz/monAp_pg.git
+cd monAp_pg
 ```
 
 **Option B : copier le dossier depuis le PC** (depuis PowerShell, une fois par VM) :
 
 ```powershell
-scp -r C:\chemin\vers\asemon-pg admin01@IP_MONITORING:~/
-scp -r C:\chemin\vers\asemon-pg admin01@IP_CIBLE:~/
+scp -r C:\chemin\vers\monAp_pg admin01@IP_MONITORING:~/
+scp -r C:\chemin\vers\monAp_pg admin01@IP_CIBLE:~/
 ```
 
 Puis, sur chaque VM, remettre les droits et les fins de ligne du dépôt (le transfert Windows les abîme) :
 
 ```bash
-cd ~/asemon-pg
+cd ~/monAp_pg
 git checkout -- .
 ```
 
@@ -175,7 +175,7 @@ Les mots de passe : 8 caractères minimum, lettres, chiffres et `. _ @ % + = -` 
 Toujours **VM-Monitoring avant VM-Cible** : la base doit exister avant que la collecte y écrive.
 
 ```bash
-cd ~/asemon-pg
+cd ~/monAp_pg
 sudo bash ./scripts/install-monitoring.sh
 ```
 
@@ -194,7 +194,7 @@ Toutes les lignes doivent être vertes. Ouvrir ensuite **`http://IP_MONITORING:3
 ## 7. Installer VM-Cible
 
 ```bash
-cd ~/asemon-pg
+cd ~/monAp_pg
 sudo bash ./scripts/install-target.sh
 ```
 
@@ -234,7 +234,7 @@ Elle alimente les sessions, les coûts CPU et disque, les verrous.
 **8.2 Requêtes lentes** (pour les plans d'exécution, environ 2 minutes) :
 
 ```bash
-cd ~/asemon-pg
+cd ~/monAp_pg
 sudo bash ./scripts/charge-lente.sh 120
 ```
 
