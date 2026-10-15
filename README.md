@@ -43,9 +43,9 @@ Schémas détaillés (flux, tables, clés, navigation des dashboards) : **[docs/
 
 | Macro | Intermédiaire | Micro |
 |---|---|---|
-| ![Macro](images/Release_2/01-macro.png) | ![Intermédiaire](images/Release_2/02-intermediaire-repartition.png) | ![Micro](images/Release_2/05-micro-top10.png) |
+| ![Macro](images/Release_3/01-macro.png) | ![Intermédiaire](images/Release_3/02-intermediaire-repartition.png) | ![Micro](images/Release_3/05-micro-top10.png) |
 
-Toutes les captures de la version 2 : [images/Release_2](images/Release_2/README.md).
+Toutes les captures (version 3, dont Capacity planning) : [images/Release_3](images/Release_3/README.md).
 
 ## État d'avancement
 

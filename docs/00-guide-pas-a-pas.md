@@ -258,11 +258,11 @@ Un message « deadlock detected » doit apparaître : c'est le résultat attendu
 
 Ouvrir `http://IP_MONITORING:3000` > **Dashboards**. Régler la période en haut à droite sur **Last 30 minutes** (ou *Last 1 hour*) : sur une installation neuve, la période par défaut de 6 heures est presque vide. Les heures affichées sont celles du navigateur ; la base stocke l'UTC.
 
-Les captures de référence sont dans [images/Release_2](../images/Release_2/README.md) ; vos valeurs seront différentes, la forme doit ressembler.
+Les captures de référence sont dans [images/Release_3](../images/Release_3/README.md) ; vos valeurs seront différentes, la forme doit ressembler.
 
 ### 9.1 monAp_pg — Macro
 
-![Macro](../images/Release_2/01-macro.png)
+![Macro](../images/Release_3/01-macro.png)
 
 À contrôler :
 - les huit tuiles ont une valeur (sessions actives, connexions, CPU, mémoire, cache, deadlocks, requêtes lentes, charge active) ;
@@ -271,7 +271,7 @@ Les captures de référence sont dans [images/Release_2](../images/Release_2/REA
 
 ### 9.2 monAp_pg — Intermédiaire
 
-![Intermédiaire](../images/Release_2/02-intermediaire-repartition.png)
+![Intermédiaire](../images/Release_3/02-intermediaire-repartition.png)
 
 À contrôler :
 - les camemberts de répartition du temps actif par **login** et par **programme** montrent `pgbench` ;
@@ -280,7 +280,7 @@ Les captures de référence sont dans [images/Release_2](../images/Release_2/REA
 
 ### 9.3 monAp_pg — Micro
 
-![Micro](../images/Release_2/05-micro-top10.png)
+![Micro](../images/Release_3/05-micro-top10.png)
 
 À contrôler :
 - le **top 10 des sessions** et le **top 10 des requêtes** sont remplis ; la variable **Trier par** change l'ordre ;
@@ -288,7 +288,7 @@ Les captures de référence sont dans [images/Release_2](../images/Release_2/REA
 
 ### 9.4 Détail d'une session
 
-![Détail session](../images/Release_2/06-detail-session.png)
+![Détail session](../images/Release_3/06-detail-session.png)
 
 À contrôler : identité (login, programme), temps actif ventilé en CPU, I/O et verrous, coûts mesurés, une ligne par exécution, et dessous les plans et interblocages de la session.
 
@@ -296,7 +296,7 @@ Les captures de référence sont dans [images/Release_2](../images/Release_2/REA
 
 Ouvrir le Micro, trier les requêtes par durée, cliquer sur le `query_id` d'une requête issue de `charge-lente.sh` (par exemple une jointure sur `pgbench_accounts`).
 
-![Détail requête](../images/Release_2/08-detail-requete.png)
+![Détail requête](../images/Release_3/08-detail-requete.png)
 
 À contrôler :
 - la boîte **Texte SQL** montre la requête indentée, 10 lignes visibles avec ascenseur ;
@@ -306,6 +306,8 @@ Ouvrir le Micro, trier les requêtes par durée, cliquer sur le `query_id` d'une
 ### 9.5 bis Capacity planning
 
 Ouvrir **Capacity** dans la barre de navigation (ou `/d/asemon-capacity`). La période par défaut est de 30 jours.
+
+![Capacity planning](../images/Release_3/10-capacity.png)
 
 À contrôler :
 - le graphe montre la taille de la base choisie dans la variable **Base** (ou `(toute l'instance)`) ;
