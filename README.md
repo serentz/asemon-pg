@@ -57,11 +57,11 @@ Toutes les captures (version 3, dont Capacity planning) : [images/Release_3](ima
 | 3 | CPU et disque réels par requête (`pg_stat_kcache`) | Fait, validé (I/O réseau non mesurable) |
 | 4 | Dashboards Grafana : macro, intermédiaire, micro, détails session et requête | Fait, validé |
 | Release 3 | Capacity planning : collecte des tailles (3a), dashboard et extrapolations (3b) | Fait, validé |
-| Release 4 | Multi-instance : schéma et agents (4a), dashboards par instance (4b), seuils (4c), niveau zéro et page instance (4d) | 4a, 4b et 4c validées ([docs/19](docs/19-multi-instance.md), [docs/20](docs/20-supervision-vm-monitoring.md), [docs/21](docs/21-seuils.md)) ; 4d codée, à valider ([docs/22](docs/22-parc-et-instance.md)) |
+| Release 4 | Multi-instance : schéma et agents (4a), dashboards par instance (4b), seuils (4c), niveau zéro et page instance (4d) | **terminée** : 4a à 4d validées ([docs/19](docs/19-multi-instance.md), [docs/20](docs/20-supervision-vm-monitoring.md), [docs/21](docs/21-seuils.md), [docs/22](docs/22-parc-et-instance.md)) |
 
 **En cours** : v2.1, plans d'exécution lisibles et mieux capturés (codée, à valider sur les VM : [docs/17-plans-v2.1.md](docs/17-plans-v2.1.md)).
 
-**Prochaines releases** : Release 4 (multi-instance, seuils : [docs/19-multi-instance.md](docs/19-multi-instance.md) pour 4a) ; Release 5 (réplication). Voir [docs/16-roadmap-releases.md](docs/16-roadmap-releases.md).
+**Prochaine release** : Release 5 (réplication). Voir [docs/16-roadmap-releases.md](docs/16-roadmap-releases.md).
 
 Suites possibles : alertes Grafana, mesure du volume réel après plusieurs jours, ajustement des durées de rétention. Réflexion et historique des choix : [docs/06-roadmap-ihm.md](docs/06-roadmap-ihm.md).
 
