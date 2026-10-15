@@ -138,3 +138,7 @@ Ordre des scripts SQL (VM-Monitoring) : `01, 02, 04, 05, 06, 08, 09, 10, 11, 12,
 | Temps actif | Durée pendant laquelle une session exécutait quelque chose, d'après les échantillons |
 | CPU mesuré | CPU réellement consommé (`pg_stat_kcache`), exact par requête et par login |
 | Non attribué | Coût mesuré qu'aucun échantillon ne permet de rattacher à une session |
+
+## Licence
+
+Projet publié sous licence [MIT](LICENSE). Vous pouvez l'utiliser, le modifier et le redistribuer librement, à condition de conserver la mention de copyright. Aucun code ni document propriétaire d'ASEMON (Sybase) n'est repris : le projet s'en inspire seulement pour l'idée.
