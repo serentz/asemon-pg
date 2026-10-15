@@ -261,17 +261,21 @@ Un message « deadlock detected » doit apparaître : c'est le résultat attendu
 
 Ouvrir `http://IP_MONITORING:3000` > **Dashboards**. Régler la période en haut à droite sur **Last 30 minutes** (ou *Last 1 hour*) : sur une installation neuve, la période par défaut de 6 heures est presque vide. Les heures affichées sont celles du navigateur ; la base stocke l'UTC.
 
-Les captures de référence sont dans [images/Release_3](../images/Release_3/README.md) ; vos valeurs seront différentes, la forme doit ressembler.
+Les captures de référence sont dans [images/Release_3](../images/Release_3/README.md) et [images/Release_4](../images/Release_4/README.md) ; vos valeurs seront différentes, la forme doit ressembler.
 
 ### 9.0 monAp_pg — Parc et Instance (Release 4)
 
 Les deux premiers boutons de la barre de navigation. Les mesures des indicateurs sont calculées toutes les 5 minutes : attendre ce délai après l'installation.
+
+![Parc](../images/Release_4/01-parc.png)
 
 **Parc** (`/d/asemon-fleet`) : une ligne par instance surveillée, avec son indicateur le plus problématique, sa valeur, ses seuils et son état (OK, avertissement, alarme, sans mesure récente). Trois tuiles en haut comptent les instances par état. Cliquer le nom d'une instance propose sa page **Instance** ou sa **Macro**.
 
 À contrôler :
 - une ligne pour VM-Cible, état **OK** (vert), indicateur et valeur renseignés ;
 - le graphe de gravité (100 % = seuil d'alarme) ne commence qu'à l'installation : quelques points au début, c'est normal.
+
+![Instance](../images/Release_4/02-instance.png)
 
 **Instance** (`/d/asemon-instance`) : choisir l'instance dans la variable **Instance**. Le haut montre l'état actuel des 6 indicateurs ; le bas donne une ligne par heure sur les 3 dernières heures (pic de CPU et son heure, attente de verrou maximale, deadlocks, transactions ouvertes, disque libre minimal, transaction la plus longue). Après l'étape 8.3, la ligne de l'heure en cours montre le deadlock.
 
@@ -337,6 +341,8 @@ Détails : [18-capacity-planning.md](18-capacity-planning.md).
 ### 9.5 ter Seuils
 
 Ouvrir **Seuils** dans la barre de navigation. Les deux tableaux donnent l'état actuel de chaque indicateur et les seuils en vigueur (défauts : CPU 80 % / 95 %, disque libre 20 % / 10 %, attente de verrou 30 s / 120 s, transaction la plus longue 5 min / 30 min, deadlocks 1 / 5 par heure).
+
+![Seuils](../images/Release_4/07-seuils.png)
 
 Pour modifier un seuil, utiliser le formulaire **Modifier un seuil** en bas de la page (instance `0` = défaut de toutes les instances), ou en SQL :
 
