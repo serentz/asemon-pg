@@ -21,6 +21,12 @@
       "id": "postgres",
       "name": "PostgreSQL",
       "version": "1.0.0"
+    },
+    {
+      "type": "panel",
+      "id": "volkovlabs-form-panel",
+      "name": "Business Forms",
+      "version": "6.3.5"
     }
   ],
   "title": "monAp_pg — Seuils",
@@ -28,7 +34,7 @@
   "description": "Release 4c : état de chaque indicateur par instance, seuils d'avertissement et d'alarme, et leur modification.",
   "tags": [
     "asemon",
-    "capacity"
+    "seuils"
   ],
   "timezone": "browser",
   "schemaVersion": 39,
@@ -257,6 +263,255 @@
       }
     },
     {
+      "id": 4,
+      "type": "volkovlabs-form-panel",
+      "title": "Modifier un seuil",
+      "description": "Modifie un seuil par l'appel de asemon.set_threshold() avec le rôle grafana_thresholds. Instance 0 = défaut de toutes les instances. Voir docs/21-seuils.md.",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${DS_MONITORING}"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 32
+      },
+      "pluginVersion": "6.3.5",
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${DS_MONITORING}"
+          },
+          "format": "table",
+          "rawQuery": false,
+          "editorMode": "builder",
+          "dataset": "monitoring",
+          "rawSql": ""
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "options": {
+        "buttonGroup": {
+          "orientation": "center",
+          "size": "md"
+        },
+        "confirmModal": {
+          "body": "Please confirm to update changed values",
+          "cancel": "Cancel",
+          "columns": {
+            "include": [
+              "name",
+              "oldValue",
+              "newValue"
+            ],
+            "name": "Label",
+            "newValue": "New Value",
+            "oldValue": "Old Value"
+          },
+          "confirm": "Confirm",
+          "elementDisplayMode": "modified",
+          "title": "Confirm update request"
+        },
+        "elementValueChanged": "",
+        "elements": [
+          {
+            "id": "instance",
+            "labelWidth": 10,
+            "section": "",
+            "title": "Instance (0 = défaut de toutes)",
+            "tooltip": "",
+            "type": "number",
+            "uid": "685d6ccd-35fc-4c9a-938e-9f2faed830c4",
+            "unit": "",
+            "value": 0
+          },
+          {
+            "allowCustomValue": false,
+            "id": "kpi",
+            "labelWidth": 10,
+            "options": [
+              {
+                "id": "cpu_pct",
+                "label": "CPU",
+                "type": "string",
+                "value": "cpu_pct"
+              },
+              {
+                "id": "disk_free_pct",
+                "label": "Disque libre",
+                "type": "string",
+                "value": "disk_free_pct"
+              },
+              {
+                "id": "lock_wait_s",
+                "label": "Verrou",
+                "type": "string",
+                "value": "lock_wait_s"
+              },
+              {
+                "id": "longest_xact_s",
+                "label": "Transaction longue",
+                "type": "string",
+                "value": "longest_xact_s"
+              },
+              {
+                "id": "deadlocks",
+                "label": "Deadlocks",
+                "type": "string",
+                "value": "deadlocks"
+              },
+              {
+                "id": "active_xacts",
+                "label": "Transactions ouvertes",
+                "type": "string",
+                "value": "active_xacts"
+              }
+            ],
+            "optionsSource": "Custom",
+            "section": "",
+            "title": "Indicateur",
+            "tooltip": "",
+            "type": "select",
+            "uid": "d7677337-65f7-465d-9f24-5f34ba9c661a",
+            "unit": "",
+            "value": ""
+          },
+          {
+            "id": "warn",
+            "labelWidth": 10,
+            "section": "",
+            "title": "Avertissement",
+            "tooltip": "",
+            "type": "number",
+            "uid": "6dfb45e0-5ced-473f-bf17-311611388b8b",
+            "unit": "",
+            "value": 0
+          },
+          {
+            "id": "crit",
+            "labelWidth": 10,
+            "section": "",
+            "title": "Alarme",
+            "tooltip": "",
+            "type": "number",
+            "uid": "3605c635-7cc9-4341-8bd7-d0c7e9e77c5c",
+            "unit": "",
+            "value": 0
+          },
+          {
+            "allowCustomValue": false,
+            "id": "enabled",
+            "labelWidth": 10,
+            "options": [
+              {
+                "id": "true",
+                "label": "Oui",
+                "type": "string",
+                "value": "true"
+              },
+              {
+                "id": "false",
+                "label": "Non",
+                "type": "string",
+                "value": "false"
+              }
+            ],
+            "optionsSource": "Custom",
+            "section": "",
+            "title": "Actif",
+            "tooltip": "",
+            "type": "select",
+            "uid": "f83b6d24-9d6f-47ca-b914-43d987f1e38c",
+            "unit": "",
+            "value": ""
+          }
+        ],
+        "initial": {
+          "code": "console.log(context.panel.data, context.panel.response, context.panel.initial, context.panel.elements);\n\nreturn;\n\n/**\n * Data Source\n * Requires form elements to be defined\n */\nconst dataQuery = context.utils.toDataQueryResponse(context.panel.response);\nconsole.log(dataQuery);",
+          "contentType": "application/json",
+          "getPayload": "return {}",
+          "highlight": false,
+          "highlightColor": "red",
+          "method": "-",
+          "payload": {}
+        },
+        "layout": {
+          "orientation": "horizontal",
+          "padding": 10,
+          "sectionVariant": "default",
+          "variant": "single"
+        },
+        "reset": {
+          "backgroundColor": "purple",
+          "foregroundColor": "yellow",
+          "icon": "process",
+          "text": "Reset",
+          "variant": "hidden"
+        },
+        "resetAction": {
+          "code": "if (context.panel.response) {\n  context.grafana.notifySuccess(['Update', 'Values updated successfully.']);\n  context.grafana.refresh();\n} else {\n  context.grafana.notifyError(['Update', 'An error occurred updating values.']);\n}",
+          "confirm": false,
+          "getPayload": "return {}",
+          "mode": "initial",
+          "payload": {}
+        },
+        "saveDefault": {
+          "icon": "save",
+          "text": "Save Default",
+          "variant": "hidden"
+        },
+        "submit": {
+          "backgroundColor": "purple",
+          "foregroundColor": "yellow",
+          "icon": "cloud-upload",
+          "text": "Submit",
+          "variant": "primary"
+        },
+        "sync": true,
+        "update": {
+          "code": "if (context.panel.response) {\n  context.grafana.notifySuccess(['Update', 'Values updated successfully.']);\n  context.grafana.refresh();\n} else {\n  context.grafana.notifyError(['Update', 'An error occurred updating values.']);\n}",
+          "confirm": true,
+          "contentType": "application/json",
+          "datasource": "asemon-seuils",
+          "getPayload": "const payload = {};\ncontext.panel.elements.forEach((element) => {\n  payload[element.id] = element.value;\n});\nreturn payload;",
+          "method": "datasource",
+          "payload": {
+            "dataset": "monitoring",
+            "editorMode": "code",
+            "format": "table",
+            "rawQuery": true,
+            "rawSql": "SELECT asemon.set_threshold(NULLIF(${payload.instance}::int, 0), '${payload.kpi}', ${payload.warn}::float8, ${payload.crit}::float8, '${payload.enabled}'::boolean)",
+            "refId": "A",
+            "sql": {
+              "columns": [
+                {
+                  "parameters": [],
+                  "type": "function"
+                }
+              ],
+              "groupBy": [
+                {
+                  "property": {
+                    "type": "string"
+                  },
+                  "type": "groupBy"
+                }
+              ],
+              "limit": 50
+            }
+          },
+          "payloadMode": "custom"
+        },
+        "updateEnabled": "auto"
+      }
+    },
+    {
       "id": 3,
       "type": "text",
       "title": "Comment ça marche, et comment modifier un seuil",
@@ -264,11 +519,11 @@
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 32
+        "y": 41
       },
       "options": {
         "mode": "markdown",
-        "content": "**Comprendre.** Chaque indicateur est comparé à deux seuils : **avertissement** (orange) puis **alarme** (rouge). Pour l'espace disque, c'est l'inverse : plus c'est bas, plus c'est grave. Le *défaut* s'applique à toutes les instances ; un seuil *propre à l'instance* le remplace pour elle seule. Les valeurs sont calculées toutes les 5 minutes.\n\n**Modifier.** Avec le formulaire de cette page (voir `docs/21-seuils.md`), ou en SQL sur VM-Monitoring :\n\n```\n-- défaut de toutes les instances (instance NULL), puis seuil propre à l'instance 2\nSELECT asemon.set_threshold(NULL, 'cpu_pct', 80, 95);\nSELECT asemon.set_threshold(2, 'cpu_pct', 70, 90);\n-- retour au défaut pour l'instance 2\nSELECT asemon.reset_threshold(2, 'cpu_pct');\n```\nLes clés d'indicateur : `cpu_pct`, `disk_free_pct`, `lock_wait_s`, `longest_xact_s`, `deadlocks`, `active_xacts` (ce dernier est désactivé tant qu'on n'a pas choisi ses seuils)."
+        "content": "**Comprendre.** Chaque indicateur est comparé à deux seuils : **avertissement** (orange) puis **alarme** (rouge). Pour l'espace disque, c'est l'inverse : plus c'est bas, plus c'est grave. Le *défaut* s'applique à toutes les instances ; un seuil *propre à l'instance* le remplace pour elle seule. Les valeurs sont calculées toutes les 5 minutes.\n\n**Modifier.** Avec le formulaire « Modifier un seuil » (instance `0` = le défaut de toutes les instances, sinon le numéro de l'instance : 1 = VM-Cible, 2 = VM-Monitoring), ou en SQL sur VM-Monitoring (`docs/21-seuils.md`). Le formulaire demande une confirmation, et ne peut pas supprimer une surcharge d'instance : pour cela, `reset_threshold` ci-dessous.\n\n```\n-- défaut de toutes les instances (instance NULL), puis seuil propre à l'instance 2\nSELECT asemon.set_threshold(NULL, 'cpu_pct', 80, 95);\nSELECT asemon.set_threshold(2, 'cpu_pct', 70, 90);\n-- retour au défaut pour l'instance 2\nSELECT asemon.reset_threshold(2, 'cpu_pct');\n```\nLes clés d'indicateur : `cpu_pct`, `disk_free_pct`, `lock_wait_s`, `longest_xact_s`, `deadlocks`, `active_xacts` (ce dernier est désactivé tant qu'on n'a pas choisi ses seuils)."
       }
     }
   ]

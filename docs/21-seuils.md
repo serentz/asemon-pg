@@ -1,6 +1,6 @@
 # Release 4c : seuils d'alarme et d'avertissement
 
-> **Statut : codée et testée en local le 2026-10-15 (PostgreSQL 16). À valider sur VM-Monitoring.** Le formulaire de modification est créé **dans Grafana** (étape 7), puis exporté dans le dépôt : sa configuration dépend de la version du plugin et n'a pas pu être testée ici. Les seuils restent modifiables en SQL (étape 6) quoi qu'il arrive. Le niveau zéro et la page d'une instance (4d) utilisent ces seuils.
+> **Statut : validée sur VM-Monitoring le 2026-10-15** (calcul des états, page Seuils, formulaire de modification, droits du rôle limité). Le formulaire dépend de la version du plugin (6.3.5) ; les seuils restent modifiables en SQL (étape 6) quoi qu'il arrive. Le niveau zéro et la page d'une instance (4d) utilisent ces seuils.
 
 ## 1. Principe
 
@@ -74,7 +74,7 @@ sudo systemctl restart grafana-server
 ```
 Attendu : `✔ Installed volkovlabs-form-panel`. En cas d'échec (accès à grafana.com), dis-le : seul le formulaire est concerné, les seuils restent modifiables en SQL.
 
-**5. Datasource « ASEMON Seuils »** (Grafana → Connections → Data sources → Add → PostgreSQL)
+**5. Datasource « ASEMON Seuils »** (Grafana → Connections → Data sources → Add new data source → PostgreSQL). Attention : le navigateur peut pré-remplir *Username* et *Password* avec tes identifiants Grafana : les retaper, et mettre le *TLS/SSL Mode* sur `disable` (la valeur par défaut `require` échoue)
 
 | Champ | Valeur |
 |---|---|
@@ -85,9 +85,11 @@ Attendu : `✔ Installed volkovlabs-form-panel`. En cas d'échec (accès à graf
 | TLS/SSL Mode | `disable` |
 | PostgreSQL Version | celle de VM-Monitoring (17) |
 
+Grafana peut conserver un nom par défaut (`grafana-postgresql-datasource-1`) malgré le champ *Name* : sans conséquence.
+
 **Save & test** : « Database Connection OK ».
 
-**6. Dashboards** : importer `grafana/asemon-thresholds.json` (Import, datasource **ASEMON Monitoring**) et réimporter Macro, Intermédiaire, Micro, Capacity avec **Overwrite** (nouveau bouton « Seuils »).
+**6. Dashboards** : importer `grafana/asemon-thresholds.json` (Import, datasource **ASEMON Monitoring**), relier le formulaire à la datasource (étape 7), et réimporter Macro, Intermédiaire, Micro, Capacity avec **Overwrite** (nouveau bouton « Seuils »).
 
 ## 5. Vérifier
 
@@ -114,44 +116,35 @@ SELECT asemon.reset_threshold(2, 'longest_xact_s');
 ```
 Les refus sont explicites : alarme inférieure à l'avertissement (ou l'inverse pour `disk_free_pct`), indicateur ou instance inconnus. L'état est recalculé au prochain passage (5 minutes au plus).
 
-## 7. Créer le formulaire dans Grafana
+## 7. Le formulaire « Modifier un seuil »
 
-> Procédure écrite sans pouvoir tester le plugin : les libellés peuvent différer un peu selon sa version. Dis-moi ce qui ne correspond pas.
+Il fait partie de `grafana/asemon-thresholds.json` (plugin **Business Forms** 6.3.5, validé sur Grafana 13.2.2 le 2026-10-15). Cinq champs : instance (`0` = défaut de toutes), indicateur, avertissement, alarme, actif. **Submit** ouvre une fenêtre de confirmation, puis appelle `asemon.set_threshold(…)` avec le rôle `grafana_thresholds`.
 
-Ouvrir la page **Seuils** → **Edit** → **Add → Visualization** → type **Business Forms** (`volkovlabs-form-panel`). Titre : « Modifier un seuil ».
+**Après l'import du dashboard** (étape 6), une seule action manuelle : relier le formulaire à la datasource « ASEMON Seuils ».
+1. Page **Seuils** → **Edit** ; menu du panneau « Modifier un seuil » (trois points) → **Edit**.
+2. Section **Update Request**, liste **Data Source** : choisir la datasource **ASEMON Seuils**. Grafana peut l'afficher sous un nom par défaut (`grafana-postgresql-datasource-1`) : c'est la deuxième de la liste, celle créée à l'étape 5.
+3. **Save**, puis **Exit edit**.
 
-**Champs** (*Form elements → Add*), dans cet ordre :
+(L'installation scriptée crée cette datasource avec l'identifiant `asemon-seuils` : le formulaire est alors déjà relié.)
 
-| Id | Type | Libellé | Valeurs |
-|---|---|---|---|
-| `instance` | Number | Instance (0 = défaut de toutes) | valeur initiale `0` |
-| `kpi` | Select | Indicateur | options (valeur / libellé) : `cpu_pct` CPU, `disk_free_pct` Disque libre, `lock_wait_s` Verrou, `longest_xact_s` Transaction longue, `deadlocks` Deadlocks, `active_xacts` Transactions ouvertes |
-| `warn` | Number | Avertissement | |
-| `crit` | Number | Alarme | |
-| `enabled` | Boolean (case à cocher) | Actif | valeur initiale cochée |
+**Essai** : instance `2`, indicateur **CPU**, avertissement `5`, alarme `8`, actif **Oui**, **Submit**, **Confirm**. Message vert « Values updated successfully » ; la ligne VM-Monitoring / CPU de « Seuils en vigueur » affiche 5 et 8, origine « propre à l'instance », et passe en alarme au calcul suivant (5 minutes au plus). Contrôle en SQL :
 
-Le numéro d'instance est celui de la liste Instance des autres pages (`SELECT instance_id, name FROM asemon.instances`) : 1 = VM-Cible, 2 = VM-Monitoring.
-
-**Envoi** (*Update request*) :
-- Method / type : **Data source** ; datasource : **ASEMON Seuils**.
-- Payload : **Custom code**, à coller :
-
-```javascript
-const v = {};
-context.panel.elements.forEach((e) => { v[e.id] = e.value; });
-const txt = (s) => "'" + String(s).replace(/'/g, "''") + "'";
-const inst = Number(v.instance) > 0 ? Number(v.instance) : "NULL";
-return {
-  rawSql: `SELECT asemon.set_threshold(${inst}, ${txt(v.kpi)}, ${Number(v.warn)}, ${Number(v.crit)}, ${v.enabled ? "true" : "false"})`,
-  format: "table",
-};
+```bash
+sudo -u postgres psql -d monitoring -c "SELECT instance_id, kpi, warn_value, crit_value, enabled, updated_by FROM asemon.kpi_thresholds WHERE instance_id IS NOT NULL;"
 ```
-- Activer la fenêtre de confirmation avant envoi, si le plugin la propose.
-- Si le plugin propose un code « après la mise à jour » : `context.grafana.refresh();` pour que les tableaux se rechargent.
+Attendu : `2 | cpu_pct | 5 | 8 | t | grafana_thresholds`. Retour au défaut : `SELECT asemon.reset_threshold(2, 'cpu_pct');` (le formulaire sait créer ou modifier un seuil, pas supprimer une surcharge).
 
-**Essai** : instance `2`, indicateur `cpu_pct`, avertissement `5`, alarme `8`, Submit. La ligne de VM-Monitoring passe en alarme dans « État actuel » (jusqu'à 5 minutes). Puis remettre `0` (défaut) ou, en SQL, `SELECT asemon.reset_threshold(2, 'cpu_pct');`.
+**Réglages du plugin** (utiles pour le refaire à la main) :
 
-**Exporter dans le dépôt** : *Save dashboard*, puis **Export → Export for sharing externally → Save to file**, et m'envoyer le fichier : je le remplace dans `grafana/asemon-thresholds.json`.
+| Section | Réglage |
+|---|---|
+| Form Elements | `instance` (Number input), `kpi` (Select with custom options, options de type **String** : `cpu_pct`, `disk_free_pct`, `lock_wait_s`, `longest_xact_s`, `deadlocks`, `active_xacts`), `warn` et `crit` (Number input), `enabled` (Select with custom options, options **String** `true` / `false`). Les **Id** doivent être exactement ceux-ci |
+| Update Request → Update Action | **Data Source** : datasource « ASEMON Seuils » |
+| Update Request Payload | **Custom** : `const payload = {}; context.panel.elements.forEach((e) => { payload[e.id] = e.value; }); return payload;` (le code d'exemple ignore les valeurs vides ou à zéro, ce qui supprimerait l'instance `0`) |
+| Query Editor | onglet **Code**, format **Table** : `SELECT asemon.set_threshold(NULLIF(${payload.instance}::int, 0), '${payload.kpi}', ${payload.warn}::float8, ${payload.crit}::float8, '${payload.enabled}'::boolean)` |
+| Update Confirmation Window | **Enabled** |
+
+**Pièges rencontrés** : une option de Select a par défaut le type **Number** (il faut **String**) ; « Add Element » crée un élément, et non une option d'un champ existant ; le bouton **Submit** est inactif tant qu'aucune valeur n'a changé.
 
 **Droits** : dans Grafana open source, toute personne qui peut modifier un dashboard peut interroger la datasource « ASEMON Seuils ». Le risque est borné (le rôle ne peut appeler que les deux fonctions) ; ne donner le droit d'édition qu'aux administrateurs.
 

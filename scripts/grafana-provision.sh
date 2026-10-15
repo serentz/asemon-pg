@@ -88,7 +88,7 @@ if [ -n "${GRAFANA_THRESHOLDS_PASSWORD:-}" ]; then
 import json, sys
 path, name, pw = sys.argv[1:4]
 json.dump({
-    "name": name, "type": "postgres", "access": "proxy",
+    "name": name, "uid": "asemon-seuils", "type": "postgres", "access": "proxy",
     "url": "localhost:5432", "user": "grafana_thresholds", "database": "monitoring", "isDefault": False,
     "jsonData": {"sslmode": "disable", "postgresVersion": 1700, "timescaledb": False},
     "secureJsonData": {"password": pw},
