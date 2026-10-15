@@ -831,6 +831,24 @@
   ],
   "links": [
     {
+      "title": "Parc",
+      "type": "link",
+      "icon": "dashboard",
+      "url": "/d/asemon-fleet",
+      "keepTime": true,
+      "targetBlank": false,
+      "includeVars": true
+    },
+    {
+      "title": "Instance",
+      "type": "link",
+      "icon": "dashboard",
+      "url": "/d/asemon-instance",
+      "keepTime": true,
+      "targetBlank": false,
+      "includeVars": true
+    },
+    {
       "title": "Macro",
       "type": "link",
       "icon": "dashboard",

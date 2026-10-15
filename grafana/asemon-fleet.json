@@ -1,0 +1,501 @@
+{
+  "__inputs": [
+    {
+      "name": "DS_MONITORING",
+      "label": "ASEMON Monitoring",
+      "description": "",
+      "type": "datasource",
+      "pluginId": "postgres",
+      "pluginName": "PostgreSQL"
+    }
+  ],
+  "__requires": [
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "10.0.0"
+    },
+    {
+      "type": "datasource",
+      "id": "postgres",
+      "name": "PostgreSQL",
+      "version": "1.0.0"
+    }
+  ],
+  "title": "monAp_pg — Parc",
+  "uid": "asemon-fleet",
+  "description": "Niveau zéro : une ligne par instance supervisée, avec son indicateur le plus problématique et sa couleur d'état.",
+  "tags": [
+    "asemon",
+    "parc"
+  ],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "1m",
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "DS_MONITORING",
+        "type": "datasource",
+        "query": "postgres",
+        "current": {},
+        "label": "Datasource ASEMON"
+      }
+    ]
+  },
+  "links": [
+    {
+      "title": "Parc",
+      "type": "link",
+      "icon": "dashboard",
+      "url": "/d/asemon-fleet",
+      "keepTime": true,
+      "targetBlank": false,
+      "includeVars": true
+    },
+    {
+      "title": "Instance",
+      "type": "link",
+      "icon": "dashboard",
+      "url": "/d/asemon-instance",
+      "keepTime": true,
+      "targetBlank": false,
+      "includeVars": true
+    },
+    {
+      "title": "Macro",
+      "type": "link",
+      "icon": "dashboard",
+      "url": "/d/asemon-macro",
+      "keepTime": true,
+      "targetBlank": false,
+      "includeVars": true
+    },
+    {
+      "title": "Intermédiaire",
+      "type": "link",
+      "icon": "dashboard",
+      "url": "/d/asemon-intermediate",
+      "keepTime": true,
+      "targetBlank": false,
+      "includeVars": true
+    },
+    {
+      "title": "Micro",
+      "type": "link",
+      "icon": "dashboard",
+      "url": "/d/asemon-micro",
+      "keepTime": true,
+      "targetBlank": false,
+      "includeVars": true
+    },
+    {
+      "title": "Capacity",
+      "type": "link",
+      "icon": "dashboard",
+      "url": "/d/asemon-capacity",
+      "keepTime": true,
+      "targetBlank": false,
+      "includeVars": true
+    },
+    {
+      "title": "Seuils",
+      "type": "link",
+      "icon": "dashboard",
+      "url": "/d/asemon-thresholds",
+      "keepTime": true,
+      "targetBlank": false,
+      "includeVars": true
+    }
+  ],
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Instances en alarme",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${DS_MONITORING}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 0,
+        "y": 0
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${DS_MONITORING}"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code",
+          "rawSql": "SELECT count(*) FILTER (WHERE state = 'critical') AS \"Instances en alarme\" FROM asemon.v_instance_status"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "noValue": "0",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center"
+      }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Instances en avertissement",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${DS_MONITORING}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 8,
+        "y": 0
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${DS_MONITORING}"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code",
+          "rawSql": "SELECT count(*) FILTER (WHERE state = 'warning') AS \"Instances en avertissement\" FROM asemon.v_instance_status"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "noValue": "0",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center"
+      }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Instances sans mesure récente",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${DS_MONITORING}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 16,
+        "y": 0
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${DS_MONITORING}"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code",
+          "rawSql": "SELECT count(*) FILTER (WHERE state = 'unknown') AS \"Instances sans mesure récente\" FROM asemon.v_instance_status"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "noValue": "0",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center"
+      }
+    },
+    {
+      "id": 4,
+      "type": "table",
+      "title": "Instances : l'indicateur le plus problématique",
+      "description": "Une ligne par instance. L'indicateur affiché est le plus grave : alarme, puis avertissement, puis ok ; à état égal, celui dont la valeur est la plus proche de son seuil d'alarme. Clic sur le nom : page de l'instance ; clic sur la valeur : Macro. Les seuils se modifient sur la page Seuils.",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${DS_MONITORING}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${DS_MONITORING}"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code",
+          "rawSql": "SELECT instance_id, instance_name AS \"Instance\", role AS \"Rôle\", host AS \"Hôte\",\n       COALESCE(worst_label, '(aucun indicateur évalué)') AS \"Indicateur le plus problématique\",\n       CASE WHEN value IS NULL THEN '-' ELSE round(value::numeric, 1)::text || CASE WHEN unit = '' THEN '' ELSE ' ' || unit END END AS \"Valeur\",\n       CASE WHEN warn_value IS NULL THEN '-' ELSE warn_value::text || ' / ' || crit_value::text END AS \"Seuils (avert. / alarme)\",\n       state AS \"État\", value_ts AS \"Mesuré à\"\nFROM asemon.v_instance_status\nORDER BY CASE state WHEN 'critical' THEN 0 WHEN 'warning' THEN 1 WHEN 'unknown' THEN 2 ELSE 3 END, instance_name"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "État"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "ok": {
+                        "text": "OK",
+                        "color": "green",
+                        "index": 0
+                      },
+                      "warning": {
+                        "text": "Avertissement",
+                        "color": "orange",
+                        "index": 1
+                      },
+                      "critical": {
+                        "text": "Alarme",
+                        "color": "red",
+                        "index": 2
+                      },
+                      "unknown": {
+                        "text": "Pas de mesure",
+                        "color": "text",
+                        "index": 3
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "instance_id"
+            },
+            "properties": [
+              {
+                "id": "custom.hidden",
+                "value": true
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Instance"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "Page de l'instance",
+                    "url": "/d/asemon-instance?var-instance=${__data.fields.instance_id}&${__url_time_range}"
+                  },
+                  {
+                    "title": "Macro de l'instance",
+                    "url": "/d/asemon-macro?var-instance=${__data.fields.instance_id}&${__url_time_range}"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "md",
+        "footer": {
+          "show": false
+        }
+      }
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Gravité de l'indicateur le plus problématique (100 % = seuil d'alarme)",
+      "description": "Évolution, pour chaque instance, de l'indicateur qui est le plus problématique en ce moment, rapportée à son seuil d'alarme : 100 % = alarme, la ligne orange marque 70 %. Pour l'espace disque (plus bas = plus grave), la gravité est seuil / valeur. Un point toutes les 5 minutes.",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${DS_MONITORING}"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 12
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${DS_MONITORING}"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "editorMode": "code",
+          "rawSql": "SELECT v.ts AS time, w.instance_name || ' : ' || w.worst_label AS metric,\n       100.0 * CASE WHEN w.direction = 'high' THEN v.value / NULLIF(w.crit_value, 0) ELSE w.crit_value / NULLIF(v.value, 0) END AS \"Gravité\"\nFROM asemon.kpi_values v\nJOIN (SELECT i.instance_id, i.instance_name, i.worst_kpi, i.worst_label, s.direction, i.crit_value\n      FROM asemon.v_instance_status i JOIN asemon.v_kpi_status s ON s.instance_id = i.instance_id AND s.kpi = i.worst_kpi) w\n  ON w.instance_id = v.instance_id AND w.worst_kpi = v.kpi\nWHERE $__timeFilter(v.ts)\nORDER BY 1"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "thresholdsStyle": {
+              "mode": "line"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 70
+              },
+              {
+                "color": "red",
+                "value": 100
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    }
+  ]
+}

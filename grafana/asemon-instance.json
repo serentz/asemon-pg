@@ -1,0 +1,307 @@
+{
+  "__inputs": [
+    {
+      "name": "DS_MONITORING",
+      "label": "ASEMON Monitoring",
+      "description": "",
+      "type": "datasource",
+      "pluginId": "postgres",
+      "pluginName": "PostgreSQL"
+    }
+  ],
+  "__requires": [
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "10.0.0"
+    },
+    {
+      "type": "datasource",
+      "id": "postgres",
+      "name": "PostgreSQL",
+      "version": "1.0.0"
+    }
+  ],
+  "title": "monAp_pg — Instance",
+  "uid": "asemon-instance",
+  "description": "Page d'une instance : état de ses indicateurs et, heure par heure sur les 3 dernières heures, CPU, verrous, deadlocks, transactions et disque.",
+  "tags": [
+    "asemon",
+    "instance"
+  ],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "1m",
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "DS_MONITORING",
+        "type": "datasource",
+        "query": "postgres",
+        "current": {},
+        "label": "Datasource ASEMON"
+      },
+      {
+        "name": "instance",
+        "label": "Instance",
+        "type": "query",
+        "datasource": {
+          "type": "postgres",
+          "uid": "${DS_MONITORING}"
+        },
+        "query": "SELECT name AS __text, instance_id AS __value FROM asemon.instances WHERE enabled ORDER BY instance_id",
+        "definition": "SELECT name AS __text, instance_id AS __value FROM asemon.instances WHERE enabled ORDER BY instance_id",
+        "refresh": 1,
+        "sort": 0,
+        "includeAll": false,
+        "multi": false,
+        "current": {}
+      }
+    ]
+  },
+  "links": [
+    {
+      "title": "Parc",
+      "type": "link",
+      "icon": "dashboard",
+      "url": "/d/asemon-fleet",
+      "keepTime": true,
+      "targetBlank": false,
+      "includeVars": true
+    },
+    {
+      "title": "Instance",
+      "type": "link",
+      "icon": "dashboard",
+      "url": "/d/asemon-instance",
+      "keepTime": true,
+      "targetBlank": false,
+      "includeVars": true
+    },
+    {
+      "title": "Macro",
+      "type": "link",
+      "icon": "dashboard",
+      "url": "/d/asemon-macro",
+      "keepTime": true,
+      "targetBlank": false,
+      "includeVars": true
+    },
+    {
+      "title": "Intermédiaire",
+      "type": "link",
+      "icon": "dashboard",
+      "url": "/d/asemon-intermediate",
+      "keepTime": true,
+      "targetBlank": false,
+      "includeVars": true
+    },
+    {
+      "title": "Micro",
+      "type": "link",
+      "icon": "dashboard",
+      "url": "/d/asemon-micro",
+      "keepTime": true,
+      "targetBlank": false,
+      "includeVars": true
+    },
+    {
+      "title": "Capacity",
+      "type": "link",
+      "icon": "dashboard",
+      "url": "/d/asemon-capacity",
+      "keepTime": true,
+      "targetBlank": false,
+      "includeVars": true
+    },
+    {
+      "title": "Seuils",
+      "type": "link",
+      "icon": "dashboard",
+      "url": "/d/asemon-thresholds",
+      "keepTime": true,
+      "targetBlank": false,
+      "includeVars": true
+    }
+  ],
+  "panels": [
+    {
+      "id": 1,
+      "type": "table",
+      "title": "État actuel",
+      "description": "Dernière valeur de chaque indicateur de l'instance, comparée à ses seuils (modifiables sur la page Seuils).",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${DS_MONITORING}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${DS_MONITORING}"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code",
+          "rawSql": "SELECT label AS \"Indicateur\", unit AS \"Unité\", round(value::numeric, 1) AS \"Valeur\",\n       warn_value AS \"Avertissement\", crit_value AS \"Alarme\", state AS \"État\", value_ts AS \"Mesuré à\"\nFROM asemon.v_kpi_status WHERE instance_id = $instance ORDER BY sort_order"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto"
+          },
+          "noValue": "-"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "État"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "ok": {
+                        "text": "OK",
+                        "color": "green",
+                        "index": 0
+                      },
+                      "warning": {
+                        "text": "Avertissement",
+                        "color": "orange",
+                        "index": 1
+                      },
+                      "critical": {
+                        "text": "Alarme",
+                        "color": "red",
+                        "index": 2
+                      },
+                      "unknown": {
+                        "text": "Pas de mesure",
+                        "color": "text",
+                        "index": 3
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Indicateur"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 320
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      }
+    },
+    {
+      "id": 2,
+      "type": "table",
+      "title": "Les 3 dernières heures, une ligne par heure (heures UTC, la dernière est partielle)",
+      "description": "CPU : pic de la machine (pas de PostgreSQL) et heure du pic. Attente de verrou : plus longue attente d'une même exécution sur un verrou (échantillons de 2 s), avec le nombre maximal de sessions bloquées au même instant. Deadlocks : nombre dans l'heure. Transactions ouvertes : maximum de sessions ayant une transaction ouverte au même instant, idle in transaction comprises. Disque : espace libre minimal de /. Transaction la plus longue : précision 15 s. Sans activité, verrous et transactions valent 0.",
+      "datasource": {
+        "type": "postgres",
+        "uid": "${DS_MONITORING}"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "${DS_MONITORING}"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code",
+          "rawSql": "WITH hrs AS (\n  SELECT g AS hour FROM generate_series(date_trunc('hour', now(), 'UTC') - interval '2 hours', date_trunc('hour', now(), 'UTC'), interval '1 hour') g\n), os AS (\n  SELECT date_trunc('hour', collected_at, 'UTC') AS hour, max(cpu_percent) AS cpu,\n         (array_agg(collected_at ORDER BY cpu_percent DESC NULLS LAST))[1] AS cpu_at,\n         min(100.0 * disk_free_bytes / NULLIF(disk_total_bytes, 0)) AS disk\n  FROM asemon.snap_os WHERE instance_id = $instance AND collected_at >= date_trunc('hour', now(), 'UTC') - interval '2 hours' GROUP BY 1\n), lk AS (\n  SELECT hour, max(ms) / 1000.0 AS wait FROM (\n    SELECT date_trunc('hour', sampled_at, 'UTC') AS hour, session_key, query_start, sum(interval_ms) AS ms\n    FROM asemon.snap_samples\n    WHERE instance_id = $instance AND sampled_at >= date_trunc('hour', now(), 'UTC') - interval '2 hours' AND wait_event_type = 'Lock'\n      AND COALESCE(application_name, '') NOT LIKE 'asemon-%'\n    GROUP BY 1, 2, 3) x GROUP BY 1\n), lkn AS (\n  SELECT hour, max(n) AS blocked FROM (\n    SELECT date_trunc('hour', sampled_at, 'UTC') AS hour, sampled_at, count(DISTINCT session_key) AS n\n    FROM asemon.snap_samples\n    WHERE instance_id = $instance AND sampled_at >= date_trunc('hour', now(), 'UTC') - interval '2 hours' AND wait_event_type = 'Lock'\n      AND COALESCE(application_name, '') NOT LIKE 'asemon-%'\n    GROUP BY 1, 2) x GROUP BY 1\n), dl AS (\n  SELECT date_trunc('hour', occurred_at, 'UTC') AS hour, count(*) AS n\n  FROM asemon.event_deadlocks WHERE instance_id = $instance AND occurred_at >= date_trunc('hour', now(), 'UTC') - interval '2 hours' GROUP BY 1\n), ax AS (\n  SELECT hour, max(n) AS xacts FROM (\n    SELECT date_trunc('hour', collected_at, 'UTC') AS hour, collected_at, count(*) AS n\n    FROM asemon.snap_activity\n    WHERE instance_id = $instance AND collected_at >= date_trunc('hour', now(), 'UTC') - interval '2 hours' AND xact_start IS NOT NULL\n      AND COALESCE(application_name, '') NOT LIKE 'asemon-%'\n    GROUP BY 1, 2) x GROUP BY 1\n), lx AS (\n  SELECT date_trunc('hour', collected_at, 'UTC') AS hour,\n         max(extract(epoch FROM collected_at - xact_start)) AS longest\n  FROM asemon.snap_activity\n  WHERE instance_id = $instance AND collected_at >= date_trunc('hour', now(), 'UTC') - interval '2 hours' AND xact_start IS NOT NULL\n    AND COALESCE(application_name, '') NOT LIKE 'asemon-%'\n  GROUP BY 1\n)\nSELECT hrs.hour AS \"Heure\",\n       round(os.cpu::numeric, 1) AS \"CPU pic (%)\", os.cpu_at AS \"Heure du pic\",\n       round(COALESCE(lk.wait, 0)::numeric, 1) AS \"Attente de verrou max (s)\",\n       COALESCE(lkn.blocked, 0) AS \"Sessions bloquées max\",\n       COALESCE(dl.n, 0) AS \"Deadlocks\",\n       COALESCE(ax.xacts, 0) AS \"Transactions ouvertes max\",\n       round(os.disk::numeric, 1) AS \"Disque libre min (%)\",\n       round(COALESCE(lx.longest, 0)::numeric, 0) AS \"Transaction la plus longue (s)\"\nFROM hrs\nLEFT JOIN os USING (hour) LEFT JOIN lk USING (hour) LEFT JOIN lkn USING (hour)\nLEFT JOIN dl USING (hour) LEFT JOIN ax USING (hour) LEFT JOIN lx USING (hour)\nORDER BY hrs.hour DESC"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto"
+          },
+          "noValue": "-"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Heure"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeAsIso"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Heure du pic"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeAsIso"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "md",
+        "footer": {
+          "show": false
+        }
+      }
+    }
+  ]
+}
