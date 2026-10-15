@@ -31,6 +31,9 @@ monitoring)
     check "grafana_ro lit asemon.snap_os" $PSQL_CMD -d monitoring -c "SET ROLE grafana_ro; SELECT 1 FROM asemon.snap_os LIMIT 1"
     check "Grafana répond" curl -fs http://localhost:3000/api/health
     log "Données reçues de VM-Cible (vides tant que install-target.sh n'a pas tourné depuis une minute) :"
+    check "multi-instance (R4a) : asemon.instances lisible par grafana_ro" $PSQL_CMD -d monitoring -c "SET ROLE grafana_ro; SELECT 1 FROM asemon.instances LIMIT 1"
+    check "multi-instance (R4a) : instance_id sur toutes les tables de données (sans valeur par défaut)" bash -c "[ \"\$($PSQL_CMD -d monitoring -At -c \"SELECT count(*) FROM information_schema.columns WHERE table_schema='asemon' AND column_name='instance_id' AND column_default IS NOT NULL AND table_name <> 'instances' AND table_name NOT LIKE 'snap_samples\\_%'\")\" -eq 0 ]"
+    check "multi-instance (R4a) : au moins une instance enregistrée par un agent" bash -c "[ \"\$($PSQL_CMD -d monitoring -At -c 'SELECT count(*) FROM asemon.instances')\" -ge 1 ]"
     check "table asemon.query_text (v2.1)" bash -c "[ \"\$($PSQL_CMD -d monitoring -At -c \"SELECT count(*) FROM information_schema.columns WHERE table_schema='asemon' AND ((table_name='query_text' AND column_name='query_formatted') OR (table_name='event_plans' AND column_name IN ('plan_text','plan_hash')))\")\" -eq 3 ]"
     for t in snap_os snap_activity snap_statements snap_samples snap_kcache snap_sessions; do
         printf '   %-16s %s lignes\n' "$t" "$(psql_value monitoring "SELECT count(*) FROM asemon.$t")"

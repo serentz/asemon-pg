@@ -2,7 +2,8 @@
 """
 monAp_pg — Collecteur
 
-Tourne sur la VM surveillée (VM-Cible). À chaque cycle :
+Tourne sur chaque VM surveillée (VM-Cible, VM-Monitoring…). Chaque machine a son
+INSTANCE_NAME (config.py) et écrit sous son instance_id. À chaque cycle :
   1. Lit les métriques OS locales (CPU, iowait, mémoire, disque, réseau,
      espace disque libre) via psutil.
   2. Lit les vues pg_stat_* de l'instance PostgreSQL locale (surveillée)
@@ -28,6 +29,7 @@ from psycopg.conninfo import make_conninfo
 import config as _cfg
 from config import TARGET_DSN, REPO_DSN, INTERVAL
 from plan_format import format_sql
+from instance import register_instance
 
 logging.basicConfig(
     level=logging.INFO,
@@ -378,103 +380,108 @@ def collect_connections(target_conn):
         return cur.fetchone()
 
 
-def write_snapshots(repo_conn, os_metrics, activity, locks, io, statements,
+def with_id(iid, rows):
+    """Ajoute l'instance_id en tête de chaque ligne (Release 4a)."""
+    return [(iid,) + tuple(r) for r in rows]
+
+
+def write_snapshots(repo_conn, iid, os_metrics, activity, locks, io, statements,
                      tables, indexes, checkpoints, wal, db_age, connections, kcache=()):
     with repo_conn.cursor() as cur:
         cur.execute("""
             INSERT INTO asemon.snap_os
-            (cpu_percent, mem_percent, disk_read_bytes, disk_write_bytes,
+            (instance_id, cpu_percent, mem_percent, disk_read_bytes, disk_write_bytes,
              net_sent_bytes, net_recv_bytes, disk_free_bytes, disk_total_bytes,
              cpu_iowait_percent)
-            VALUES (%(cpu_percent)s, %(mem_percent)s, %(disk_read_bytes)s,
+            VALUES (%(instance_id)s, %(cpu_percent)s, %(mem_percent)s, %(disk_read_bytes)s,
                     %(disk_write_bytes)s, %(net_sent_bytes)s, %(net_recv_bytes)s,
                     %(disk_free_bytes)s, %(disk_total_bytes)s, %(cpu_iowait_percent)s)
-        """, os_metrics)
+        """, {**os_metrics, "instance_id": iid})
 
         if activity:
             cur.executemany("""
                 INSERT INTO asemon.snap_activity
-                (pid, usename, datname, application_name, client_addr, state,
+                (instance_id, pid, usename, datname, application_name, client_addr, state,
                  wait_event_type, wait_event, query, query_start, xact_start, backend_start,
                  session_key)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            """, activity)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, with_id(iid, activity))
 
         if locks:
             cur.executemany("""
                 INSERT INTO asemon.snap_locks
-                (pid, blocking_pid, locktype, relation, mode, granted, query)
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
-            """, locks)
+                (instance_id, pid, blocking_pid, locktype, relation, mode, granted, query)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            """, with_id(iid, locks))
 
         if io:
             cur.executemany("""
                 INSERT INTO asemon.snap_io
-                (datname, blks_read, blks_hit, tup_returned, tup_fetched,
+                (instance_id, datname, blks_read, blks_hit, tup_returned, tup_fetched,
                  tup_inserted, tup_updated, tup_deleted, temp_files, temp_bytes, deadlocks)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            """, io)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, with_id(iid, io))
 
         if statements:
             cur.executemany("""
                 INSERT INTO asemon.snap_statements
-                (queryid, query, calls, total_exec_time, mean_exec_time,
+                (instance_id, queryid, query, calls, total_exec_time, mean_exec_time,
                  rows, shared_blks_hit, shared_blks_read)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-            """, statements)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, with_id(iid, statements))
 
         if kcache:
             cur.executemany("""
                 INSERT INTO asemon.snap_kcache
-                (sampled_at, period_ms, queryid, usename, datname,
+                (instance_id, sampled_at, period_ms, queryid, usename, datname,
                  cpu_user_ms, cpu_system_ms, reads_bytes, writes_bytes)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-            """, kcache)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, with_id(iid, kcache))
 
         if tables:
             cur.executemany("""
                 INSERT INTO asemon.snap_tables
-                (schemaname, relname, seq_scan, seq_tup_read, idx_scan, idx_tup_fetch,
+                (instance_id, schemaname, relname, seq_scan, seq_tup_read, idx_scan, idx_tup_fetch,
                  n_live_tup, n_dead_tup, last_autovacuum, last_autoanalyze)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            """, tables)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, with_id(iid, tables))
 
         if indexes:
             cur.executemany("""
                 INSERT INTO asemon.snap_indexes
-                (schemaname, relname, indexrelname, idx_scan, idx_tup_read,
+                (instance_id, schemaname, relname, indexrelname, idx_scan, idx_tup_read,
                  idx_tup_fetch, index_size_bytes)
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
-            """, indexes)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            """, with_id(iid, indexes))
 
         if checkpoints:
             cur.executemany("""
                 INSERT INTO asemon.snap_checkpoints
-                (num_timed, num_requested, restartpoints_timed, restartpoints_req,
+                (instance_id, num_timed, num_requested, restartpoints_timed, restartpoints_req,
                  write_time, sync_time, buffers_written)
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
-            """, checkpoints)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            """, with_id(iid, checkpoints))
 
         if wal:
             cur.executemany("""
                 INSERT INTO asemon.snap_wal
-                (wal_records, wal_fpi, wal_bytes, wal_buffers_full, wal_write, wal_sync)
-                VALUES (%s, %s, %s, %s, %s, %s)
-            """, wal)
+                (instance_id, wal_records, wal_fpi, wal_bytes, wal_buffers_full, wal_write, wal_sync)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+            """, with_id(iid, wal))
 
         if db_age:
             cur.executemany("""
-                INSERT INTO asemon.snap_db_age (datname, datfrozenxid_age)
-                VALUES (%s, %s)
-            """, db_age)
+                INSERT INTO asemon.snap_db_age (instance_id, datname, datfrozenxid_age)
+                VALUES (%s, %s, %s)
+            """, with_id(iid, db_age))
 
         if connections:
             cur.execute("""
                 INSERT INTO asemon.snap_connections
-                (total_connections, active_connections, idle_connections,
+                (instance_id, total_connections, active_connections, idle_connections,
                  idle_in_transaction_connections, max_connections)
-                VALUES (%s, %s, %s, %s, %s)
-            """, connections)
+                VALUES (%s, %s, %s, %s, %s, %s)
+            """, (iid,) + tuple(connections))
 
     repo_conn.commit()
 
@@ -482,7 +489,7 @@ def write_snapshots(repo_conn, os_metrics, activity, locks, io, statements,
 _known_queryids = set()    # requêtes déjà présentes dans asemon.query_text (mémoire du processus)
 
 
-def write_query_texts(repo_conn, statements):
+def write_query_texts(repo_conn, iid, statements):
     """v2.1 : texte SQL indenté, une ligne par requête (asemon.query_text).
     Seules les requêtes encore inconnues sont mises en forme ; au redémarrage du
     collecteur, les lignes déjà présentes sont ignorées (ON CONFLICT DO NOTHING)."""
@@ -490,12 +497,12 @@ def write_query_texts(repo_conn, statements):
            if row[0] is not None and row[1] and row[0] not in _known_queryids]
     if not new:
         return
-    rows = [(qid, text, format_sql(text)) for qid, text in new]
+    rows = [(iid, qid, text, format_sql(text)) for qid, text in new]
     try:
         with repo_conn.cursor() as cur:
             cur.executemany("""
-                INSERT INTO asemon.query_text (queryid, query, query_formatted)
-                VALUES (%s, %s, %s)
+                INSERT INTO asemon.query_text (instance_id, queryid, query, query_formatted)
+                VALUES (%s, %s, %s, %s)
                 ON CONFLICT DO NOTHING
             """, rows)
         repo_conn.commit()
@@ -558,24 +565,24 @@ def collect_capacity(target_conn):
     return at, db_rows, table_rows
 
 
-def write_capacity(repo_conn, db_rows, table_rows):
+def write_capacity(repo_conn, iid, db_rows, table_rows):
     with repo_conn.cursor() as cur:
         if db_rows:
             cur.executemany("""
-                INSERT INTO asemon.snap_db_size (collected_at, datname, size_bytes)
-                VALUES (%s, %s, %s)
-            """, db_rows)
+                INSERT INTO asemon.snap_db_size (instance_id, collected_at, datname, size_bytes)
+                VALUES (%s, %s, %s, %s)
+            """, with_id(iid, db_rows))
         if table_rows:
             cur.executemany("""
                 INSERT INTO asemon.snap_table_size
-                (collected_at, datname, schemaname, relname, row_estimate,
+                (instance_id, collected_at, datname, schemaname, relname, row_estimate,
                  table_bytes, index_bytes, toast_bytes, total_bytes, index_count)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            """, table_rows)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, with_id(iid, table_rows))
     repo_conn.commit()
 
 
-def run_capacity(target_conn, repo_conn):
+def run_capacity(target_conn, repo_conn, iid):
     """Écrit un point de capacity planning au premier cycle de chaque heure UTC.
 
     Toute erreur est journalisée sans interrompre la collecte ; nouvel essai après
@@ -588,7 +595,7 @@ def run_capacity(target_conn, repo_conn):
     try:
         if _capacity_last_hour is None:
             with repo_conn.cursor() as cur:
-                cur.execute("SELECT max(collected_at) FROM asemon.snap_db_size")
+                cur.execute("SELECT max(collected_at) FROM asemon.snap_db_size WHERE instance_id = %s", (iid,))
                 last = cur.fetchone()[0]
             repo_conn.rollback()
             _capacity_last_hour = hour_key(last) if last else ""
@@ -596,7 +603,7 @@ def run_capacity(target_conn, repo_conn):
         if current == _capacity_last_hour:
             return
         at, db_rows, table_rows = collect_capacity(target_conn)
-        write_capacity(repo_conn, db_rows, table_rows)
+        write_capacity(repo_conn, iid, db_rows, table_rows)
         _capacity_last_hour = current
         log.info("Capacity OK | %s UTC | bases=%d tables=%d", at.strftime("%Y-%m-%d %H:%M"),
                  len(db_rows), len(table_rows))
@@ -610,7 +617,7 @@ def run_capacity(target_conn, repo_conn):
         _capacity_retry_at = time.monotonic() + CAPACITY_RETRY_S
 
 
-def run_cycle(target_conn, repo_conn):
+def run_cycle(target_conn, repo_conn, iid):
     os_metrics = collect_os_metrics()
     activity = collect_activity(target_conn)
     locks = collect_locks(target_conn)
@@ -624,10 +631,10 @@ def run_cycle(target_conn, repo_conn):
     connections = collect_connections(target_conn)
     kcache, kcache_state = collect_kcache(target_conn)
 
-    write_snapshots(repo_conn, os_metrics, activity, locks, io, statements,
+    write_snapshots(repo_conn, iid, os_metrics, activity, locks, io, statements,
                      tables, indexes, checkpoints, wal, db_age, connections, kcache)
-    write_query_texts(repo_conn, statements)
-    run_capacity(target_conn, repo_conn)
+    write_query_texts(repo_conn, iid, statements)
+    run_capacity(target_conn, repo_conn, iid)
     commit_kcache(kcache_state)
 
     log.info(
@@ -643,11 +650,13 @@ def main():
 
     target_conn = psycopg.connect(TARGET_DSN, autocommit=True, application_name=APP_NAME)
     repo_conn = psycopg.connect(REPO_DSN, application_name=APP_NAME)
+    # Release 4a : l'instance_id de cette machine, créé au premier démarrage (docs/19)
+    iid = register_instance(repo_conn, target_conn)
 
     try:
         while True:
             try:
-                run_cycle(target_conn, repo_conn)
+                run_cycle(target_conn, repo_conn, iid)
             except Exception:
                 log.exception("Erreur pendant le cycle de collecte")
                 # Reconnexion défensive en cas de coupure réseau/DB

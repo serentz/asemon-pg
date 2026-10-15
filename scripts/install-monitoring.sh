@@ -23,7 +23,8 @@ check_password GRAFANA_RO_PASSWORD
 
 # Ordre d'application. 07 est un brouillon et n'est jamais appliqué.
 SQL_FILES=(01-schema-asemon 02-roles-and-grants 04-schema-extension 05-schema-sessions
-           06-rollup-horaire 08-schema-samples 09-retention 10-plans-query-id 11-schema-kcache 12-plans-lisibles 13-capacity)
+           06-rollup-horaire 08-schema-samples 09-retention 10-plans-query-id 11-schema-kcache 12-plans-lisibles 13-capacity
+           14-multi-instance 15-instance-id-cutover)
 
 apply_schema() {
     log "Schéma du repository"

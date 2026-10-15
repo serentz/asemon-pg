@@ -28,3 +28,11 @@ PG_DATA_DIR = "/var/lib/postgresql/17/main"
 # requête et par heure. Optionnel (5 par défaut ; 0 = illimité). Après modification :
 #   sudo systemctl restart asemon-logparser
 PLAN_MAX_PER_QUERY_HOUR = 5
+
+# Release 4a : nom de cette instance supervisée, affiché dans les dashboards et unique dans le
+# repository. Une machine = un nom : "VM-Cible" sur la VM-Cible, "VM-Monitoring" sur VM-Monitoring.
+# L'agent s'enregistre dans asemon.instances au premier démarrage (aucune autre action).
+INSTANCE_NAME = "VM-Cible"
+
+# Adresse affichée pour cette instance (facultatif ; sinon l'hôte de TARGET_DSN)
+# INSTANCE_HOST = "192.168.1.30"
