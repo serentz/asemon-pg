@@ -56,11 +56,12 @@ Toutes les captures (version 3, dont Capacity planning) : [images/Release_3](ima
 | 2 | Échantillonnage des sessions actives toutes les 2 s ; rétention des données | Fait, validé |
 | 3 | CPU et disque réels par requête (`pg_stat_kcache`) | Fait, validé (I/O réseau non mesurable) |
 | 4 | Dashboards Grafana : macro, intermédiaire, micro, détails session et requête | Fait, validé |
-| Release 3 | Capacity planning : collecte des tailles (3a), dashboard et extrapolations (3b) | 3a validée ; 3b à valider |
+| Release 3 | Capacity planning : collecte des tailles (3a), dashboard et extrapolations (3b) | Fait, validé |
+| Release 4 | Multi-instance : schéma et agents (4a), dashboards par instance (4b), seuils (4c), niveau zéro et page instance (4d) | 4a codée, à valider ([docs/19](docs/19-multi-instance.md)) |
 
 **En cours** : v2.1, plans d'exécution lisibles et mieux capturés (codée, à valider sur les VM : [docs/17-plans-v2.1.md](docs/17-plans-v2.1.md)).
 
-**Prochaines releases** : Release 3 (3a validée ; 3b, le dashboard, codée : [docs/18-capacity-planning.md](docs/18-capacity-planning.md)) ; Release 4 (multi-instance, seuils) ; Release 5 (réplication). Voir [docs/16-roadmap-releases.md](docs/16-roadmap-releases.md).
+**Prochaines releases** : Release 4 (multi-instance, seuils : [docs/19-multi-instance.md](docs/19-multi-instance.md) pour 4a) ; Release 5 (réplication). Voir [docs/16-roadmap-releases.md](docs/16-roadmap-releases.md).
 
 Suites possibles : alertes Grafana, mesure du volume réel après plusieurs jours, ajustement des durées de rétention. Réflexion et historique des choix : [docs/06-roadmap-ihm.md](docs/06-roadmap-ihm.md).
 
@@ -106,7 +107,7 @@ sudo ./scripts/install-target.sh          # ensuite, sur VM-Cible
 sudo ./scripts/verify.sh monitoring|target
 ```
 
-Ordre des scripts SQL (VM-Monitoring) : `01, 02, 04, 05, 06, 08, 09, 10, 11, 12, 13` ; `03` sur VM-Cible ; `07` est un brouillon, **ne pas l'appliquer**. Les scripts sont rejouables. Toujours VM-Monitoring avant VM-Cible : le schéma doit exister avant que le collecteur écrive dedans.
+Ordre des scripts SQL (VM-Monitoring) : `01, 02, 04, 05, 06, 08, 09, 10, 11, 12, 13, 14, 15` (`14` puis `15` : voir [docs/19](docs/19-multi-instance.md) pour une mise à jour) ; `03` sur VM-Cible ; `07` est un brouillon, **ne pas l'appliquer**. Les scripts sont rejouables. Toujours VM-Monitoring avant VM-Cible : le schéma doit exister avant que le collecteur écrive dedans.
 
 ## Réglages courants
 

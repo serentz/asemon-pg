@@ -33,8 +33,8 @@ log = logging.getLogger("asemon-retention")
 
 # table -> colonnes qui identifient un objet (une série de points)
 CAPACITY_TABLES = {
-    "snap_db_size": "datname",
-    "snap_table_size": "datname, schemaname, relname",
+    "snap_db_size": "instance_id, datname",
+    "snap_table_size": "instance_id, datname, schemaname, relname",
 }
 
 

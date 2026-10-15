@@ -39,6 +39,7 @@ import psycopg
 import config as _cfg
 from config import REPO_DSN, PG_DATA_DIR
 from plan_format import plan_to_text, plan_hash
+from instance import register_with_retry
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 log = logging.getLogger("asemon-log-parser")
@@ -219,62 +220,62 @@ def parse_timestamp(ts_str):
 
 SQL_DEADLOCK = """
     INSERT INTO asemon.event_deadlocks
-    (occurred_at, process_id, involved_tables, involved_users, queries, raw_log, session_key)
-    VALUES (%s, %s, %s, %s, %s, %s, %s)
+    (instance_id, occurred_at, process_id, involved_tables, involved_users, queries, raw_log, session_key)
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
 """
 
 SQL_PLAN = """
     INSERT INTO asemon.event_plans
-    (occurred_at, duration_ms, query, plan, session_key, query_id, plan_text, plan_hash)
-    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+    (instance_id, occurred_at, duration_ms, query, plan, session_key, query_id, plan_text, plan_hash)
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
 """
 
 # Connexion : on n'écrase jamais une ligne existante.
 SQL_SESSION_CONNECT = """
     INSERT INTO asemon.snap_sessions
-    (session_key, pid, usename, application_name, client_addr, datname, connected_at)
-    VALUES (%(session_key)s, %(pid)s, %(usename)s, %(application_name)s,
+    (instance_id, session_key, pid, usename, application_name, client_addr, datname, connected_at)
+    VALUES (%(instance_id)s, %(session_key)s, %(pid)s, %(usename)s, %(application_name)s,
             %(client_addr)s, %(datname)s, %(connected_at)s)
-    ON CONFLICT (session_key) DO NOTHING
+    ON CONFLICT (instance_id, session_key) DO NOTHING
 """
 
 # Déconnexion : crée la ligne complète si la connexion n'a pas été vue (parseur
 # démarré en cours de session), sinon se contente de poser disconnected_at.
 SQL_SESSION_DISCONNECT = """
     INSERT INTO asemon.snap_sessions
-    (session_key, pid, usename, application_name, client_addr, datname,
+    (instance_id, session_key, pid, usename, application_name, client_addr, datname,
      connected_at, disconnected_at)
-    VALUES (%(session_key)s, %(pid)s, %(usename)s, %(application_name)s,
+    VALUES (%(instance_id)s, %(session_key)s, %(pid)s, %(usename)s, %(application_name)s,
             %(client_addr)s, %(datname)s, %(connected_at)s, %(event_at)s)
-    ON CONFLICT (session_key) DO UPDATE SET disconnected_at = %(event_at)s
+    ON CONFLICT (instance_id, session_key) DO UPDATE SET disconnected_at = %(event_at)s
 """
 # NB : on réutilise le paramètre plutôt que EXCLUDED.disconnected_at, car lire
 # EXCLUDED exige le droit SELECT sur la colonne, que collector_writer n'a pas
-# (seul SELECT (session_key) lui est accordé, voir sql/05-schema-sessions.sql).
+# (seuls SELECT (session_key) et SELECT (instance_id) lui sont accordés, voir sql/05 et sql/14).
 
 
-def write_deadlock(repo_conn, d):
+def write_deadlock(repo_conn, iid, d):
     with repo_conn.cursor() as cur:
-        cur.execute(SQL_DEADLOCK, (parse_timestamp(d["occurred_at"]), d["process_id"],
+        cur.execute(SQL_DEADLOCK, (iid, parse_timestamp(d["occurred_at"]), d["process_id"],
                                    d["involved_tables"], d["involved_users"], d["queries"],
                                    d["raw_log"], d["session_key"]))
     repo_conn.commit()
     log.info("Deadlock enregistré | pid=%s tables=%s", d["process_id"], d["involved_tables"])
 
 
-def write_plan(repo_conn, p):
+def write_plan(repo_conn, iid, p):
     with repo_conn.cursor() as cur:
-        cur.execute(SQL_PLAN, (parse_timestamp(p["occurred_at"]), p["duration_ms"],
+        cur.execute(SQL_PLAN, (iid, parse_timestamp(p["occurred_at"]), p["duration_ms"],
                                p["query"], p["plan"], p["session_key"], p["query_id"],
                                p["plan_text"], p["plan_hash"]))
     repo_conn.commit()
     log.info("Plan enregistré | duration=%.1fms", p["duration_ms"])
 
 
-def write_session(repo_conn, s):
+def write_session(repo_conn, iid, s):
     sql = SQL_SESSION_CONNECT if s["kind"] == "connect" else SQL_SESSION_DISCONNECT
     with repo_conn.cursor() as cur:
-        cur.execute(sql, s)
+        cur.execute(sql, {**s, "instance_id": iid})
     repo_conn.commit()
     log.info("Session %s | key=%s user=%s app=%s",
              "connectée" if s["kind"] == "connect" else "déconnectée",
@@ -321,6 +322,8 @@ def main():
 
     log.info("Suivi du fichier de log : %s", logpath)
     repo_conn = psycopg.connect(REPO_DSN)
+    # Release 4a : instance_id de cette machine (réessaie tant que le repository est injoignable)
+    iid = register_with_retry(lambda: psycopg.connect(REPO_DSN))
 
     for line in follow(logpath):
         line = line.strip()
@@ -334,15 +337,15 @@ def main():
         message = entry.get("message", "")
         try:
             if entry.get("state_code") == "40P01":
-                write_deadlock(repo_conn, parse_deadlock(entry))
+                write_deadlock(repo_conn, iid, parse_deadlock(entry))
             elif message.startswith("duration:") and "plan:" in message:
                 p = parse_plan(entry)
                 if p and plan_quota_ok(p):
-                    write_plan(repo_conn, p)
+                    write_plan(repo_conn, iid, p)
             else:
                 s = parse_session_event(entry)
                 if s:
-                    write_session(repo_conn, s)
+                    write_session(repo_conn, iid, s)
         except Exception:
             log.exception("Erreur lors du traitement d'une ligne de log")
             try:

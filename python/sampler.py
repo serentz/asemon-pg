@@ -28,6 +28,7 @@ import psycopg
 
 import config
 from config import TARGET_DSN, REPO_DSN
+from instance import register_with_retry
 
 logging.basicConfig(
     level=logging.INFO,
@@ -61,9 +62,9 @@ SQL_SAMPLE = """
 
 SQL_INSERT = """
     INSERT INTO asemon.snap_samples
-        (sampled_at, interval_ms, pid, session_key, usename, datname,
+        (instance_id, sampled_at, interval_ms, pid, session_key, usename, datname,
          application_name, wait_event_type, wait_event, query_id, query_start)
-    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
 """
 
 _stop = threading.Event()
@@ -130,6 +131,9 @@ def main():
     signal.signal(signal.SIGTERM, on_signal)
     signal.signal(signal.SIGINT, on_signal)
 
+    # Release 4a : instance_id de cette machine (réessaie tant que le repository est injoignable)
+    iid = register_with_retry(connect_repo)
+
     target_conn = None
     repo_conn = None
     buffer = []                 # [(monotonic_ts, row_tuple)]
@@ -174,7 +178,7 @@ def main():
                     rows = cur.fetchall()
                 ts = time.monotonic()
                 for r in rows:
-                    buffer.append((ts, (r[0], interval_ms) + tuple(r[1:])))
+                    buffer.append((ts, (iid, r[0], interval_ms) + tuple(r[1:])))
                 n_sampled += len(rows)
             except Exception as exc:
                 if throttle.ok("target"):

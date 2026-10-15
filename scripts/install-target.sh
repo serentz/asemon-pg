@@ -20,6 +20,7 @@ check_password ASEMON_COLLECT_PASSWORD
 id "$SERVICE_USER" >/dev/null 2>&1 || die "L'utilisateur Linux '$SERVICE_USER' (SERVICE_USER) n'existe pas."
 [[ "$SAMPLE_INTERVAL" =~ ^[0-9]+(\.[0-9]+)?$ ]] || die "SAMPLE_INTERVAL invalide : $SAMPLE_INTERVAL"
 [[ "$INTERVAL" =~ ^[0-9]+$ ]] || die "INTERVAL invalide : $INTERVAL"
+[[ "$INSTANCE_NAME" =~ ^[A-Za-z0-9._-]+$ ]] || die "INSTANCE_NAME invalide : $INSTANCE_NAME (lettres, chiffres, . _ - uniquement)"
 
 # --- 1. Paquets -----------------------------------------------------------------------
 install_postgres "postgresql-$PG_VERSION-pg-stat-kcache"
@@ -97,7 +98,7 @@ getent group asemon >/dev/null || groupadd --system asemon
 # (utilisateur du service + postgres, qui fait tourner le parseur de logs).
 usermod -aG asemon "$SERVICE_USER"
 usermod -aG asemon postgres
-for f in collector.py sampler.py log_parser.py plan_format.py backfill_plans.py; do
+for f in collector.py sampler.py log_parser.py plan_format.py backfill_plans.py instance.py; do
     install -m 0644 -o root -g root "$REPO_DIR/python/$f" "$INSTALL_DIR/app/$f"
 done
 if [ -f "$INSTALL_DIR/app/config.py" ] && [ "${FORCE_CONFIG:-0}" != "1" ]; then
@@ -108,6 +109,7 @@ else
         -e "s|^REPO_DSN = .*|REPO_DSN = \"host=$MONITORING_IP dbname=monitoring user=collector_writer password=$COLLECTOR_PASSWORD\"|" \
         -e "s|^INTERVAL = .*|INTERVAL = $INTERVAL|" \
         -e "s|^SAMPLE_INTERVAL = .*|SAMPLE_INTERVAL = $SAMPLE_INTERVAL|" \
+        -e "s|^INSTANCE_NAME = .*|INSTANCE_NAME = \"$INSTANCE_NAME\"|" \
         -e "s|^PG_DATA_DIR = .*|PG_DATA_DIR = \"/var/lib/postgresql/$PG_VERSION/main\"|" \
         "$REPO_DIR/python/config.py.example" > "$cfg"
     install -m 0640 -o root -g asemon "$cfg" "$INSTALL_DIR/app/config.py"
