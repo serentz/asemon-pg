@@ -73,6 +73,7 @@ Suites possibles : alertes Grafana, mesure du volume réel après plusieurs jour
 | `sql/` | Schéma du dépôt, rôles et droits, fonctions (rollup, purge, partitions, répartition `kcache_attr`). Numérotés dans l'ordre d'application |
 | `systemd/` | Services (`collector`, `sampler`, `logparser`) et timers (`rollup`, `retention`, `samples-maintenance`) |
 | `grafana/` | 7 dashboards en JSON, importables (dont `asemon-capacity`) |
+| `infra/hyperv/` | `create_vms.ps1` : commutateur et 2 VM Hyper-V avec Ubuntu installé automatiquement (voir `docs/23-creation-vm-hyperv.md`) |
 | `scripts/` | Installation scriptée (`install-monitoring.sh`, `install-target.sh`, `grafana-provision.sh`, `verify.sh`) ; `charge-lente.sh` (requêtes lentes pour tester les plans) |
 | `docs/` | Fiches d'installation et de fonctionnement, une par étape |
 | `images/` | Captures et références visuelles |
@@ -83,6 +84,7 @@ Suites possibles : alertes Grafana, mesure du volume réel après plusieurs jour
 
 | Étape | Où | Document |
 |---|---|---|
+| 0. (Option) Créer les deux VM d'un coup, Ubuntu installé automatiquement | Windows (Hyper-V) | [23-creation-vm-hyperv](docs/23-creation-vm-hyperv.md) |
 | 1. Créer VM-Monitoring, PostgreSQL 17, Grafana | VM-Monitoring | [01-VM-Monitoring](docs/01-VM-Monitoring.md), [01-…-repository-grafana](docs/01-VM-Monitoring-repository-grafana.md) |
 | 2. Créer VM-Cible, PostgreSQL 17, extensions, logs JSON | VM-Cible | [02-VM-Cible](docs/02-VM-Cible.md) |
 | 3. Collecteur Python | VM-Cible | [02-VM-Cible-collecteur-python](docs/02-VM-Cible-collecteur-python.md) |

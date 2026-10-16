@@ -49,6 +49,8 @@ Les deux VM utiliseront **ce même commutateur** : sinon elles ne se voient pas.
 
 ## 2. Créer les deux machines virtuelles
 
+> **Option rapide** : le script `infra/hyperv/create_vms.ps1` crée le commutateur et les deux VM et installe Ubuntu sans intervention (mémoire fixe 6 Go, démarrage sécurisé, SSH, utilisateur `admin01`). Voir [docs/23-creation-vm-hyperv.md](23-creation-vm-hyperv.md), puis reprendre ce guide à la **section 3**. Les étapes manuelles ci-dessous restent valables.
+
 Faire les mêmes gestes deux fois :
 
 | | Première VM | Deuxième VM |
